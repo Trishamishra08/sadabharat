@@ -1,0 +1,79 @@
+import React from 'react';
+
+const FeaturesBar = () => {
+  const features = [
+    {
+      id: 1,
+      title: '100% Natural',
+      subtitle: 'Pure & Safe Ingredients',
+      icon: (
+        <svg className="w-8 h-8 text-[#054425]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+          <path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10 10-4.5 10-10S17.5 2 12 2zm0 15c-2.8 0-5-2.2-5-5s2.2-5 5-5 5 2.2 5 5-2.2 5-5 5z" />
+        </svg>
+      )
+    },
+    {
+      id: 2,
+      title: 'Free Delivery',
+      subtitle: 'On Orders Above ₹499',
+      icon: (
+        <svg className="w-8 h-8 text-[#054425]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+          <rect x="1" y="3" width="15" height="13" rx="2" />
+          <polygon points="16 8 20 8 23 11 23 16 16 16 16 8" />
+          <circle cx="5.5" cy="18.5" r="2.5" />
+          <circle cx="18.5" cy="18.5" r="2.5" />
+        </svg>
+      )
+    },
+    {
+      id: 3,
+      title: 'Easy Returns',
+      subtitle: '7 Days Return Policy',
+      icon: (
+        <svg className="w-8 h-8 text-[#054425]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+          <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67" />
+        </svg>
+      )
+    },
+    {
+      id: 4,
+      title: 'Secure Payment',
+      subtitle: '100% Secure Payments',
+      icon: (
+        <svg className="w-8 h-8 text-[#054425]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+          <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+          <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+        </svg>
+      )
+    }
+  ];
+
+  return (
+    <div className="bg-[#F4F8F5] border-t border-gray-100 py-6 md:py-8 mt-12">
+      <div className="w-full px-4 md:px-8">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 md:gap-8 justify-items-center">
+          {features.map((item) => (
+            <div key={item.id} className="flex items-center gap-3 w-fit text-left">
+              {/* Feature Icon */}
+              <div className="shrink-0 bg-white p-2 rounded-xl shadow-sm border border-gray-100">
+                {item.icon}
+              </div>
+              
+              {/* Details */}
+              <div className="flex flex-col leading-none">
+                <span className="text-xs md:text-sm font-bold text-[#054425] uppercase tracking-wide">
+                  {item.title}
+                </span>
+                <span className="text-[10px] md:text-xs text-gray-500 font-medium mt-1">
+                  {item.subtitle}
+                </span>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default FeaturesBar;
