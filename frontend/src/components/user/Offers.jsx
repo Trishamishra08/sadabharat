@@ -16,10 +16,30 @@ const Offers = () => {
   const [sortBy, setSortBy] = useState(urlSort);
   const [visibleCount, setVisibleCount] = useState(15);
   const [priceSegment, setPriceSegment] = useState('All');
+  const [timeLeft, setTimeLeft] = useState({ hours: 12, minutes: 45, seconds: 30 });
 
   useEffect(() => {
     setActiveOffer(searchParams.get('category') || 'All Offers');
   }, [searchParams]);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setTimeLeft(prev => {
+        let { hours, minutes, seconds } = prev;
+        if (seconds > 0) seconds--;
+        else {
+          seconds = 59;
+          if (minutes > 0) minutes--;
+          else {
+            minutes = 59;
+            if (hours > 0) hours--;
+          }
+        }
+        return { hours, minutes, seconds };
+      });
+    }, 1000);
+    return () => clearInterval(timer);
+  }, []);
 
   const [searchQuery, setSearchQuery] = useState('');
   const [isSortOpen, setIsSortOpen] = useState(false);
@@ -94,7 +114,7 @@ const Offers = () => {
     <div className="min-h-screen bg-[#FDFCFB] font-sans selection:bg-brand-pink selection:text-white pb-20">
 
       {/* MAIN CONTENT AREA: SIDEBAR + GRID */}
-      <div className="w-full px-4 lg:px-8 pt-6 lg:pt-8 pb-8 flex flex-col lg:flex-row gap-8 items-start">
+      <div className="w-full px-4 lg:px-8 pt-2 lg:pt-4 pb-8 flex flex-col lg:flex-row gap-8 items-start">
         
         {/* MOBILE FILTER TOGGLE & SEARCH */}
         <div className="lg:hidden w-full flex flex-col gap-4 mb-4">
@@ -202,6 +222,46 @@ const Offers = () => {
 
         {/* RIGHT CONTENT: PRODUCT GRID */}
         <main className="flex-1 w-full">
+          {/* Flash Sale / Deal of the Day Banner */}
+          <div className="mb-6 rounded-2xl overflow-hidden bg-gradient-to-r from-[#054425] to-[#0a6338] text-white p-4 md:py-3 md:px-5 relative flex flex-col md:flex-row items-center justify-between gap-4 shadow-xl border border-[#054425]/20">
+            {/* Background decoration */}
+            <div className="absolute inset-0 opacity-10 pointer-events-none" style={{ backgroundImage: 'radial-gradient(circle at 20% 50%, rgba(255,255,255,0.4) 0%, transparent 50%)' }} />
+            
+            <div className="relative z-10 flex flex-col md:flex-row items-center gap-4 text-center md:text-left w-full md:w-auto">
+              <div className="bg-gradient-to-br from-[#E5C158] to-[#D4AF37] text-[#054425] font-black text-lg md:text-2xl px-4 py-2 rounded-xl transform -rotate-2 shadow-lg drop-shadow-md whitespace-nowrap">
+                SAVE 20%
+              </div>
+              <div>
+                <h2 className="text-xl md:text-2xl font-black font-serif italic mb-0.5 text-white drop-shadow-sm leading-tight">Deal of the Day</h2>
+                <p className="text-xs md:text-sm text-gray-200 mb-1.5">Exclusive discount on all Ayurvedic Skincare & Wellness</p>
+                <div className="flex gap-2 justify-center md:justify-start">
+                  <span className="px-2.5 py-0.5 bg-white/10 rounded-full text-[9px] uppercase tracking-widest font-bold">Free Shipping</span>
+                  <span className="px-2.5 py-0.5 bg-white/10 rounded-full text-[9px] uppercase tracking-widest font-bold">Extra 5% on Prepaid</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="relative z-10 flex flex-col items-center md:items-end gap-1.5 mt-2 md:mt-0 shrink-0">
+              <p className="text-[10px] font-bold uppercase tracking-widest text-[#D4AF37] drop-shadow-sm">Offer Ends In</p>
+              <div className="flex gap-1.5">
+                <div className="flex flex-col items-center">
+                  <div className="bg-white/10 backdrop-blur-md rounded-lg w-10 h-10 md:w-11 md:h-11 flex items-center justify-center text-lg md:text-xl font-black border border-white/10 shadow-inner">{String(timeLeft.hours).padStart(2, '0')}</div>
+                  <span className="text-[8px] md:text-[9px] uppercase tracking-wider mt-0.5 text-gray-300 font-medium">Hours</span>
+                </div>
+                <span className="text-xl font-black animate-pulse mt-1.5 text-[#D4AF37] opacity-80">:</span>
+                <div className="flex flex-col items-center">
+                  <div className="bg-white/10 backdrop-blur-md rounded-lg w-10 h-10 md:w-11 md:h-11 flex items-center justify-center text-lg md:text-xl font-black border border-white/10 shadow-inner">{String(timeLeft.minutes).padStart(2, '0')}</div>
+                  <span className="text-[8px] md:text-[9px] uppercase tracking-wider mt-0.5 text-gray-300 font-medium">Mins</span>
+                </div>
+                <span className="text-xl font-black animate-pulse mt-1.5 text-[#D4AF37] opacity-80">:</span>
+                <div className="flex flex-col items-center">
+                  <div className="bg-white/10 backdrop-blur-md rounded-lg w-10 h-10 md:w-11 md:h-11 flex items-center justify-center text-lg md:text-xl font-black border border-white/10 shadow-inner">{String(timeLeft.seconds).padStart(2, '0')}</div>
+                  <span className="text-[8px] md:text-[9px] uppercase tracking-wider mt-0.5 text-gray-300 font-medium">Secs</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
           {/* Top Bar (Desktop) */}
           <div className="hidden lg:flex justify-between items-center border-b border-gray-200 pb-4 mb-4">
             <div className="flex items-center gap-4">

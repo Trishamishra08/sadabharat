@@ -20,7 +20,6 @@ const Auth = () => {
 
   const [form, setForm] = useState({
     mobile: '',
-    email: '',
     otp: '',
   });
 
@@ -60,9 +59,6 @@ const Auth = () => {
     const newErrors = {};
     if (!form.mobile || form.mobile.length !== 10) {
       newErrors.mobile = 'Enter a valid 10-digit mobile number';
-    }
-    if (form.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) {
-      newErrors.email = 'Enter a valid email format';
     }
     
     if (Object.keys(newErrors).length > 0) {
@@ -261,21 +257,7 @@ const Auth = () => {
                 {errors.mobile && <p className="text-red-500 text-xs mt-1 ml-1">{errors.mobile}</p>}
               </div>
 
-              {/* Email (Optional) */}
-              <div>
-                <div className="relative shadow-sm rounded-xl">
-                  <FiMail className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 text-lg" />
-                  <input
-                    type="email"
-                    name="email"
-                    value={form.email}
-                    onChange={handleInputChange}
-                    placeholder="Email Address (Optional)"
-                    className={`w-full bg-white border ${errors.email ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : 'border-gray-200 focus:border-[#054425] focus:ring-[#054425]'} pl-11 pr-4 py-2.5 rounded-xl text-sm font-medium outline-none transition-all text-gray-800 placeholder:text-gray-400`}
-                  />
-                </div>
-                {errors.email && <p className="text-red-500 text-xs mt-1 ml-1">{errors.email}</p>}
-              </div>
+              {/* Email field removed as requested */}
 
               {/* OTP */}
               <div>

@@ -5,6 +5,7 @@ import { Link } from 'react-router-dom';
 import { useShop } from '../../context/ShopContext';
 import api from '../../utils/api';
 import { uploadToCloudinary } from '../../utils/cloudinary';
+import ProfileSidebar from './ProfileSidebar';
 
 const RMAModal = ({ order, onClose, isBankOnly = false }) => {
 
@@ -253,9 +254,14 @@ const UserOrders = () => {
 
     if (loading) {
         return (
-            <div className="min-h-screen pt-24 pb-20 flex flex-col items-center justify-center bg-[#FDFCFB]">
-                <div className="text-[10px] font-black uppercase tracking-[0.3em] text-[#5C2E3E]/40 animate-pulse">
-                    Retrieving Sacred Scripts...
+            <div className="min-h-screen bg-[#F8F9FA] pt-4 md:pt-6 pb-12 font-sans selection:bg-[#054425] selection:text-white">
+                <div className="w-full px-4 lg:px-8 flex flex-col lg:flex-row gap-6">
+                    <ProfileSidebar activeTab="orders" />
+                    <div className="flex-1 flex flex-col gap-5 pt-24 pb-20 items-center justify-center bg-white border border-gray-100 rounded-2xl">
+                        <div className="text-[10px] font-black uppercase tracking-[0.3em] text-[#5C2E3E]/40 animate-pulse">
+                            Retrieving Sacred Scripts...
+                        </div>
+                    </div>
                 </div>
             </div>
         );
@@ -263,26 +269,31 @@ const UserOrders = () => {
 
     if (orders.length === 0) {
         return (
-            <div className="min-h-screen pt-24 pb-20 flex flex-col items-center justify-center bg-[#FDFCFB] px-4">
-                <div className="w-20 h-20 bg-brand-pink/10 rounded-full flex items-center justify-center text-brand-pink mb-6 shadow-inner">
-                    <FiPackage size={40} />
+            <div className="min-h-screen bg-[#F8F9FA] pt-4 md:pt-6 pb-12 font-sans selection:bg-[#054425] selection:text-white">
+                <div className="w-full px-4 lg:px-8 flex flex-col lg:flex-row gap-6">
+                    <ProfileSidebar activeTab="orders" />
+                    <div className="flex-1 flex flex-col gap-5 pt-24 pb-20 items-center justify-center bg-white border border-gray-100 rounded-2xl shadow-sm">
+                        <div className="w-20 h-20 bg-brand-pink/10 rounded-full flex items-center justify-center text-brand-pink mb-6 shadow-inner">
+                            <FiPackage size={40} />
+                        </div>
+                        <h2 className="text-2xl font-serif font-black text-brand-dark uppercase tracking-widest mb-2">No Sacred Orders Yet</h2>
+                        <p className="text-gray-400 text-xs uppercase tracking-widest mb-8 text-center max-w-sm">
+                            Your ritual history is empty. Begin your journey into divine beauty.
+                        </p>
+                        <Link
+                            to="/shop"
+                            className="bg-brand-dark text-white px-10 py-3 rounded-full text-[10px] font-black uppercase tracking-[0.2em] shadow-xl hover:bg-brand-pink transition-all"
+                        >
+                            Discover Treasures
+                        </Link>
+                    </div>
                 </div>
-                <h2 className="text-2xl font-serif font-black text-brand-dark uppercase tracking-widest mb-2">No Sacred Orders Yet</h2>
-                <p className="text-gray-400 text-xs uppercase tracking-widest mb-8 text-center max-w-sm">
-                    Your ritual history is empty. Begin your journey into divine beauty.
-                </p>
-                <Link
-                    to="/shop"
-                    className="bg-brand-dark text-white px-10 py-3 rounded-full text-[10px] font-black uppercase tracking-[0.2em] shadow-xl hover:bg-brand-pink transition-all"
-                >
-                    Discover Treasures
-                </Link>
             </div>
         );
     }
 
     return (
-        <div className="min-h-screen bg-[#FDFCFB] pt-24 pb-20">
+        <div className="min-h-screen bg-[#F8F9FA] pt-4 md:pt-6 pb-12 font-sans selection:bg-[#054425] selection:text-white">
             <AnimatePresence>
                 {showRmaModal && selectedOrder && (
                     <RMAModal
@@ -294,155 +305,156 @@ const UserOrders = () => {
             </AnimatePresence>
 
 
-            <div className="container mx-auto px-4 max-w-5xl">
-                <div className="flex justify-between items-end mb-8 border-b border-gray-100 pb-4">
-                    <div>
-                        <h1 className="text-3xl md:text-4xl font-serif font-black text-brand-dark uppercase tracking-tighter">
-                            Your <span className="text-brand-pink italic">Journeys</span>
-                        </h1>
-                        <p className="text-[10px] text-gray-400 font-black uppercase tracking-widest mt-1">
-                            Ritual History : {orders.length} Dispatched
-                        </p>
+            <div className="w-full px-4 lg:px-8 flex flex-col lg:flex-row gap-6">
+                <ProfileSidebar activeTab="orders" />
+                
+                <div className="flex-1 flex flex-col gap-5">
+                    <div className="flex justify-between items-end mb-2 border-b border-gray-100 pb-4">
+                        <div>
+                            <h1 className="text-3xl md:text-4xl font-serif font-black text-brand-dark uppercase tracking-tighter">
+                                Your <span className="text-brand-pink italic">Journeys</span>
+                            </h1>
+                            <p className="text-[10px] text-gray-400 font-black uppercase tracking-widest mt-1">
+                                Ritual History : {orders.length} Dispatched
+                            </p>
+                        </div>
                     </div>
-                    <Link to="/profile" className="text-[9px] font-black text-[#5C2E3E] uppercase border-b border-[#5C2E3E] hover:text-brand-pink hover:border-brand-pink transition-all hidden md:block">
-                        Back to Sanctuary
-                    </Link>
-                </div>
 
-                <div className="space-y-6">
-                    {orders.map((order) => (
-                        <motion.div
-                            key={order._id}
-                            initial={{ opacity: 0, y: 10 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden group"
-                        >
-                            <div className="bg-gray-50/50 px-6 py-4 border-b border-gray-100 flex flex-wrap justify-between items-center gap-4">
-                                <div className="flex items-center gap-4">
-                                    <div className={`w-10 h-10 rounded-full flex items-center justify-center shadow-inner ${order.status === 'Delivered' ? 'bg-green-50 text-green-600' :
-                                        order.status === 'Processing' ? 'bg-orange-50 text-orange-500' :
-                                            'bg-brand-pink/10 text-brand-pink'
-                                        }`}>
-                                        {order.status === 'Delivered' ? <FiCheckCircle size={18} /> : order.status === 'Processing' ? <FiClock size={18} /> : <FiTruck size={18} />}
+                    <div className="space-y-6">
+                        {orders.map((order) => (
+                            <motion.div
+                                key={order._id}
+                                initial={{ opacity: 0, y: 10 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden group"
+                            >
+                                <div className="bg-gray-50/50 px-6 py-4 border-b border-gray-100 flex flex-wrap justify-between items-center gap-4">
+                                    <div className="flex items-center gap-4">
+                                        <div className={`w-10 h-10 rounded-full flex items-center justify-center shadow-inner ${order.status === 'Delivered' ? 'bg-green-50 text-green-600' :
+                                            order.status === 'Processing' ? 'bg-orange-50 text-orange-500' :
+                                                'bg-brand-pink/10 text-brand-pink'
+                                            }`}>
+                                            {order.status === 'Delivered' ? <FiCheckCircle size={18} /> : order.status === 'Processing' ? <FiClock size={18} /> : <FiTruck size={18} />}
+                                        </div>
+                                        <div>
+                                            <p className="text-[8px] font-black text-gray-400 uppercase tracking-widest mb-0.5">Order ID</p>
+                                            <p className="text-[11px] font-black text-brand-dark tracking-widest">{order.orderId}</p>
+                                        </div>
                                     </div>
-                                    <div>
-                                        <p className="text-[8px] font-black text-gray-400 uppercase tracking-widest mb-0.5">Order ID</p>
-                                        <p className="text-[11px] font-black text-brand-dark tracking-widest">{order.orderId}</p>
-                                    </div>
-                                </div>
 
-                                <div className="flex items-center gap-6">
-                                    <div className="text-right hidden sm:block">
-                                        <p className="text-[8px] font-black text-gray-400 uppercase tracking-widest mb-0.5">Manifest Placed</p>
-                                        <p className="text-[11px] font-bold text-gray-600">{new Date(order.createdAt).toLocaleDateString()}</p>
-                                    </div>
-                                    <div className="text-right">
-                                        <p className="text-[8px] font-black text-gray-400 uppercase tracking-widest mb-0.5">Total Value</p>
-                                        <p className="text-[13px] font-black text-brand-gold">₹{order.totalAmount}</p>
-                                    </div>
-                                    <div className="flex flex-wrap items-center gap-3">
-                                        <button
-                                            onClick={(e) => {
-                                                e.preventDefault();
-                                                import('../../utils/invoiceHelper').then(m => m.generateInvoice(order));
-                                            }}
-                                            className="bg-white border-2 border-[#5C2E3E]/10 text-[#5C2E3E] px-4 py-2 rounded-lg text-[9px] font-black uppercase tracking-widest hover:bg-[#5C2E3E] hover:text-white transition-all flex items-center gap-2 shadow-sm"
-                                        >
-                                            <FiDownload className={order.status === 'Delivered' ? 'text-brand-pink' : ''} />
-                                            Download Invoice
-                                        </button>
-                                        <Link
-                                            to={`/track-order?id=${order.orderId}`}
-                                            className="bg-[#5C2E3E] text-white px-5 py-2.5 rounded-lg text-[9px] font-black uppercase tracking-widest hover:bg-brand-pink transition-colors shadow-md shadow-brand-pink/10"
-                                        >
-                                            Track Order
-                                        </Link>
+                                    <div className="flex items-center gap-6">
+                                        <div className="text-right hidden sm:block">
+                                            <p className="text-[8px] font-black text-gray-400 uppercase tracking-widest mb-0.5">Manifest Placed</p>
+                                            <p className="text-[11px] font-bold text-gray-600">{new Date(order.createdAt).toLocaleDateString()}</p>
+                                        </div>
+                                        <div className="text-right">
+                                            <p className="text-[8px] font-black text-gray-400 uppercase tracking-widest mb-0.5">Total Value</p>
+                                            <p className="text-[13px] font-black text-brand-gold">₹{order.totalAmount}</p>
+                                        </div>
+                                        <div className="flex flex-wrap items-center gap-3">
+                                            <button
+                                                onClick={(e) => {
+                                                    e.preventDefault();
+                                                    import('../../utils/invoiceHelper').then(m => m.generateInvoice(order));
+                                                }}
+                                                className="bg-white border-2 border-[#5C2E3E]/10 text-[#5C2E3E] px-4 py-2 rounded-lg text-[9px] font-black uppercase tracking-widest hover:bg-[#5C2E3E] hover:text-white transition-all flex items-center gap-2 shadow-sm"
+                                            >
+                                                <FiDownload className={order.status === 'Delivered' ? 'text-brand-pink' : ''} />
+                                                Download Invoice
+                                            </button>
+                                            <Link
+                                                to={`/track-order?id=${order.orderId}`}
+                                                className="bg-[#5C2E3E] text-white px-5 py-2.5 rounded-lg text-[9px] font-black uppercase tracking-widest hover:bg-brand-pink transition-colors shadow-md shadow-brand-pink/10"
+                                            >
+                                                Track Order
+                                            </Link>
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
 
-                            {/* Items List */}
-                            <div className="p-6">
-                                <div className="space-y-4">
-                                    {order.items.map((item, index) => (
-                                        <Link
-                                            key={index}
-                                            to={`/track-order?id=${order.orderId}`}
-                                            className="flex gap-4 items-center p-3 hover:bg-gray-50 transition-colors rounded-xl group/item border border-transparent hover:border-brand-pink/10"
-                                        >
-                                            <div className="w-16 h-16 bg-[#F9F6F4] rounded-xl overflow-hidden shrink-0 border border-gray-100">
-                                                <img src={item.image || 'https://via.placeholder.com/150'} alt={item.name} className="w-full h-full object-cover mix-blend-multiply" />
-                                            </div>
-                                            <div className="flex-1 text-left">
-                                                <h4 className="text-[11px] font-black font-serif text-[#5C2E3E] uppercase tracking-widest group-hover/item:text-brand-pink transition-colors">{item.name}</h4>
-                                                <p className="text-[9px] text-gray-400 font-bold uppercase tracking-widest mt-0.5">Qty: {item.quantity}</p>
-                                            </div>
-                                            <div className="text-right">
-                                                <span className="text-[11px] font-black text-gray-600">₹{item.price}</span>
-                                            </div>
-                                        </Link>
-                                    ))}
-                                </div>
-
-                                {order.status === 'Shipped' && order.trackingId && (
-                                    <div className="mt-6 pt-4 border-t border-gray-50 flex items-center justify-between">
-                                        <span className="text-[9px] font-black text-[#5C2E3E]/60 uppercase tracking-widest flex items-center gap-2">
-                                            <FiBox /> Tracking Constellation
-                                        </span>
-                                        <span className="text-[10px] font-bold text-brand-pink uppercase tracking-widest px-3 py-1 bg-brand-pink/5 rounded-md border border-brand-pink/10">
-                                            {order.trackingId}
-                                        </span>
+                                {/* Items List */}
+                                <div className="p-6">
+                                    <div className="space-y-4">
+                                        {order.items.map((item, index) => (
+                                            <Link
+                                                key={index}
+                                                to={`/track-order?id=${order.orderId}`}
+                                                className="flex gap-4 items-center p-3 hover:bg-gray-50 transition-colors rounded-xl group/item border border-transparent hover:border-brand-pink/10"
+                                            >
+                                                <div className="w-16 h-16 bg-[#F9F6F4] rounded-xl overflow-hidden shrink-0 border border-gray-100">
+                                                    <img src={item.image || 'https://via.placeholder.com/150'} alt={item.name} className="w-full h-full object-cover mix-blend-multiply" />
+                                                </div>
+                                                <div className="flex-1 text-left">
+                                                    <h4 className="text-[11px] font-black font-serif text-[#5C2E3E] uppercase tracking-widest group-hover/item:text-brand-pink transition-colors">{item.name}</h4>
+                                                    <p className="text-[9px] text-gray-400 font-bold uppercase tracking-widest mt-0.5">Qty: {item.quantity}</p>
+                                                </div>
+                                                <div className="text-right">
+                                                    <span className="text-[11px] font-black text-gray-600">₹{item.price}</span>
+                                                </div>
+                                            </Link>
+                                        ))}
                                     </div>
-                                )}
 
-                                {order.status === 'Delivered' && (
-                                    <div className="mt-6 pt-4 border-t border-gray-50 flex flex-col md:flex-row md:items-center justify-between gap-4">
-                                        <span className="text-[9px] font-black text-[#5C2E3E]/60 uppercase tracking-widest flex items-center gap-2">
-                                            {(!order.returnStatus || order.returnStatus === 'Not Requested') ? 'Need Support?' : 'RMA Status'}
-                                        </span>
+                                    {order.status === 'Shipped' && order.trackingId && (
+                                        <div className="mt-6 pt-4 border-t border-gray-50 flex items-center justify-between">
+                                            <span className="text-[9px] font-black text-[#5C2E3E]/60 uppercase tracking-widest flex items-center gap-2">
+                                                <FiBox /> Tracking Constellation
+                                            </span>
+                                            <span className="text-[10px] font-bold text-brand-pink uppercase tracking-widest px-3 py-1 bg-brand-pink/5 rounded-md border border-brand-pink/10">
+                                                {order.trackingId}
+                                            </span>
+                                        </div>
+                                    )}
 
-                                        {order.returnStatus === 'Return Approved' && !order.refundAccountDetails && (
-                                            <div className="flex-1 px-4">
-                                                <div className="bg-brand-pink/5 border border-brand-pink/10 rounded-xl p-3 flex items-center justify-between">
-                                                    <p className="text-[9px] font-bold text-brand-dark uppercase tracking-widest flex items-center gap-2">
-                                                        <FiCreditCard className="text-brand-pink" />
-                                                        Please fill your account details for refund
-                                                    </p>
+                                    {order.status === 'Delivered' && (
+                                        <div className="mt-6 pt-4 border-t border-gray-50 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                                            <span className="text-[9px] font-black text-[#5C2E3E]/60 uppercase tracking-widest flex items-center gap-2">
+                                                {(!order.returnStatus || order.returnStatus === 'Not Requested') ? 'Need Support?' : 'RMA Status'}
+                                            </span>
+
+                                            {order.returnStatus === 'Return Approved' && !order.refundAccountDetails && (
+                                                <div className="flex-1 px-4">
+                                                    <div className="bg-brand-pink/5 border border-brand-pink/10 rounded-xl p-3 flex items-center justify-between">
+                                                        <p className="text-[9px] font-bold text-brand-dark uppercase tracking-widest flex items-center gap-2">
+                                                            <FiCreditCard className="text-brand-pink" />
+                                                            Please fill your account details for refund
+                                                        </p>
+                                                        <button
+                                                            onClick={() => { setSelectedOrder(order); setIsBankOnly(true); setShowRmaModal(true); }}
+                                                            className="bg-brand-dark text-white text-[8px] font-black uppercase px-4 py-1.5 rounded-full hover:bg-brand-pink transition-colors"
+                                                        >
+                                                            Fill Details
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            )}
+
+
+                                            {(!order.returnStatus || order.returnStatus === 'Not Requested') ? (
+                                                <div className="flex items-center gap-3">
                                                     <button
-                                                        onClick={() => { setSelectedOrder(order); setIsBankOnly(true); setShowRmaModal(true); }}
-                                                        className="bg-brand-dark text-white text-[8px] font-black uppercase px-4 py-1.5 rounded-full hover:bg-brand-pink transition-colors"
+                                                        onClick={() => { setSelectedOrder(order); setShowRmaModal(true); }}
+                                                        className="text-[9px] font-bold text-brand-dark uppercase tracking-widest px-6 py-2.5 bg-brand-light border border-brand-dark hover:bg-brand-dark hover:text-white transition-all shadow-sm flex items-center gap-2"
                                                     >
-                                                        Fill Details
+                                                        <FiPlusCircle /> Initiate Restoration
                                                     </button>
                                                 </div>
-                                            </div>
-                                        )}
-
-
-                                        {(!order.returnStatus || order.returnStatus === 'Not Requested') ? (
-                                            <div className="flex items-center gap-3">
-                                                <button
-                                                    onClick={() => { setSelectedOrder(order); setShowRmaModal(true); }}
-                                                    className="text-[9px] font-bold text-brand-dark uppercase tracking-widest px-6 py-2.5 bg-brand-light border border-brand-dark hover:bg-brand-dark hover:text-white transition-all shadow-sm flex items-center gap-2"
-                                                >
-                                                    <FiPlusCircle /> Initiate Restoration
-                                                </button>
-                                            </div>
-                                        ) : (
-                                            <div className="flex items-center gap-4">
-                                                <div className="flex items-center gap-2">
-                                                    {order.returnImages?.length > 0 && <FiImage className="text-brand-pink" size={14} title="Evidence Attached" />}
-                                                    <span className={`text-[10px] font-bold uppercase tracking-widest px-3 py-1.5 rounded-sm border ${['Returned', 'Replaced'].includes(order.returnStatus) ? 'bg-green-50 text-green-600 border-green-200' : order.returnStatus?.includes('Rejected') ? 'bg-red-50 text-red-500 border-red-200' : 'bg-brand-gold/10 text-brand-gold border-brand-gold/20'}`}>
-                                                        {order.returnStatus}
-                                                    </span>
+                                            ) : (
+                                                <div className="flex items-center gap-4">
+                                                    <div className="flex items-center gap-2">
+                                                        {order.returnImages?.length > 0 && <FiImage className="text-brand-pink" size={14} title="Evidence Attached" />}
+                                                        <span className={`text-[10px] font-bold uppercase tracking-widest px-3 py-1.5 rounded-sm border ${['Returned', 'Replaced'].includes(order.returnStatus) ? 'bg-green-50 text-green-600 border-green-200' : order.returnStatus?.includes('Rejected') ? 'bg-red-50 text-red-500 border-red-200' : 'bg-brand-gold/10 text-brand-gold border-brand-gold/20'}`}>
+                                                            {order.returnStatus}
+                                                        </span>
+                                                    </div>
                                                 </div>
-                                            </div>
-                                        )}
-                                    </div>
-                                )}
-                            </div>
-                        </motion.div>
-                    ))}
+                                            )}
+                                        </div>
+                                    )}
+                                </div>
+                            </motion.div>
+                        ))}
+                    </div>
                 </div>
             </div>
         </div>

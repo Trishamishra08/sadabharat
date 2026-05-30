@@ -1,45 +1,21 @@
 import React, { useState, useEffect } from 'react';
 import { useShop } from '../../context/ShopContext';
 import { Link, useNavigate } from 'react-router-dom';
-import { FiUser, FiPhone, FiMail, FiMapPin, FiShoppingBag, FiHeart, FiLogOut, FiEdit2, FiMessageSquare } from 'react-icons/fi';
+import { 
+  FiShoppingBag, FiShoppingCart, FiHeart, FiStar, FiTag, FiEdit2, FiUser, FiMail, FiPhone, FiClock, FiCalendar, FiMapPin, FiCheck, FiLock, FiSettings, FiLogOut, FiBell 
+} from 'react-icons/fi';
 import api from '../../utils/api';
+import ProfileSidebar from './ProfileSidebar';
 
 const Profile = () => {
-  const { user, isAuthenticated, logout, wishlistCount } = useShop();
+  const { user, isAuthenticated, logout, wishlistCount, cartCount, setIsCartDrawerOpen } = useShop();
   const navigate = useNavigate();
-  const [isEditingProfile, setIsEditingProfile] = useState(false);
-  const [isEditingAddress, setIsEditingAddress] = useState(false);
-  const [isEditingBank, setIsEditingBank] = useState(false);
   const [totalOrders, setTotalOrders] = useState(0);
-  const [editForm, setEditForm] = useState({
-    name: user?.name || '',
-    email: user?.email || '',
-    phone: user?.phone || '',
-    address: user?.address || '',
-    bankDetails: {
-      accountName: user?.bankDetails?.accountName || '',
-      bankName: user?.bankDetails?.bankName || '',
-      accountNumber: user?.bankDetails?.accountNumber || '',
-      ifscCode: user?.bankDetails?.ifscCode || ''
-    }
-  });
+  const [editingAddressId, setEditingAddressId] = useState(null);
 
   useEffect(() => {
     if (!isAuthenticated) navigate('/login');
     if (user) {
-      setEditForm({
-        name: user.name || '',
-        email: user.email || '',
-        phone: user.phone || '',
-        address: user.address || '',
-        bankDetails: {
-          accountName: user.bankDetails?.accountName || '',
-          bankName: user.bankDetails?.bankName || '',
-          accountNumber: user.bankDetails?.accountNumber || '',
-          ifscCode: user.bankDetails?.ifscCode || ''
-        }
-      });
-      // Fetch dynamic order count
       api.get('/orders/my-orders').then(res => {
         if (res.data.status === 'success') {
           setTotalOrders(res.data.data.orders.length);
@@ -50,315 +26,301 @@ const Profile = () => {
 
   if (!user) return null;
 
-  const handleLogout = () => {
-    logout();
-    navigate('/');
-  };
-
-  const handleSave = async (section) => {
-    if (section === 'profile') {
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (!editForm.email || !emailRegex.test(editForm.email)) {
-        alert("Please enter a valid email address.");
-        return;
-      }
-    }
-    
-    try {
-      const res = await api.patch('/users/update-me', editForm);
-      setUser(res.data.data.user);
-      if (section === 'profile') setIsEditingProfile(false);
-      if (section === 'address') setIsEditingAddress(false);
-      if (section === 'bank') setIsEditingBank(false);
-    } catch (err) {
-      alert("Failed to update profile: " + (err.response?.data?.message || err.message));
-    }
-  };
-
   return (
-    <div className="min-h-screen bg-[#FDFCFB] pt-6 md:pt-8 pb-12">
-      <div className="w-full px-4 lg:px-8 max-w-7xl mx-auto">
-        <h1 className="text-2xl md:text-3xl font-serif font-black text-[#054425] uppercase tracking-tighter mb-6 border-b border-gray-100 pb-2">
-          Your <span className="text-[#D4AF37] italic">Sanctuary</span>
-        </h1>
+    <div className="min-h-screen bg-[#F8F9FA] pt-4 md:pt-6 pb-12 font-sans selection:bg-[#054425] selection:text-white">
+      <div className="w-full px-4 lg:px-8 flex flex-col lg:flex-row gap-6">
+        
+        <ProfileSidebar activeTab="profile" />
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          {/* Main User Card */}
-          <div className="md:col-span-1 space-y-4">
-            <div className="bg-white rounded-[1.5rem] p-6 text-center border border-gray-100 shadow-lg relative overflow-hidden group">
-              <div className="absolute top-0 inset-x-0 h-24 bg-[#054425]/5 -z-10 group-hover:bg-[#054425]/10 transition-colors"></div>
+        {/* MAIN CONTENT AREA */}
+        <div className="flex-1 flex flex-col gap-3">
+          
+          {/* Header */}
+          <div className="flex flex-col md:flex-row md:justify-between md:items-end gap-4 mb-2">
+            <div>
+              <h1 className="text-3xl font-serif font-bold text-[#054425] mb-1">My Profile</h1>
+              <p className="text-xs text-gray-500 font-medium">Manage your personal information and account details</p>
+            </div>
+            <button 
+              onClick={() => navigate('/settings')}
+              className="bg-[#054425] text-white px-5 py-2.5 rounded-lg text-xs font-bold flex items-center gap-2 hover:bg-[#04331c] transition-colors shadow-md"
+            >
+              <FiEdit2 className="w-3.5 h-3.5" />
+              Edit Profile
+            </button>
+          </div>
 
-              <div className="w-20 h-20 bg-white rounded-full border-4 border-white shadow-md mx-auto mb-3 flex items-center justify-center relative">
-                <div className="absolute inset-0 bg-[#054425] rounded-full flex items-center justify-center">
-                  <span className="text-2xl font-serif text-[#D4AF37] italic">
-                    {editForm.name ? editForm.name.charAt(0).toUpperCase() : 'U'}
-                  </span>
+          {/* Account Overview */}
+          <div className="bg-white border border-gray-100 rounded-xl p-4 md:p-5 shadow-sm">
+            <h3 className="text-base font-serif font-bold text-gray-900 mb-4">Account Overview</h3>
+            <div className="grid grid-cols-2 lg:grid-cols-5 gap-2 md:gap-3">
+              
+              <Link to="/orders" className="border border-[#054425]/10 rounded-xl p-2.5 md:p-3 flex flex-col justify-between group hover:border-[#054425]/30 transition-colors bg-[#F4F8F5] shadow-[0_2px_10px_-4px_rgba(0,0,0,0.05)] block cursor-pointer">
+                <div className="flex items-center gap-2 md:gap-3 mb-2">
+                  <div className="w-7 h-7 md:w-9 md:h-9 rounded-full bg-white flex items-center justify-center text-[#054425] shrink-0 shadow-sm">
+                    <FiShoppingBag className="w-3.5 h-3.5 md:w-4 md:h-4" />
+                  </div>
+                  <div>
+                    <p className="text-[8px] md:text-[9px] font-bold text-gray-500 uppercase tracking-widest leading-none mb-1">Total Orders</p>
+                    <p className="text-base md:text-lg font-bold text-[#054425] leading-none">{totalOrders}</p>
+                  </div>
                 </div>
-                {!isEditingProfile && (
-                  <button
-                    onClick={() => setIsEditingProfile(true)}
-                    className="absolute bottom-0 right-0 p-1 bg-[#D4AF37] text-white rounded-full shadow-lg hover:scale-110 active:scale-95 transition-transform"
-                  >
-                    <FiEdit2 size={10} />
-                  </button>
-                )}
+                <div className="text-[9px] md:text-[10px] font-bold text-[#054425] flex items-center gap-1 group-hover:underline mt-auto">
+                  View History &rarr;
+                </div>
+              </Link>
+
+              <Link to="/wishlist" className="border border-[#B8860B]/10 rounded-xl p-2.5 md:p-3 flex flex-col justify-between group hover:border-[#B8860B]/30 transition-colors bg-[#FFF5E6] shadow-[0_2px_10px_-4px_rgba(0,0,0,0.05)] block cursor-pointer">
+                <div className="flex items-center gap-2 md:gap-3 mb-2">
+                  <div className="w-7 h-7 md:w-9 md:h-9 rounded-full bg-white flex items-center justify-center text-[#B8860B] shrink-0 shadow-sm">
+                    <FiHeart className="w-3.5 h-3.5 md:w-4 md:h-4" />
+                  </div>
+                  <div>
+                    <p className="text-[8px] md:text-[9px] font-bold text-gray-500 uppercase tracking-widest leading-none mb-1">Wishlist Items</p>
+                    <p className="text-base md:text-lg font-bold text-[#B8860B] leading-none">{wishlistCount}</p>
+                  </div>
+                </div>
+                <div className="text-[9px] md:text-[10px] font-bold text-[#B8860B] flex items-center gap-1 group-hover:underline mt-auto">
+                  View Wishlist &rarr;
+                </div>
+              </Link>
+
+              <Link to="/reviews" className="border border-green-500/10 rounded-xl p-2.5 md:p-3 flex flex-col justify-between group hover:border-green-500/30 transition-colors bg-[#E6F4EA] shadow-[0_2px_10px_-4px_rgba(0,0,0,0.05)] block cursor-pointer">
+                <div className="flex items-center gap-2 md:gap-3 mb-2">
+                  <div className="w-7 h-7 md:w-9 md:h-9 rounded-full bg-white flex items-center justify-center text-green-700 shrink-0 shadow-sm">
+                    <FiStar className="w-3.5 h-3.5 md:w-4 md:h-4" />
+                  </div>
+                  <div>
+                    <p className="text-[8px] md:text-[9px] font-bold text-gray-500 uppercase tracking-widest leading-none mb-1">Reviews</p>
+                    <p className="text-base md:text-lg font-bold text-green-700 leading-none">6</p>
+                  </div>
+                </div>
+                <div className="text-[9px] md:text-[10px] font-bold text-green-700 flex items-center gap-1 group-hover:underline mt-auto">
+                  View Reviews &rarr;
+                </div>
+              </Link>
+
+              <Link to="/coupons" className="border border-pink-500/10 rounded-xl p-2.5 md:p-3 flex flex-col justify-between group hover:border-pink-500/30 transition-colors bg-pink-50 shadow-[0_2px_10px_-4px_rgba(0,0,0,0.05)] block cursor-pointer">
+                <div className="flex items-center gap-2 md:gap-3 mb-2">
+                  <div className="w-7 h-7 md:w-9 md:h-9 rounded-full bg-white flex items-center justify-center text-pink-500 shrink-0 shadow-sm">
+                    <FiTag className="w-3.5 h-3.5 md:w-4 md:h-4" />
+                  </div>
+                  <div>
+                    <p className="text-[8px] md:text-[9px] font-bold text-gray-500 uppercase tracking-widest leading-none mb-1">Coupons</p>
+                    <p className="text-base md:text-lg font-bold text-pink-600 leading-none">3</p>
+                  </div>
+                </div>
+                <div className="text-[9px] md:text-[10px] font-bold text-pink-600 flex items-center gap-1 group-hover:underline mt-auto">
+                  View Coupons &rarr;
+                </div>
+              </Link>
+
+              {/* Cart Items Card */}
+              <div onClick={() => setIsCartDrawerOpen(true)} className="border border-purple-500/10 rounded-xl p-2.5 md:p-3 flex flex-col justify-between group hover:border-purple-500/30 transition-colors bg-purple-50 shadow-[0_2px_10px_-4px_rgba(0,0,0,0.05)] block cursor-pointer">
+                <div className="flex items-center gap-2 md:gap-3 mb-2">
+                  <div className="w-7 h-7 md:w-9 md:h-9 rounded-full bg-white flex items-center justify-center text-purple-600 shrink-0 shadow-sm">
+                    <FiShoppingCart className="w-3.5 h-3.5 md:w-4 md:h-4" />
+                  </div>
+                  <div>
+                    <p className="text-[8px] md:text-[9px] font-bold text-gray-500 uppercase tracking-widest leading-none mb-1">Cart Items</p>
+                    <p className="text-base md:text-lg font-bold text-purple-600 leading-none">{cartCount || 0}</p>
+                  </div>
+                </div>
+                <div className="text-[9px] md:text-[10px] font-bold text-purple-600 flex items-center gap-1 group-hover:underline mt-auto">
+                  View Cart &rarr;
+                </div>
               </div>
 
-              {isEditingProfile ? (
-                <div className="space-y-3 mb-3">
-                  <input
-                    type="text"
-                    value={editForm.name}
-                    onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
-                    className="w-full text-center font-serif font-bold text-[#054425] border-b border-[#054425]/30 focus:border-[#054425] outline-none bg-transparent py-1 text-sm"
-                    placeholder="Full Name"
-                  />
-                  <p className="text-[9px] font-black uppercase tracking-widest text-gray-400">Editing Profile</p>
-                </div>
-              ) : (
-                <>
-                  <h2 className="text-lg font-serif font-bold text-[#054425] mb-0.5">{user?.name}</h2>
-                  <p className="text-[9px] font-black uppercase tracking-widest text-gray-400 mb-4">{user?.role === 'customer' ? 'VIP Member' : 'Admin'}</p>
-                </>
-              )}
-
-              <div className="space-y-3 text-left border-t border-gray-100 pt-4">
-                <div className="flex items-center gap-3">
-                  <div className="w-7 h-7 rounded-full bg-[#F4F8F5] flex items-center justify-center text-[#054425]">
-                    <FiPhone size={12} />
-                  </div>
-                  <div className="flex-1">
-                    <span className="block text-[7px] font-black uppercase tracking-widest text-[#054425]/50">Mobile</span>
-                    {isEditingProfile ? (
-                      <input
-                        type="tel"
-                        maxLength={10}
-                        value={editForm.phone}
-                        onChange={(e) => setEditForm({ ...editForm, phone: e.target.value.replace(/\D/g, '').slice(0, 10) })}
-                        className="text-[11px] font-bold text-gray-800 border-b border-[#054425]/20 focus:border-[#054425] outline-none bg-transparent w-full"
-                      />
-                    ) : (
-                      <span className="text-[11px] font-bold text-gray-800">+91 {user?.phone}</span>
-                    )}
-                  </div>
-                </div>
-                <div className="flex items-center gap-3">
-                  <div className="w-7 h-7 rounded-full bg-[#F4F8F5] flex items-center justify-center text-[#054425]">
-                    <FiMail size={12} />
-                  </div>
-                  <div className="flex-1">
-                    <span className="block text-[7px] font-black uppercase tracking-widest text-[#054425]/50">Email</span>
-                    {isEditingProfile ? (
-                      <input
-                        type="email"
-                        value={editForm.email}
-                        onChange={(e) => setEditForm({ ...editForm, email: e.target.value })}
-                        className="text-[11px] font-bold text-gray-800 border-b border-[#054425]/20 focus:border-[#054425] outline-none bg-transparent w-full"
-                      />
-                    ) : (
-                      <span className="text-[11px] font-bold text-gray-800 truncate block max-w-[140px]">{user?.email || 'Not Provided'}</span>
-                    )}
-                  </div>
-                </div>
-              </div>
-
-              {isEditingProfile ? (
-                <div className="grid grid-cols-2 gap-2 mt-6">
-                  <button
-                    onClick={() => setIsEditingProfile(false)}
-                    className="py-2.5 bg-gray-50 text-gray-400 rounded-lg text-[9px] font-black uppercase tracking-widest hover:bg-gray-100 transition-all"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    onClick={() => handleSave('profile')}
-                    className="py-2.5 bg-[#054425] text-white rounded-lg text-[9px] font-black uppercase tracking-widest hover:bg-opacity-90 shadow-lg shadow-[#054425]/20 transition-all"
-                  >
-                    Save
-                  </button>
-                </div>
-              ) : (
-                <button
-                  onClick={handleLogout}
-                  className="w-full mt-6 py-2.5 bg-red-50 text-red-500 rounded-lg text-[9px] font-black uppercase tracking-widest flex items-center justify-center gap-2 hover:bg-red-500 hover:text-white transition-all shadow-sm"
-                >
-                  <FiLogOut /> Logout
-                </button>
-              )}
+              {/* Order History card removed as requested */}
             </div>
           </div>
 
-          {/* Quick Stats & Details */}
-          <div className="md:col-span-2 space-y-6">
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-              <Link to="/profile?tab=orders" className="bg-white rounded-xl p-5 border border-gray-100 shadow-sm flex items-center gap-4 hover:border-[#054425]/30 hover:shadow-lg transition-all cursor-pointer group">
-                <div className="w-12 h-12 bg-[#054425]/10 rounded-full flex items-center justify-center text-[#054425] group-hover:bg-[#054425] group-hover:text-white transition-colors">
-                  <FiShoppingBag size={20} />
+          {/* Personal Information */}
+          <div className="bg-white border border-gray-100 rounded-xl p-4 md:p-5 shadow-sm">
+            <h3 className="text-base font-serif font-bold text-gray-900 mb-4">Personal Information</h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-y-6 gap-x-6">
+              
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-[#F4F8F5] flex items-center justify-center text-[#054425] shrink-0">
+                  <FiUser className="w-4 h-4" />
                 </div>
                 <div>
-                  <span className="block text-[9px] font-black uppercase tracking-widest text-gray-400">Total Orders</span>
-                  <span className="text-2xl font-serif text-[#054425] font-bold">{totalOrders}</span>
+                  <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Full Name</p>
+                  <p className="text-[13px] font-bold text-gray-900 mt-0.5">{user.name}</p>
                 </div>
-              </Link>
-              <Link to="/wishlist" className="bg-white rounded-xl p-5 border border-gray-100 shadow-sm flex items-center gap-4 hover:border-[#D4AF37]/30 hover:shadow-lg transition-all cursor-pointer group">
-                <div className="w-12 h-12 bg-[#D4AF37]/10 rounded-full flex items-center justify-center text-[#D4AF37] group-hover:bg-[#D4AF37] group-hover:text-white transition-colors">
-                  <FiHeart size={20} />
-                </div>
-                <div>
-                  <span className="block text-[9px] font-black uppercase tracking-widest text-gray-400">Wishlist</span>
-                  <span className="text-2xl font-serif text-[#054425] font-bold">{wishlistCount || 0}</span>
-                </div>
-              </Link>
-              <Link to="/support" className="bg-white rounded-xl p-5 border border-gray-100 shadow-sm flex items-center gap-4 hover:border-gray-300 hover:shadow-lg transition-all cursor-pointer group col-span-2 md:col-span-1">
-                <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center text-gray-600 group-hover:bg-gray-800 group-hover:text-white transition-colors">
-                  <FiMessageSquare size={20} />
-                </div>
-                <div>
-                  <span className="block text-[9px] font-black uppercase tracking-widest text-gray-400">Assistance</span>
-                  <span className="text-[13px] font-black uppercase tracking-[0.05em] text-[#054425]">Raise Ticket</span>
-                </div>
-              </Link>
-            </div>
-
-            {/* Address Section */}
-            <div className="bg-white rounded-2xl p-6 md:p-8 border border-gray-100 shadow-sm">
-              <div className="flex items-center justify-between mb-6">
-                <h3 className="text-xs font-bold uppercase tracking-[0.2em] text-[#054425] flex items-center gap-2">
-                  <FiMapPin /> Saved Addresses
-                </h3>
-                {!isEditingAddress && (
-                  <button
-                    onClick={() => setIsEditingAddress(true)}
-                    className="text-[9px] font-black uppercase tracking-widest text-[#054425] border-b border-[#054425] hover:text-[#D4AF37] hover:border-[#D4AF37] transition-colors"
-                  >
-                    Edit Address
-                  </button>
-                )}
               </div>
 
-              <div className={`border rounded-xl p-5 relative transition-all ${isEditingAddress ? 'border-[#054425] bg-white shadow-inner' : 'border-[#054425]/20 bg-[#F4F8F5]'}`}>
-                {isEditingAddress ? (
-                  <div className="space-y-3">
-                    <div className="absolute top-4 right-4 text-[8px] font-black uppercase tracking-widest text-[#054425]">
-                      Editing
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-[#F4F8F5] flex items-center justify-center text-[#054425] shrink-0">
+                  <FiMail className="w-4 h-4" />
+                </div>
+                <div>
+                  <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Email Address</p>
+                  <p className="text-[13px] font-bold text-gray-900 mt-0.5">{user.email}</p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-[#F4F8F5] flex items-center justify-center text-[#054425] shrink-0">
+                  <FiPhone className="w-4 h-4" />
+                </div>
+                <div>
+                  <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Mobile Number</p>
+                  <p className="text-[13px] font-bold text-gray-900 mt-0.5">{user.phone ? `+91 ${user.phone}` : 'Not Provided'}</p>
+                </div>
+              </div>
+
+            </div>
+          </div>
+
+          {/* Saved Addresses */}
+          <div className="bg-white border border-gray-100 rounded-xl p-4 md:p-5 shadow-sm">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-base font-serif font-bold text-gray-900">Saved Addresses</h3>
+              <button className="text-[11px] font-bold text-[#054425] hover:underline">View All Addresses</button>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              
+              {/* Address 1: Home */}
+              <div className="border border-gray-100 rounded-xl p-4 relative hover:border-[#054425]/30 transition-colors bg-gray-50/50">
+                <button 
+                  onClick={() => setEditingAddressId(editingAddressId === 1 ? null : 1)}
+                  className="absolute top-4 right-4 flex items-center justify-center text-gray-400 hover:text-[#054425] transition-colors"
+                >
+                  <FiEdit2 className="w-4 h-4" />
+                </button>
+                
+                {editingAddressId === 1 ? (
+                  <div className="flex flex-col gap-3 max-w-[90%]">
+                    <div className="flex items-center gap-2">
+                      <span className="bg-[#E6F0E9] text-[#054425] text-[9px] font-bold px-2 py-0.5 rounded uppercase">Default</span>
+                      <input type="text" defaultValue="Home" className="text-xs font-bold text-gray-900 bg-transparent border-b border-gray-200 focus:border-[#054425] outline-none px-1 py-0.5 w-1/2" />
                     </div>
-                    <h4 className="font-bold text-[#054425] text-xs uppercase tracking-widest">Primary Address</h4>
-                    <textarea
-                      value={editForm.address}
-                      onChange={(e) => setEditForm({ ...editForm, address: e.target.value })}
-                      className="w-full bg-white border border-gray-200 rounded-lg p-3 text-[12px] font-medium text-gray-800 focus:border-[#054425] outline-none min-h-[80px]"
-                      placeholder="Enter your full address..."
+                    <textarea 
+                      defaultValue="123, Green Park, New Delhi&#10;Delhi - 110016, India" 
+                      className="text-xs text-gray-600 bg-white border border-gray-200 rounded p-2 focus:outline-none focus:border-[#054425] resize-none h-16 w-full"
                     />
-                    <div className="flex justify-end gap-2 mt-4">
-                      <button
-                        onClick={() => setIsEditingAddress(false)}
-                        className="px-4 py-2 bg-gray-50 text-gray-400 rounded-lg text-[8px] font-black uppercase tracking-widest hover:bg-gray-100 transition-all"
-                      >
-                        Cancel
-                      </button>
-                      <button
-                        onClick={() => handleSave('address')}
-                        className="px-4 py-2 bg-[#054425] text-white rounded-lg text-[8px] font-black uppercase tracking-widest hover:bg-opacity-90 shadow-lg shadow-[#054425]/20 transition-all"
-                      >
-                        Save Address
-                      </button>
+                    <input 
+                      type="text" 
+                      defaultValue="+91 98765 43210" 
+                      className="text-xs text-gray-900 font-medium bg-white border border-gray-200 rounded p-2 focus:outline-none focus:border-[#054425] w-full" 
+                    />
+                    <div>
+                      <button onClick={() => setEditingAddressId(null)} className="text-[10px] font-bold bg-[#054425] text-white px-3 py-1.5 rounded hover:bg-[#04331c] transition-colors">Save</button>
                     </div>
                   </div>
                 ) : (
                   <>
-                    <div className="absolute top-4 right-4 text-[8px] font-black uppercase tracking-widest text-white bg-[#054425] px-2.5 py-1 rounded-full shadow-sm">
-                      Primary
+                    <div className="flex items-center gap-2 mb-2">
+                      <span className="bg-[#E6F0E9] text-[#054425] text-[9px] font-bold px-2 py-0.5 rounded uppercase">Default</span>
+                      <span className="text-xs font-bold text-gray-900">Home</span>
                     </div>
-                    <h4 className="font-bold text-[#054425] mb-2 text-sm">{user?.name}</h4>
-                    <p className="text-xs text-gray-700 font-medium leading-relaxed max-w-[320px]">
-                      {user?.address || 'No address saved.'}
+                    <p className="text-xs text-gray-500 leading-relaxed max-w-[85%]">
+                      123, Green Park, New Delhi<br/>
+                      Delhi - 110016, India<br/>
+                      <span className="text-gray-900 font-medium mt-1 inline-block">+91 98765 43210</span>
                     </p>
-                    <p className="text-[10px] font-bold uppercase tracking-widest text-gray-500 border-t border-[#054425]/10 pt-3 mt-4 block w-full">+91 {user?.phone}</p>
                   </>
                 )}
               </div>
-            </div>
 
-            {/* Refund Account Section */}
-            <div className="bg-white rounded-2xl p-6 md:p-8 border border-gray-100 shadow-sm relative overflow-hidden">
-              <div className="absolute top-0 right-0 w-32 h-32 bg-[#054425]/5 rounded-full -mr-16 -mt-16 -z-10"></div>
-              <div className="flex items-center justify-between mb-6">
-                <h3 className="text-xs font-bold uppercase tracking-[0.2em] text-[#054425] flex items-center gap-2">
-                  <FiShoppingBag /> Refund Account Details
-                </h3>
-                {!isEditingBank ? (
-                  <button onClick={() => setIsEditingBank(true)} className="text-[9px] font-black uppercase tracking-widest text-[#054425] border-b border-[#054425] hover:text-[#D4AF37] hover:border-[#D4AF37] transition-colors">
-                    Edit Details
-                  </button>
-                ) : (
-                  <div className="flex gap-2">
-                    <button onClick={() => setIsEditingBank(false)} className="text-[9px] font-black uppercase tracking-widest text-gray-400">Cancel</button>
-                    <button onClick={() => handleSave('bank')} className="text-[9px] font-black uppercase tracking-widest text-[#054425]">Save</button>
+              {/* Address 2: Office */}
+              <div className="border border-gray-100 rounded-xl p-4 relative hover:border-[#054425]/30 transition-colors bg-white">
+                <button 
+                  onClick={() => setEditingAddressId(editingAddressId === 2 ? null : 2)}
+                  className="absolute top-4 right-4 flex items-center justify-center text-gray-400 hover:text-[#054425] transition-colors"
+                >
+                  <FiEdit2 className="w-4 h-4" />
+                </button>
+
+                {editingAddressId === 2 ? (
+                  <div className="flex flex-col gap-3 max-w-[90%]">
+                    <div className="flex items-center gap-2">
+                      <input type="text" defaultValue="Office" className="text-xs font-bold text-gray-900 bg-transparent border-b border-gray-200 focus:border-[#054425] outline-none px-1 py-0.5 w-1/2" />
+                    </div>
+                    <textarea 
+                      defaultValue="456, Sector 21, Noida&#10;Uttar Pradesh - 201301, India" 
+                      className="text-xs text-gray-600 bg-white border border-gray-200 rounded p-2 focus:outline-none focus:border-[#054425] resize-none h-16 w-full"
+                    />
+                    <input 
+                      type="text" 
+                      defaultValue="+91 98765 43210" 
+                      className="text-xs text-gray-900 font-medium bg-white border border-gray-200 rounded p-2 focus:outline-none focus:border-[#054425] w-full" 
+                    />
+                    <div>
+                      <button onClick={() => setEditingAddressId(null)} className="text-[10px] font-bold bg-[#054425] text-white px-3 py-1.5 rounded hover:bg-[#04331c] transition-colors">Save</button>
+                    </div>
                   </div>
+                ) : (
+                  <>
+                    <div className="flex items-center gap-2 mb-2">
+                      <span className="text-xs font-bold text-gray-900">Office</span>
+                    </div>
+                    <p className="text-xs text-gray-500 leading-relaxed max-w-[85%]">
+                      456, Sector 21, Noida<br/>
+                      Uttar Pradesh - 201301, India<br/>
+                      <span className="text-gray-900 font-medium mt-1 inline-block">+91 98765 43210</span>
+                    </p>
+                  </>
                 )}
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-2">
-                  <label className="text-[8px] font-black uppercase tracking-[0.2em] text-gray-400">Account Holder Name</label>
-                  {isEditingBank ? (
-                    <input
-                      type="text"
-                      value={editForm.bankDetails.accountName}
-                      onChange={(e) => setEditForm({ ...editForm, bankDetails: { ...editForm.bankDetails, accountName: e.target.value } })}
-                      className="w-full bg-gray-50/50 border border-gray-200 rounded-lg px-4 py-2.5 text-[12px] font-bold text-gray-800 outline-none focus:border-[#054425]/50"
-                      placeholder="Name per records"
-                    />
-                  ) : (
-                    <p className="text-[12px] font-black text-gray-800">{user?.bankDetails?.accountName || '---'}</p>
-                  )}
-                </div>
-                <div className="space-y-2">
-                  <label className="text-[8px] font-black uppercase tracking-[0.2em] text-gray-400">Account Number</label>
-                  {isEditingBank ? (
-                    <input
-                      type="text"
-                      value={editForm.bankDetails.accountNumber}
-                      onChange={(e) => setEditForm({ ...editForm, bankDetails: { ...editForm.bankDetails, accountNumber: e.target.value } })}
-                      className="w-full bg-gray-50/50 border border-gray-200 rounded-lg px-4 py-2.5 text-[12px] font-bold text-gray-800 outline-none focus:border-[#054425]/50"
-                      placeholder="000000000000"
-                    />
-                  ) : (
-                    <p className="text-[12px] font-black text-gray-800">{user?.bankDetails?.accountNumber ? `•••• •••• ${user.bankDetails.accountNumber.slice(-4)}` : '---'}</p>
-                  )}
-                </div>
-                <div className="space-y-2">
-                  <label className="text-[8px] font-black uppercase tracking-[0.2em] text-gray-400">Bank Name</label>
-                  {isEditingBank ? (
-                    <input
-                      type="text"
-                      value={editForm.bankDetails.bankName}
-                      onChange={(e) => setEditForm({ ...editForm, bankDetails: { ...editForm.bankDetails, bankName: e.target.value } })}
-                      className="w-full bg-gray-50/50 border border-gray-200 rounded-lg px-4 py-2.5 text-[12px] font-bold text-gray-800 outline-none focus:border-[#054425]/50"
-                      placeholder="Bank Name"
-                    />
-                  ) : (
-                    <p className="text-[12px] font-black text-gray-800">{user?.bankDetails?.bankName || '---'}</p>
-                  )}
-                </div>
-                <div className="space-y-2">
-                  <label className="text-[8px] font-black uppercase tracking-[0.2em] text-gray-400">IFSC Code</label>
-                  {isEditingBank ? (
-                    <input
-                      type="text"
-                      value={editForm.bankDetails.ifscCode}
-                      onChange={(e) => setEditForm({ ...editForm, bankDetails: { ...editForm.bankDetails, ifscCode: e.target.value.toUpperCase() } })}
-                      className="w-full bg-gray-50/50 border border-gray-200 rounded-lg px-4 py-2.5 text-[12px] font-bold text-gray-800 outline-none focus:border-[#054425]/50"
-                      placeholder="IFSC0000000"
-                    />
-                  ) : (
-                    <p className="text-[12px] font-black text-gray-800">{user?.bankDetails?.ifscCode || '---'}</p>
-                  )}
-                </div>
+
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      {/* BOTTOM BANNER (Features) */}
+      <div className="w-full px-4 lg:px-8 mt-6">
+        <div className="bg-white border border-gray-100 rounded-2xl p-6 shadow-sm">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-4 divide-x divide-gray-50">
+            
+            <div className="flex items-center gap-3 px-2">
+              <div className="w-10 h-10 rounded-full border border-gray-100 flex items-center justify-center text-[#054425] shrink-0">
+                <FiShoppingBag className="w-4 h-4" />
+              </div>
+              <div>
+                <p className="text-[11px] font-bold text-gray-900 leading-tight">Free Delivery</p>
+                <p className="text-[9px] text-gray-500 mt-0.5">On orders above ₹499</p>
               </div>
             </div>
+
+            <div className="flex items-center gap-3 px-2 md:px-4">
+              <div className="w-10 h-10 rounded-full border border-gray-100 flex items-center justify-center text-[#054425] shrink-0">
+                <FiClock className="w-4 h-4" />
+              </div>
+              <div>
+                <p className="text-[11px] font-bold text-gray-900 leading-tight">7 Days Return</p>
+                <p className="text-[9px] text-gray-500 mt-0.5">Easy Returns</p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-3 px-2 md:px-4">
+              <div className="w-10 h-10 rounded-full border border-gray-100 flex items-center justify-center text-[#054425] shrink-0">
+                <FiLock className="w-4 h-4" />
+              </div>
+              <div>
+                <p className="text-[11px] font-bold text-gray-900 leading-tight">100% Secure Payments</p>
+                <p className="text-[9px] text-gray-500 mt-0.5">Safe & Trusted</p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-3 px-2 md:px-4">
+              <div className="w-10 h-10 rounded-full border border-gray-100 flex items-center justify-center text-[#054425] shrink-0">
+                <FiStar className="w-4 h-4" />
+              </div>
+              <div>
+                <p className="text-[11px] font-bold text-gray-900 leading-tight">Authentic Products</p>
+                <p className="text-[9px] text-gray-500 mt-0.5">100% Ayurvedic</p>
+              </div>
+            </div>
+
           </div>
         </div>
       </div>
+
     </div>
   );
 };

@@ -74,22 +74,50 @@ const Checkout = () => {
       setIsPincodeLoading(true);
       setPincodeStatus('Detecting location...');
       try {
-        const res = await fetch(`https://api.postalpincode.in/pincode/${pin}`);
-        const data = await res.json();
-        const record = data?.[0];
-        const office = record?.PostOffice?.[0];
+        let city = '';
+        let district = '';
+        let state = '';
+        
+        try {
+          const res = await fetch(`https://api.postalpincode.in/pincode/${pin}`);
+          const data = await res.json();
+          const record = data?.[0];
+          const office = record?.PostOffice?.[0];
+
+          if (record?.Status === 'Success' && office) {
+            city = office?.Block || office?.Name || office?.District || '';
+            district = office?.District || '';
+            state = office?.State || '';
+          }
+        } catch (err) {
+          console.error("PostalPincode API failed, trying fallback...", err);
+        }
+
+        // Fallback to Zippopotamus if PostalPincode failed or returned empty
+        if (!city || !state) {
+          const res2 = await fetch(`https://api.zippopotam.us/IN/${pin}`);
+          if (res2.ok) {
+            const data2 = await res2.json();
+            const place = data2?.places?.[0];
+            if (place) {
+              city = place['place name'] || '';
+              district = place['state'] || ''; // Zippo doesn't always have district, use state or place name
+              state = place['state'] || '';
+            }
+          }
+        }
 
         if (!isActive) return;
 
-        if (record?.Status === 'Success' && office) {
+        if (city || state) {
           setFormData(prev => ({
             ...prev,
-            city: office?.Block || office?.Name || '',
-            district: office?.District || '',
-            state: office?.State || ''
+            city: city || prev.city,
+            district: district || city || prev.district,
+            state: state || prev.state
           }));
           setErrors(prev => ({ ...prev, pincode: '', city: '', district: '', state: '' }));
-          setPincodeStatus(`Detected: ${office?.District || ''}, ${office?.State || ''}`.trim());
+          setPincodeStatus(`Detected: ${city}, ${state}`.trim());
         } else {
           setPincodeStatus('Invalid pincode. Please check and try again.');
         }

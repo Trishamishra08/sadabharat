@@ -60,16 +60,23 @@ const ProductCard = ({ product, offerBannerText }) => {
       onClick={handleCardClick}
       className="bg-white border border-gray-200 rounded-lg flex flex-col h-full group relative cursor-pointer hover:shadow-lg transition-all duration-300 overflow-hidden"
     >
-      {/* Dynamic Offer Banner (Reference: Bluestone design) */}
-      {offerBannerText && (
-        <div className="bg-[#FEFAF6] text-[#054425] text-[10px] font-black uppercase tracking-widest py-1.5 px-3 w-full border-b border-gray-100 flex items-center justify-center shadow-sm">
-          {offerBannerText}
-        </div>
-      )}
+
 
       {/* Product Image Panel */}
       <div className="relative aspect-square overflow-hidden p-2 bg-white flex items-center justify-center">
         
+        {/* Special Offer Starburst Badge */}
+        {offerBannerText && (
+          <div 
+            className="absolute top-2 left-2 z-20 w-[48px] h-[48px] md:w-[54px] md:h-[54px] bg-gradient-to-br from-[#E5C158] to-[#D4AF37] flex items-center justify-center text-[#054425] font-black text-[8px] md:text-[9px] leading-[1.1] text-center uppercase transform -rotate-12 shadow-lg drop-shadow-md"
+            style={{
+              clipPath: 'polygon(50% 0%, 61% 15%, 79% 9%, 83% 27%, 100% 32%, 93% 48%, 100% 68%, 83% 73%, 79% 91%, 61% 85%, 50% 100%, 39% 85%, 21% 91%, 17% 73%, 0% 68%, 7% 48%, 0% 32%, 17% 27%, 21% 9%, 39% 15%)'
+            }}
+          >
+            <span className="pt-0.5">Special<br/>Offer</span>
+          </div>
+        )}
+
         {/* Wishlist Heart Icon (Top-Right) */}
         <motion.button
           type="button"

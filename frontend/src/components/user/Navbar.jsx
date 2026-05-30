@@ -63,6 +63,20 @@ const Navbar = () => {
     }
   }, [isAuthenticated, location]);
 
+  React.useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = 'hidden';
+      document.documentElement.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+      document.documentElement.style.overflow = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+      document.documentElement.style.overflow = '';
+    };
+  }, [isOpen]);
+
   const markAllRead = async () => {
     try {
       await api.patch('/notifications/read-all');
@@ -75,6 +89,7 @@ const Navbar = () => {
     e.preventDefault();
     if (searchQuery.trim()) {
       navigate(`/shop?search=${encodeURIComponent(searchQuery.trim())}`);
+      setIsOpen(false);
     }
   };
 
@@ -108,17 +123,17 @@ const Navbar = () => {
           
           {/* Left Column: Logo Brand Block aligned to the left corner (No Overlap) */}
           <div className="flex items-center justify-start shrink-0">
-            <Link to="/" className="flex items-center gap-2.5 md:gap-3.5 cursor-pointer group">
+            <Link to="/" className="flex items-center gap-1.5 md:gap-3.5 cursor-pointer group">
               <img
                 src={logo}
                 alt="Sada Bharat Logo"
-                className="h-12 md:h-16 w-auto object-contain transition-transform group-hover:scale-105"
+                className="h-8 md:h-16 w-auto object-contain transition-transform group-hover:scale-105"
               />
               
               <div className="flex flex-col leading-none select-none">
                 {/* website name styled as a proper heading */}
                 <h1 
-                  className="text-base md:text-xl font-black uppercase whitespace-nowrap"
+                  className="text-[12px] md:text-xl font-black uppercase whitespace-nowrap"
                   style={{ 
                     fontFamily: "'Cormorant Garamond', serif", 
                     color: '#054425', 
@@ -129,10 +144,10 @@ const Navbar = () => {
                 </h1>
                 
                 {/* tagline "AYURVEDIC" underneath with elegant gold lines */}
-                <div className="flex items-center gap-1 md:gap-1.5 w-full justify-center mt-0.5 md:mt-1">
+                <div className="flex items-center gap-0.5 md:gap-1.5 w-full justify-center mt-0.5 md:mt-1">
                   <span className="h-[1px] bg-[#D4AF37] flex-1"></span>
                   <span 
-                    className="text-[6.5px] md:text-[8px] uppercase tracking-[0.2em] text-[#054425] font-black"
+                    className="text-[5px] md:text-[8px] uppercase tracking-[0.2em] text-[#054425] font-black"
                     style={{ fontFamily: "'Inter', sans-serif" }}
                   >
                     Ayurvedic
@@ -168,8 +183,8 @@ const Navbar = () => {
           </div>
 
           {/* Right Column: Icons Grid on the right side */}
-          <div className="flex items-center gap-4 md:gap-6 lg:gap-8 text-[#054425] shrink-0 font-sans select-none ml-auto md:ml-0 md:pr-4 lg:pr-8">
-            <div className="flex items-center gap-4 md:gap-5">
+          <div className="flex items-center gap-3 md:gap-6 lg:gap-8 text-[#054425] shrink-0 font-sans select-none ml-auto md:ml-0 md:pr-4 lg:pr-8">
+            <div className="flex items-center gap-3 md:gap-5">
               
               {/* Recents */}
               <div className="relative">
@@ -200,7 +215,7 @@ const Navbar = () => {
                             <FiClock className="text-[#D4AF37]" /> Recently Viewed
                           </h3>
                         </div>
-                        <div className="max-h-[350px] overflow-y-auto custom-sidebar-scrollbar bg-gray-50/50 p-2 space-y-2">
+                        <div className="max-h-[350px] overflow-y-auto custom-sidebar-scrollbar bg-gray-50/50 p-2 space-y-2 overscroll-contain" data-lenis-prevent="true">
                           {[
                             { id: '1', name: 'Bhringraj Hair Oil', price: '₹349', time: '10 mins ago', img: '/bhringraj_hair_oil.png' },
                             { id: '2', name: 'Tulsi Green Tea', price: '₹199', time: '2 hours ago', img: '/tulsi_green_tea.png' },
@@ -270,7 +285,7 @@ const Navbar = () => {
                           </h3>
                           <button onClick={markAllRead} className="text-[9px] font-black uppercase text-[#D4AF37] hover:text-white transition-colors relative z-10 bg-white/10 px-2 py-1 rounded-full">Mark all read</button>
                         </div>
-                        <div className="max-h-[350px] overflow-y-auto custom-sidebar-scrollbar bg-gray-50/50 p-2 space-y-2">
+                        <div className="max-h-[350px] overflow-y-auto custom-sidebar-scrollbar bg-gray-50/50 p-2 space-y-2 overscroll-contain" data-lenis-prevent="true">
                           {(notifications.length > 0 ? notifications : [
                             { _id: 'mock1', title: 'Flash Sale Alert!', body: 'Get flat 20% off on all wellness supplements today.', read: false, type: 'promo' },
                             { _id: 'mock2', title: 'Order Dispatched', body: 'Your order #SB-1029 is on its way. Track it now.', read: true, type: 'order' },
@@ -346,8 +361,11 @@ const Navbar = () => {
               <span className="text-[10px] font-medium hidden md:block">Cart</span>
             </motion.div>
  
-            {/* Account */}
-            <Link to={isAuthenticated ? "/profile" : "/login"} className="flex flex-col items-center justify-center gap-1 group hover:scale-105 transition-transform">
+            {/* Account / User Icon - Hidden on mobile because it's in bottom nav */}
+            <Link 
+              to={isAuthenticated ? "/profile" : "/login"} 
+              className="hidden md:flex flex-col items-center justify-center gap-1 group hover:scale-105 transition-transform"
+            >
               <div className="p-1 flex items-center justify-center">
                 {isAuthenticated ? (
                   <div className="w-5 h-5 md:w-6 md:h-6 rounded-full bg-[#054425] text-white flex items-center justify-center text-[10px] font-bold uppercase shadow-sm">
@@ -497,7 +515,7 @@ const Navbar = () => {
             className="fixed inset-0 z-[60] lg:hidden flex"
           >
             <div className="flex-1 bg-black/40 backdrop-blur-sm" onClick={() => setIsOpen(false)} />
-            <div className="w-4/5 bg-white h-full shadow-2xl p-6 relative overflow-y-auto">
+            <div className="w-4/5 bg-white h-full shadow-2xl p-6 relative overflow-y-auto overscroll-contain" data-lenis-prevent="true">
               <button
                 className="absolute top-6 right-6 text-2xl text-[#054425] outline-none"
                 onClick={() => setIsOpen(false)}
@@ -505,11 +523,11 @@ const Navbar = () => {
                 <FiX />
               </button>
 
-              <div className="mt-8 mb-8 flex flex-col items-center">
+              <div className="mt-6 mb-6 flex flex-col items-center">
                 <img
                   src={logo}
                   alt="Sada Bharat Logo"
-                  className="h-28 w-auto object-contain"
+                  className="h-16 w-auto object-contain"
                 />
               </div>
 
@@ -528,16 +546,46 @@ const Navbar = () => {
               </form>
 
               <div className="flex flex-col gap-4">
+                <div className="text-[10px] font-black uppercase text-gray-400 tracking-widest mb-1">Menu</div>
                 {menuItems.map((item) => (
                   <Link
                     key={item.name}
                     to={item.link}
-                    className={`pb-2.5 uppercase tracking-wider text-xs font-semibold border-b transition-colors ${isActive(item.link) ? 'text-[#054425] border-[#054425]/20' : 'text-gray-600 border-gray-100'}`}
+                    className={`block w-full pb-2.5 uppercase tracking-wider text-xs font-semibold border-b transition-colors ${isActive(item.link) ? 'text-[#054425] border-[#054425]/20' : 'text-gray-600 border-gray-100'}`}
                     onClick={() => setIsOpen(false)}
                   >
                     {item.name}
                   </Link>
                 ))}
+
+                {isAuthenticated && (
+                  <div className="mt-4 flex flex-col gap-4">
+                    <div className="text-[10px] font-black uppercase text-gray-400 tracking-widest mb-1 mt-2">My Account</div>
+                    {[
+                      { name: 'My Profile', link: '/profile' },
+                      { name: 'My Orders', link: '/orders' },
+                      { name: 'Wishlist', link: '/wishlist' },
+                      { name: 'My Reviews', link: '/reviews' },
+                      { name: 'Coupons', link: '/coupons' },
+                      { name: 'Settings', link: '/settings' }
+                    ].map((item) => (
+                      <Link
+                        key={item.name}
+                        to={item.link}
+                        className={`block w-full pb-2.5 uppercase tracking-wider text-xs font-semibold border-b transition-colors ${isActive(item.link) ? 'text-[#054425] border-[#054425]/20' : 'text-gray-600 border-gray-100'}`}
+                        onClick={() => setIsOpen(false)}
+                      >
+                        {item.name}
+                      </Link>
+                    ))}
+                    <button 
+                      onClick={() => { setIsOpen(false); /* Logout logic could go here */ }}
+                      className="block w-full text-left pb-2.5 uppercase tracking-wider text-xs font-bold text-red-500 mt-2"
+                    >
+                      Logout
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
           </motion.div>

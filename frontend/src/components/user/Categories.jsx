@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { useShop } from '../../context/ShopContext';
 import ProductCard from './ProductCard';
-import { FiArrowRight } from 'react-icons/fi';
+import { FiArrowRight, FiChevronDown } from 'react-icons/fi';
 import { Leaf } from 'lucide-react';
 import iconHairCare from '../../assets/images/icons/icon_hair_care_1779911677580.png';
 import iconSkinCare from '../../assets/images/icons/icon_skin_care_1779911695841.png';
@@ -17,6 +17,7 @@ import iconBabyCare from '../../assets/images/icons/icon_baby_care_1779911800390
 const Categories = () => {
   const { categories, products, loading } = useShop();
   const [selectedCategory, setSelectedCategory] = React.useState(null);
+  const [isCategoriesVisible, setIsCategoriesVisible] = React.useState(false);
   
   // Custom Generated Icons for Sada Bharat Ayurvedic categories
   const getCategoryIcon = (name) => {
@@ -59,10 +60,13 @@ const Categories = () => {
         
         {/* Header Block matching mockup */}
         <div className="flex items-center justify-between mb-2 md:mb-4">
-          <div className="flex items-center gap-2">
-            <h2 className="text-lg md:text-2xl font-serif font-black text-[#054425] tracking-tight">
+          <div className="flex items-center gap-2 cursor-pointer group" onClick={() => setIsCategoriesVisible(!isCategoriesVisible)}>
+            <h2 className="text-lg md:text-2xl font-serif font-black text-[#054425] tracking-tight leading-none">
               Shop by Category
             </h2>
+            <span className="text-[#054425] bg-[#054425]/10 w-6 h-6 md:w-7 md:h-7 rounded-full group-hover:bg-[#054425]/20 transition-colors flex items-center justify-center shrink-0 mt-1 md:mt-1.5">
+              <FiChevronDown className={`w-4 h-4 md:w-5 md:h-5 transition-transform duration-300 ${isCategoriesVisible ? 'rotate-180' : ''}`} />
+            </span>
           </div>
 
           <Link
@@ -77,45 +81,55 @@ const Categories = () => {
         </div>
 
         {/* Category Circular Icons Slider */}
-        <div 
-          className="flex justify-start w-full gap-6 md:gap-10 lg:gap-16 overflow-x-auto snap-x snap-mandatory pb-4 pt-2"
-          style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
-        >
-          {displayCategories.map((cat, index) => {
-            const isSelected = selectedCategory === cat.name;
-            return (
-              <div
-                key={cat._id || index}
-                onClick={() => setSelectedCategory(isSelected ? null : cat.name)}
-                className="flex flex-col items-center group cursor-pointer snap-start shrink-0"
+        <AnimatePresence>
+          {isCategoriesVisible && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: 'auto', opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              className="overflow-hidden"
+            >
+              <div 
+                className="flex justify-start w-full gap-6 md:gap-10 lg:gap-16 overflow-x-auto snap-x snap-mandatory pb-4 pt-2"
+                style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
               >
-                <motion.div
-                  initial={{ opacity: 0, rotateY: 90 }}
-                  whileInView={{ opacity: 1, rotateY: 0 }}
-                  viewport={{ once: false, amount: 0.3 }}
-                  transition={{ delay: index * 0.05, duration: 0.6, type: 'spring' }}
-                  className="flex flex-col items-center"
-                >
-                  <div 
-                    className={`rounded-full flex items-center justify-center mb-2 transition-all duration-300 shadow-sm ${
-                      isSelected ? 'scale-105 ring-2 ring-[#054425] ring-offset-2' : 'group-hover:scale-105 group-hover:shadow-md'
-                    }`}
-                  >
-                    {getCategoryIcon(cat.name)}
-                  </div>
-                  <h3 
-                    className={`text-sm md:text-base font-bold transition-colors text-center tracking-tight max-w-[100px] ${
-                      isSelected ? 'text-[#054425]' : 'text-[#054425] group-hover:text-[#0d5c34]'
-                    }`}
-                    style={{ fontFamily: "'Cormorant Garamond', serif" }}
-                  >
-                    {cat.name}
-                  </h3>
-                </motion.div>
+                {displayCategories.map((cat, index) => {
+                  const isSelected = selectedCategory === cat.name;
+                  return (
+                    <div
+                      key={cat._id || index}
+                      onClick={() => setSelectedCategory(isSelected ? null : cat.name)}
+                      className="flex flex-col items-center group cursor-pointer snap-start shrink-0"
+                    >
+                      <motion.div
+                        initial={{ opacity: 0, rotateY: 90 }}
+                        animate={{ opacity: 1, rotateY: 0 }}
+                        transition={{ delay: index * 0.05, duration: 0.6, type: 'spring' }}
+                        className="flex flex-col items-center"
+                      >
+                        <div 
+                          className={`rounded-full flex items-center justify-center mb-2 transition-all duration-300 shadow-sm ${
+                            isSelected ? 'scale-105 ring-2 ring-[#054425] ring-offset-2' : 'group-hover:scale-105 group-hover:shadow-md'
+                          }`}
+                        >
+                          {getCategoryIcon(cat.name)}
+                        </div>
+                        <h3 
+                          className={`text-sm md:text-base font-bold transition-colors text-center tracking-tight max-w-[100px] ${
+                            isSelected ? 'text-[#054425]' : 'text-[#054425] group-hover:text-[#0d5c34]'
+                          }`}
+                          style={{ fontFamily: "'Cormorant Garamond', serif" }}
+                        >
+                          {cat.name}
+                        </h3>
+                      </motion.div>
+                    </div>
+                  );
+                })}
               </div>
-            );
-          })}
-        </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* Dynamic Tiered Products Section */}
         <AnimatePresence>

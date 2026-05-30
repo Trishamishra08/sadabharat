@@ -94,12 +94,7 @@ const TrackOrder = () => {
                         </div>
                     </div>
 
-                    {/* Inline Button */}
-                    <div className="mt-5 pt-4 border-t border-[#054425]/10">
-                        <button className="w-full sm:w-auto px-5 py-2 bg-[#054425] text-white rounded shadow-sm hover:bg-[#1E4D2B] transition-all text-[11px] md:text-xs font-medium font-['Poppins'] flex items-center justify-center gap-2">
-                            <FiNavigation size={12} /> Track on Map
-                        </button>
-                    </div>
+
                 </div>
             </div>
 
