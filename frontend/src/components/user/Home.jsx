@@ -5,6 +5,7 @@ import TrendingOffers from './TrendingOffers';
 import FeaturedProducts from './FeaturedProducts';
 import BestSellers from './BestSellers';
 import FeaturesBar from './FeaturesBar';
+import Testimonials from './Testimonials';
 
 const Home = () => {
   return (
@@ -23,11 +24,12 @@ const Home = () => {
       
       {/* Recommended For You Swiper Slider */}
       <FeaturedProducts />
+
+      {/* Customer Testimonials - just before footer */}
+      <Testimonials />
       
       {/* Bottom Features Banner Bar (100% Natural, etc.) */}
       <FeaturesBar />
-
-
     </div>
   );
 };

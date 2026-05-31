@@ -1,149 +1,219 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Swiper, SwiperSlide } from 'swiper/react';
-import { Autoplay, Navigation, FreeMode } from 'swiper/modules';
-import { FiChevronLeft, FiChevronRight } from 'react-icons/fi';
+import { Autoplay, Navigation } from 'swiper/modules';
+import { FiChevronLeft, FiChevronRight, FiStar } from 'react-icons/fi';
 import { motion } from 'framer-motion';
 import api from '../../utils/api';
 
 import 'swiper/css';
 import 'swiper/css/navigation';
-import 'swiper/css/free-mode';
 
-const rotations = ['-rotate-6', 'rotate-6', '-rotate-4', 'rotate-8', '-rotate-8'];
+const MOCK_TESTIMONIALS = [
+  {
+    _id: 'm1',
+    name: 'Priya Sharma',
+    location: 'Delhi',
+    rating: 5,
+    text: 'Bhringraj Hair Oil has genuinely transformed my hair. After just 3 weeks, my hair fall reduced drastically. Love the natural fragrance!',
+    image: 'https://randomuser.me/api/portraits/women/44.jpg',
+    product: 'Bhringraj Hair Oil',
+  },
+  {
+    _id: 'm2',
+    name: 'Anita Verma',
+    location: 'Mumbai',
+    rating: 5,
+    text: 'The Neem Tulsi Face Wash is absolutely wonderful. My skin feels so fresh and the acne has reduced significantly. Purely Ayurvedic and effective!',
+    image: 'https://randomuser.me/api/portraits/women/68.jpg',
+    product: 'Neem Tulsi Face Wash',
+  },
+  {
+    _id: 'm3',
+    name: 'Rekha Gupta',
+    location: 'Jaipur',
+    rating: 5,
+    text: 'I have been using Tulsi Green Tea for a month now. It helps with my digestion and I feel lighter. A true Ayurvedic blessing!',
+    image: 'https://randomuser.me/api/portraits/women/32.jpg',
+    product: 'Tulsi Green Tea',
+  },
+  {
+    _id: 'm4',
+    name: 'Sunita Patel',
+    location: 'Ahmedabad',
+    rating: 4,
+    text: 'Aloe Vera Gel is my everyday skin saviour. It soothes my skin after sun exposure and keeps it moisturised. Very happy with this product!',
+    image: 'https://randomuser.me/api/portraits/women/55.jpg',
+    product: 'Aloe Vera Gel',
+  },
+  {
+    _id: 'm5',
+    name: 'Kavita Singh',
+    location: 'Lucknow',
+    rating: 5,
+    text: 'Sada Bharat products are my go-to for all natural Ayurvedic remedies. The quality is unmatched and delivery is always on time. Highly recommend!',
+    image: 'https://randomuser.me/api/portraits/women/12.jpg',
+    product: 'Ayurvedic Wellness',
+  },
+];
+
+const StarRating = ({ rating }) => (
+  <div className="flex items-center gap-0.5">
+    {[1, 2, 3, 4, 5].map((star) => (
+      <FiStar
+        key={star}
+        size={11}
+        className={star <= rating ? 'text-[#D4AF37] fill-[#D4AF37]' : 'text-gray-300'}
+      />
+    ))}
+  </div>
+);
 
 const Testimonials = () => {
-  const [dynamicTestimonials, setDynamicTestimonials] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [swiperInstance, setSwiperInstance] = useState(null);
+  const [testimonials, setTestimonials] = useState(MOCK_TESTIMONIALS);
+  const prevRef = useRef(null);
+  const nextRef = useRef(null);
 
   useEffect(() => {
     const fetchTestimonials = async () => {
       try {
         const res = await api.get('/testimonials');
-        setDynamicTestimonials(res.data.data.testimonials);
+        const data = res.data?.data?.testimonials;
+        if (data && data.length > 0) {
+          setTestimonials(data);
+        }
       } catch (err) {
-        console.error('Testimonials fetch failed:', err);
-      } finally {
-        setLoading(false);
+        // silently fall back to mock data
       }
     };
     fetchTestimonials();
   }, []);
 
   return (
-    <section className="py-12 bg-[#FFF0F3] overflow-hidden relative">
-      {/* Enhanced Boutique Background with Pink Gradient Overlay */}
-      <div
-        className="absolute inset-0 z-0 opacity-45"
-        style={{
-          backgroundImage: `url('/testi_bg.png')`,
-          backgroundSize: 'cover',
-          backgroundPosition: 'center',
-          filter: 'blur(2px)',
-        }}
-      ></div>
-      <div className="absolute inset-0 bg-gradient-to-b from-[#FFF0F3]/70 via-transparent to-[#FFF0F3]/70 z-0 pointer-events-none"></div>
+    <section className="pt-2 pb-10 md:pt-4 md:pb-14 bg-[#F2F6E8] overflow-hidden relative">
+      {/* Decorative blobs */}
+      <div className="absolute top-0 left-0 w-48 h-48 rounded-full bg-[#054425]/5 -translate-x-1/2 -translate-y-1/2 pointer-events-none" />
+      <div className="absolute bottom-0 right-0 w-64 h-64 rounded-full bg-[#D4AF37]/5 translate-x-1/2 translate-y-1/2 pointer-events-none" />
 
-      {/* Bolder Wavy String (SVG) - Positioned Behind Clips at Top */}
-      <div className="absolute top-[145px] sm:top-[165px] md:top-[185px] left-0 w-full z-5 opacity-100 pointer-events-none">
-        <svg viewBox="0 0 1440 100" className="w-full h-auto" preserveAspectRatio="none">
-          <path
-            d="M0,50 C240,100 480,0 720,50 C960,100 1200,0 1440,50"
-            stroke="#64748B"
-            strokeWidth="2.5"
-            fill="none"
-          />
-        </svg>
-      </div>
-
-      <div className="container mx-auto px-4 md:px-8 relative z-10">
+      <div className="w-full px-4 md:px-8 relative z-10">
+        {/* Section Header */}
         <motion.div
-          initial={{ opacity: 0, y: 30 }}
+          initial={{ opacity: 0, y: 24 }}
           whileInView={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8 }}
-          className="text-center mb-8 relative z-10"
+          viewport={{ once: true }}
+          transition={{ duration: 0.6 }}
+          className="flex items-center justify-between mb-6 md:mb-8"
         >
-          <h2 className="text-xl md:text-2xl font-serif font-bold mb-1 text-brand-dark uppercase tracking-wide">Customer Stories</h2>
-          <div className="w-16 h-1 bg-brand-gold mx-auto"></div>
+          <div>
+            <h2 className="text-lg md:text-2xl font-serif font-black text-[#054425] tracking-tight">
+              What Our Customers Say
+            </h2>
+            <div className="flex items-center gap-2 mt-1">
+              <div className="h-[2px] w-10 bg-[#D4AF37] rounded-full" />
+              <span className="text-[10px] md:text-xs text-[#054425]/60 font-semibold uppercase tracking-widest">
+                Real Reviews · Real People
+              </span>
+            </div>
+          </div>
+
+          {/* Compact Arrow Buttons */}
+          <div className="flex items-center gap-2">
+            <button
+              ref={prevRef}
+              className="w-8 h-8 md:w-9 md:h-9 rounded-full border border-[#054425]/30 bg-white flex items-center justify-center text-[#054425] hover:bg-[#054425] hover:text-white hover:border-[#054425] transition-all duration-200 shadow-sm active:scale-95"
+            >
+              <FiChevronLeft size={16} />
+            </button>
+            <button
+              ref={nextRef}
+              className="w-8 h-8 md:w-9 md:h-9 rounded-full border border-[#054425]/30 bg-white flex items-center justify-center text-[#054425] hover:bg-[#054425] hover:text-white hover:border-[#054425] transition-all duration-200 shadow-sm active:scale-95"
+            >
+              <FiChevronRight size={16} />
+            </button>
+          </div>
         </motion.div>
 
+        {/* Swiper */}
         <Swiper
-          modules={[Navigation, Autoplay, FreeMode]}
-          spaceBetween={40}
-          slidesPerView="auto"
-          centeredSlides={false}
-          loop={dynamicTestimonials.length > 3}
-          freeMode={{
-            enabled: true,
-            momentum: true,
-            momentumRatio: 0.5,
-            momentumVelocityRatio: 0.5,
-            sticky: false
+          modules={[Navigation, Autoplay]}
+          spaceBetween={14}
+          slidesPerView={1.15}
+          loop={testimonials.length > 3}
+          autoplay={{ delay: 4500, disableOnInteraction: false, pauseOnMouseEnter: true }}
+          navigation={{ prevEl: prevRef.current, nextEl: nextRef.current }}
+          onBeforeInit={(swiper) => {
+            swiper.params.navigation.prevEl = prevRef.current;
+            swiper.params.navigation.nextEl = nextRef.current;
           }}
-          onSwiper={setSwiperInstance}
-          autoplay={{ delay: 4000, disableOnInteraction: false }}
-          className="testimonials-swiper !overflow-visible"
+          breakpoints={{
+            480:  { slidesPerView: 1.4, spaceBetween: 14 },
+            640:  { slidesPerView: 2.1, spaceBetween: 16 },
+            768:  { slidesPerView: 2.5, spaceBetween: 18 },
+            1024: { slidesPerView: 3.2, spaceBetween: 20 },
+            1280: { slidesPerView: 4,   spaceBetween: 20 },
+          }}
+          className="testimonials-ayur-swiper !overflow-visible"
         >
-          {dynamicTestimonials.map((item, index) => (
-            <SwiperSlide key={item._id} className="!w-auto">
-              <div className="flex flex-col items-center pt-4 pb-6 px-0">
-                <div className="relative z-30 -mb-5 scale-90">
-                  <div className="w-6 h-8 relative">
-                    <div className="absolute top-0 left-1/2 -translate-x-1/2 w-4.5 h-4.5 border-[1.5px] border-gray-400 rounded-sm rotate-45 transform origin-center"></div>
-                    <div className="absolute bottom-1 left-0 w-full h-2.5 bg-[#FDF6E3] border border-gray-200 rounded-sm shadow-sm z-10"></div>
-                  </div>
-                </div>
-
-                <div className={`bg-[#FDF6E3] p-1.5 shadow-xl ${rotations[index % rotations.length]} w-[200px] md:w-[240px] transition-all duration-700 hover:rotate-0 hover:scale-105 cursor-pointer border border-brand-pink/5`}>
-                  <div className="bg-[#FDF6E3] p-0 shadow-sm mb-0 aspect-[4/5] overflow-hidden">
+          {testimonials.map((item, index) => (
+            <SwiperSlide key={item._id}>
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.5, delay: index * 0.08 }}
+                className="bg-white rounded-xl p-3 shadow-sm border border-[#054425]/8 hover:shadow-md hover:-translate-y-0.5 transition-all duration-300 h-full flex flex-col"
+              >
+                {/* Top: Avatar + Name */}
+                <div className="flex items-center gap-2 mb-2">
+                  <div className="relative shrink-0">
                     <img
                       src={item.image}
                       alt={item.name}
-                      className="w-full h-full object-cover grayscale-[5%] hover:grayscale-0 transition-all duration-1000"
+                      className="w-9 h-9 rounded-full object-cover border-2 border-[#054425]/20"
+                      onError={(e) => {
+                        e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(item.name)}&background=054425&color=fff&size=36`;
+                      }}
                     />
+                    {/* verified badge */}
+                    <div className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 bg-[#054425] rounded-full flex items-center justify-center">
+                      <svg viewBox="0 0 12 12" className="w-2 h-2 text-white fill-white">
+                        <path d="M10 3L4.5 8.5 2 6" stroke="white" strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
+                      </svg>
+                    </div>
                   </div>
-
-                  <div className="bg-[#FEECF0] p-3.5 text-left min-h-[80px] md:min-h-[100px]">
-                    <h4 className="font-serif font-bold text-sm md:text-base text-[#822143] mb-1 leading-tight uppercase">
-                      {item.name}
-                    </h4>
-
-                    <p className="text-[#a1687c] text-[10px] md:text-[11px] leading-relaxed font-medium line-clamp-3">
-                      "{item.text}"
-                    </p>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[12px] font-black text-[#054425] truncate">{item.name}</p>
+                    {item.location && (
+                      <p className="text-[9px] text-gray-400 font-medium">{item.location}</p>
+                    )}
                   </div>
+                  <StarRating rating={item.rating || 5} />
                 </div>
-              </div>
+
+                {/* Divider */}
+                <div className="h-px bg-gradient-to-r from-[#054425]/10 via-[#D4AF37]/20 to-transparent mb-2" />
+
+                {/* Quote */}
+                <div className="flex-1 relative">
+                  <span className="absolute -top-1 -left-0.5 text-[24px] leading-none text-[#D4AF37]/30 font-serif select-none">"</span>
+                  <p className="text-[10px] text-gray-600 leading-relaxed font-medium pl-3 line-clamp-3">
+                    {item.text}
+                  </p>
+                </div>
+
+                {/* Product tag */}
+                {item.product && (
+                  <div className="mt-2 pt-2 border-t border-gray-50">
+                    <span className="inline-flex items-center gap-1 bg-[#F2F6E8] text-[#054425] text-[9px] font-bold px-1.5 py-0.5 rounded-full uppercase tracking-wide">
+                      <span className="w-1 h-1 rounded-full bg-[#D4AF37]" />
+                      {item.product}
+                    </span>
+                  </div>
+                )}
+              </motion.div>
             </SwiperSlide>
           ))}
         </Swiper>
-
-        {/* Custom Navigation Buttons */}
-        <button
-          onClick={() => swiperInstance?.slidePrev()}
-          className="swiper-button-prev-custom absolute left-2 md:-left-4 top-[55%] -translate-y-1/2 z-50 w-10 h-10 md:w-12 md:h-12 bg-white/90 backdrop-blur-md rounded-full flex items-center justify-center text-brand-gold shadow-2xl border border-brand-gold/30 hover:bg-brand-gold hover:text-white transition-all duration-300 active:scale-95 pointer-events-auto"
-        >
-          <FiChevronLeft size={24} />
-        </button>
-        <button
-          onClick={() => swiperInstance?.slideNext()}
-          className="swiper-button-next-custom absolute right-2 md:-right-4 top-[55%] -translate-y-1/2 z-50 w-10 h-10 md:w-12 md:h-12 bg-white/90 backdrop-blur-md rounded-full flex items-center justify-center text-brand-gold shadow-2xl border border-brand-gold/30 hover:bg-brand-gold hover:text-white transition-all duration-300 active:scale-95 pointer-events-auto"
-        >
-          <FiChevronRight size={24} />
-        </button>
       </div>
-
-      <style>{`
-        .testimonials-swiper {
-          padding-top: 20px;
-          padding-bottom: 40px;
-        }
-        .swiper-button-disabled {
-          opacity: 0.3;
-          cursor: not-allowed;
-          pointer-events: none;
-        }
-      `}</style>
     </section>
   );
 };

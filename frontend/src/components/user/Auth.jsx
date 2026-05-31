@@ -139,22 +139,23 @@ const Auth = () => {
         >
 
         {/* Decorative Leaves (Matching Image) */}
-        <img src="https://cdn-icons-png.flaticon.com/512/3257/3257635.png" alt="leaf" className="absolute top-0 right-0 w-32 h-32 opacity-80 object-contain translate-x-8 -translate-y-8 rotate-45 z-[1000] pointer-events-none" style={{ filter: 'brightness(0.8) sepia(1) hue-rotate(80deg) saturate(3)' }} />
-        <img src="https://cdn-icons-png.flaticon.com/512/3257/3257635.png" alt="leaf" className="absolute bottom-0 right-0 w-32 h-32 opacity-80 object-contain translate-x-4 translate-y-8 -rotate-90 z-[1000] pointer-events-none" style={{ filter: 'brightness(0.8) sepia(1) hue-rotate(80deg) saturate(3)' }} />
+        <img src="https://cdn-icons-png.flaticon.com/512/3257/3257635.png" alt="leaf" className="absolute top-0 right-0 w-32 h-32 opacity-80 object-contain translate-x-8 -translate-y-8 rotate-45 z-10 pointer-events-none hidden md:block" style={{ filter: 'brightness(0.8) sepia(1) hue-rotate(80deg) saturate(3)' }} />
+        <img src="https://cdn-icons-png.flaticon.com/512/3257/3257635.png" alt="leaf" className="absolute bottom-0 right-0 w-24 h-24 md:w-32 md:h-32 opacity-80 object-contain translate-x-2 translate-y-2 md:translate-x-4 md:translate-y-8 -rotate-90 z-[1000] pointer-events-none" style={{ filter: 'brightness(0.8) sepia(1) hue-rotate(80deg) saturate(3)' }} />
         
         {/* Back to Website Button */}
         <Link 
           to="/" 
-          className="absolute top-6 right-6 md:top-8 md:right-12 z-[1000] flex items-center gap-2 px-4 py-2 bg-white/70 backdrop-blur-md border border-gray-200 text-[#054425] text-sm font-semibold rounded-full shadow-sm hover:bg-white transition-all group"
+          className="absolute top-4 right-4 md:top-8 md:right-12 z-[1000] flex items-center gap-1.5 md:gap-2 px-3 py-1.5 md:px-4 md:py-2 bg-white/70 backdrop-blur-md border border-gray-200 text-[#054425] text-[11px] md:text-sm font-semibold rounded-full shadow-sm hover:bg-white transition-all group"
         >
-          <svg className="w-4 h-4 transition-transform group-hover:-translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <svg className="w-3 h-3 md:w-4 md:h-4 transition-transform group-hover:-translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
           </svg>
-          Back to Website
+          <span className="hidden sm:inline">Back to Website</span>
+          <span className="sm:hidden">Back</span>
         </Link>
 
         {/* LEFT PANEL (Image & Wave) */}
-        <div className="relative w-full md:w-[50%] lg:w-[55%] h-[40vh] md:h-full shrink-0">
+        <div className="relative w-full md:w-[50%] lg:w-[55%] h-[32vh] sm:h-[40vh] md:h-full shrink-0">
           <img 
             src="/auth-bg.png" 
             alt="Ayurvedic Background" 
@@ -192,26 +193,26 @@ const Auth = () => {
           </div>
 
           {/* Logo & Welcome Text */}
-          <div className="absolute inset-0 p-8 md:p-12 flex flex-col z-20 text-[#054425]">
-            <div className="flex items-center gap-4">
-              <img src="/logo.png" alt="Sada Bharat" className="h-14 md:h-20 w-auto drop-shadow-sm" />
+          <div className="absolute inset-0 p-4 pt-4 md:p-12 flex flex-col z-20 text-[#054425]">
+            <div className="flex items-center gap-3 md:gap-4">
+              <img src="/logo.png" alt="Sada Bharat" className="h-10 md:h-20 w-auto drop-shadow-sm" />
               <div className="flex flex-col">
-                <h1 className="text-lg md:text-2xl font-bold tracking-wider leading-none">SADA BHARAT</h1>
-                <p className="text-xs md:text-sm font-medium tracking-widest text-[#054425] mt-1">AYURVEDIC</p>
+                <h1 className="text-base md:text-2xl font-bold tracking-wider leading-none">SADA BHARAT</h1>
+                <p className="text-[10px] md:text-sm font-medium tracking-widest text-[#054425] mt-1">AYURVEDIC</p>
               </div>
             </div>
 
-            <div className="mt-12 md:mt-32">
-              <h2 className="text-3xl md:text-5xl font-serif font-bold text-[#054425] mb-4">Welcome Back!</h2>
-              <p className="text-sm md:text-lg text-[#054425]/90 font-medium max-w-sm">Login to continue your wellness journey</p>
+            <div className="mt-4 md:mt-32">
+              <h2 className="text-2xl md:text-5xl font-serif font-bold text-[#054425] mb-2 md:mb-4">Welcome Back!</h2>
+              <p className="text-xs md:text-lg text-[#054425]/90 font-medium max-w-[200px] md:max-w-sm leading-tight md:leading-normal">Login to continue your wellness journey</p>
             </div>
           </div>
         </div>
 
         {/* RIGHT PANEL (Login Form) */}
-        <div className="flex-1 flex flex-col justify-start items-center px-6 pt-10 pb-8 md:px-12 md:pt-16 relative z-20 bg-[#F4F1E1]">
+        <div className="flex-1 flex flex-col justify-start items-center px-6 pt-2 pb-6 md:pb-12 md:px-12 md:pt-16 relative z-20 bg-[#F4F1E1] overflow-y-auto overscroll-contain" data-lenis-prevent="true">
           
-          <div className="w-full max-w-md md:-translate-x-8 lg:-translate-x-16">
+          <div className="w-full max-w-md md:-translate-x-8 lg:-translate-x-16 relative z-10">
             <div className="text-center mb-6">
               <h2 className="text-3xl md:text-5xl font-serif font-bold text-[#054425]" style={{ fontFamily: "'Cormorant Garamond', serif" }}>Sign In</h2>
               <div className="flex items-center justify-center gap-3 mt-4">
@@ -226,7 +227,7 @@ const Auth = () => {
               </div>
             </div>
 
-            <form onSubmit={handleSubmit} className="space-y-3">
+            <form onSubmit={handleSubmit} className="space-y-2 md:space-y-3">
               
               {/* Mobile Number */}
               <div>
@@ -239,19 +240,19 @@ const Auth = () => {
                     onChange={handleInputChange}
                     placeholder="Contact Number *"
                     maxLength={10}
-                    className={`w-full bg-white border ${errors.mobile ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : 'border-gray-200 focus:border-[#054425] focus:ring-[#054425]'} pl-11 pr-24 py-2.5 rounded-xl text-sm font-medium outline-none transition-all text-gray-800 placeholder:text-gray-400`}
+                    className={`w-full bg-white border ${errors.mobile ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : 'border-gray-200 focus:border-[#054425] focus:ring-[#054425]'} pl-11 pr-24 py-2 md:py-2.5 rounded-xl text-sm font-medium outline-none transition-all text-gray-800 placeholder:text-gray-400`}
                   />
                   <button 
                     type="button" 
                     onClick={handleSendOtp}
-                    disabled={otpSent && timer > 0}
+                    disabled={otpSent}
                     className={`absolute right-2 top-1/2 -translate-y-1/2 text-[10px] md:text-xs font-bold px-3 py-1.5 md:py-2 rounded-lg transition-all ${
-                      otpSent && timer > 0 
+                      otpSent 
                         ? 'bg-gray-200 text-gray-500 cursor-not-allowed' 
                         : 'bg-[#0F3520] text-white hover:bg-[#0d2a1a]'
                     }`}
                   >
-                    {otpSent && timer > 0 ? `Sent (${timer}s)` : (otpSent ? 'Resend OTP' : 'Send OTP')}
+                    {otpSent ? 'Sent' : 'Send OTP'}
                   </button>
                 </div>
                 {errors.mobile && <p className="text-red-500 text-xs mt-1 ml-1">{errors.mobile}</p>}
@@ -271,10 +272,32 @@ const Auth = () => {
                     placeholder="Enter OTP *"
                     disabled={!otpSent}
                     maxLength={6}
-                    className={`w-full bg-white border ${errors.otp ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : 'border-gray-200 focus:border-[#054425] focus:ring-[#054425]'} pl-11 pr-16 py-2.5 rounded-xl text-sm font-medium outline-none transition-all text-gray-800 placeholder:text-gray-400 disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed`}
+                    className={`w-full bg-white border ${errors.otp ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : 'border-gray-200 focus:border-[#054425] focus:ring-[#054425]'} pl-11 pr-16 py-2 md:py-2.5 rounded-xl text-sm font-medium outline-none transition-all text-gray-800 placeholder:text-gray-400 disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed`}
                   />
                 </div>
                 {errors.otp && <p className="text-red-500 text-xs mt-1 ml-1">{errors.otp}</p>}
+                
+                {/* Resend OTP Link */}
+                <AnimatePresence>
+                  {otpSent && (
+                    <motion.div 
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: 'auto' }}
+                      className="flex justify-end mt-1.5 mr-1"
+                    >
+                      <button
+                        type="button"
+                        onClick={handleSendOtp}
+                        disabled={timer > 0}
+                        className={`text-[10px] md:text-xs font-bold transition-all ${
+                          timer > 0 ? 'text-gray-400 cursor-not-allowed' : 'text-[#054425] hover:underline'
+                        }`}
+                      >
+                        {timer > 0 ? `Resend OTP in 00:${timer < 10 ? '0' : ''}${timer}` : 'Resend OTP'}
+                      </button>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </div>
 
 
@@ -305,9 +328,9 @@ const Auth = () => {
             initial={{ opacity: 0, y: 50, scale: 0.9 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, scale: 0.9 }}
-            className="fixed bottom-10 left-1/2 -translate-x-1/2 z-[1001] bg-white border-l-4 border-[#054425] shadow-xl px-6 py-4 flex items-center gap-4 min-w-[300px] rounded-r-lg"
+            className="fixed bottom-10 left-[5%] right-[5%] md:left-1/2 md:right-auto md:-translate-x-1/2 md:w-auto md:min-w-[300px] z-[1001] bg-white border-l-4 border-[#054425] shadow-xl px-6 py-4 flex items-center gap-4 rounded-r-lg md:rounded-l-lg"
           >
-            <div className={`w-8 h-8 rounded-full flex items-center justify-center ${notification.type === 'error' ? 'bg-red-50 text-red-500' : 'bg-green-50 text-[#054425]'}`}>
+            <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${notification.type === 'error' ? 'bg-red-50 text-red-500' : 'bg-green-50 text-[#054425]'}`}>
               {notification.type === 'error' ? '!' : <FiCheckCircle size={18} />}
             </div>
             <div>

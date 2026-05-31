@@ -43,8 +43,11 @@ const CartDrawer = () => {
                 >
                   <FiArrowLeft className="text-[#054425] group-hover:text-[#D4AF37] transition-colors" size={20} />
                 </button>
-                <h2 className="text-xs md:text-sm font-black uppercase tracking-[0.2em] text-[#054425]">
-                  Your Selection <span className="text-[#054425]/50 ml-1">({cartCount})</span>
+                <h2 
+                  className="text-xs md:text-sm font-normal uppercase tracking-[0.2em] text-black"
+                  style={{ fontFamily: "'Poppins', sans-serif" }}
+                >
+                  Your Selection <span className="text-gray-400 ml-1">({cartCount})</span>
                 </h2>
               </div>
               <button

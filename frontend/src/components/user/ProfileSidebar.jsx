@@ -1,6 +1,6 @@
 import React from 'react';
 import { useShop } from '../../context/ShopContext';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { 
   FiUser, FiShoppingBag, FiMapPin, FiHeart, FiStar, FiTag, 
   FiBell, FiLock, FiSettings, FiLogOut, FiCheck
@@ -9,6 +9,23 @@ import {
 const ProfileSidebar = ({ activeTab = 'profile' }) => {
   const { user, logout } = useShop();
   const navigate = useNavigate();
+  const location = useLocation();
+
+  React.useEffect(() => {
+    if (window.innerWidth < 1024) {
+      const timer = setTimeout(() => {
+        const sidebar = document.getElementById('profile-sidebar');
+        if (sidebar) {
+          const bottom = sidebar.getBoundingClientRect().bottom + window.scrollY;
+          // Only scroll if we are near the top (e.g. after a navigation reset)
+          if (window.scrollY < bottom - 100) {
+            window.scrollTo({ top: bottom - 70, behavior: 'smooth' });
+          }
+        }
+      }, 150);
+      return () => clearTimeout(timer);
+    }
+  }, [location.pathname]);
 
   if (!user) return null;
 
@@ -30,7 +47,7 @@ const ProfileSidebar = ({ activeTab = 'profile' }) => {
   ];
 
   return (
-    <div className="w-full lg:w-[260px] shrink-0">
+    <div className="w-full lg:w-[260px] shrink-0" id="profile-sidebar">
       <div className="bg-[#F8FAF9] border border-gray-100 rounded-2xl flex flex-col shadow-sm overflow-hidden sticky top-24 lg:-mt-1.5">
         
         {/* User Info Section */}

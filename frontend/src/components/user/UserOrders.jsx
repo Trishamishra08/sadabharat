@@ -272,17 +272,17 @@ const UserOrders = () => {
             <div className="min-h-screen bg-[#F8F9FA] pt-4 md:pt-6 pb-12 font-sans selection:bg-[#054425] selection:text-white">
                 <div className="w-full px-4 lg:px-8 flex flex-col lg:flex-row gap-6">
                     <ProfileSidebar activeTab="orders" />
-                    <div className="flex-1 flex flex-col gap-5 pt-24 pb-20 items-center justify-center bg-white border border-gray-100 rounded-2xl shadow-sm">
-                        <div className="w-20 h-20 bg-brand-pink/10 rounded-full flex items-center justify-center text-brand-pink mb-6 shadow-inner">
-                            <FiPackage size={40} />
+                    <div className="flex-1 flex flex-col items-center justify-center bg-white border border-gray-100 rounded-2xl shadow-sm py-12 md:py-20 px-4">
+                        <div className="w-16 h-16 md:w-20 md:h-20 bg-brand-pink/10 rounded-full flex items-center justify-center text-brand-pink mb-4 md:mb-6 shadow-inner">
+                            <FiPackage size={32} className="md:w-10 md:h-10" />
                         </div>
-                        <h2 className="text-2xl font-serif font-black text-brand-dark uppercase tracking-widest mb-2">No Sacred Orders Yet</h2>
-                        <p className="text-gray-400 text-xs uppercase tracking-widest mb-8 text-center max-w-sm">
+                        <h2 className="text-lg md:text-2xl font-serif font-black text-brand-dark uppercase tracking-widest mb-1 md:mb-2 text-center">No Sacred Orders Yet</h2>
+                        <p className="text-gray-400 text-[10px] md:text-xs uppercase tracking-widest mb-5 md:mb-8 text-center max-w-sm leading-relaxed">
                             Your ritual history is empty. Begin your journey into divine beauty.
                         </p>
                         <Link
                             to="/shop"
-                            className="bg-brand-dark text-white px-10 py-3 rounded-full text-[10px] font-black uppercase tracking-[0.2em] shadow-xl hover:bg-brand-pink transition-all"
+                            className="bg-brand-dark text-white px-8 py-2.5 md:px-10 md:py-3 rounded-full text-[9px] md:text-[10px] font-black uppercase tracking-[0.2em] shadow-xl hover:bg-brand-pink transition-all"
                         >
                             Discover Treasures
                         </Link>

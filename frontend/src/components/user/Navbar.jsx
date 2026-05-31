@@ -15,8 +15,17 @@ const Navbar = () => {
   const { cartCount, wishlistCount, setIsCartDrawerOpen, isAuthenticated, user, categories } = useShop();
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const [isRecentsOpen, setIsRecentsOpen] = useState(false);
-  const [notifications, setNotifications] = useState([]);
-  const [unreadCount, setUnreadCount] = useState(2); // Mockup badge 2 matching image
+  const [notifications, setNotifications] = useState([
+    { _id: 'mock1', title: 'Flash Sale Alert!', body: 'Get flat 20% off on all wellness supplements today.', read: false, type: 'promo' },
+    { _id: 'mock2', title: 'Order Dispatched', body: 'Your order #SB-1029 is on its way. Track it now.', read: true, type: 'order' },
+    { _id: 'mock3', title: 'New Arrival', body: 'Experience the magic of Ayurveda with our newest glow serum.', read: true, type: 'product' },
+  ]);
+  const [unreadCount, setUnreadCount] = useState(1); // 1 unread mock notification
+  const [recentItems, setRecentItems] = useState([
+    { id: '1', name: 'Bhringraj Hair Oil', price: '₹349', time: '10 mins ago', img: '/bhringraj_hair_oil.png' },
+    { id: '2', name: 'Tulsi Green Tea', price: '₹199', time: '2 hours ago', img: '/tulsi_green_tea.png' },
+    { id: '3', name: 'Neem Tulsi Face Wash', price: '₹299', time: '5 hours ago', img: '/neem_tulsi_face_wash.png' },
+  ]);
   const [isAnimatingCart, setIsAnimatingCart] = useState(false);
   const prevCartCountRef = React.useRef(cartCount);
   
@@ -51,11 +60,11 @@ const Navbar = () => {
       const fetchNotifications = async () => {
         try {
           const res = await api.get('/notifications/my-notifications');
-          if (res.data.data.notifications) {
+          if (res.data.data.notifications && res.data.data.notifications.length > 0) {
             setNotifications(res.data.data.notifications);
             setUnreadCount(res.data.data.notifications.filter(n => !n.read).length);
           }
-        } catch (err) { console.error(err); }
+        } catch (err) { /* Silently handle network errors for notifications when offline */ }
       };
       fetchNotifications();
       const interval = setInterval(fetchNotifications, 60000);
@@ -78,11 +87,23 @@ const Navbar = () => {
   }, [isOpen]);
 
   const markAllRead = async () => {
+    // Optimistically update UI first
+    setNotifications(prev => prev.map(n => ({ ...n, read: true })));
+    setUnreadCount(0);
+    // Auto-close after short delay so user sees the update
+    setTimeout(() => setIsNotificationsOpen(false), 600);
     try {
       await api.patch('/notifications/read-all');
-      setNotifications(prev => prev.map(n => ({ ...n, read: true })));
-      setUnreadCount(0);
-    } catch (err) { console.error(err); }
+    } catch (err) { 
+      console.error(err);
+      // No rollback needed for UX - keep as read
+    }
+  };
+
+  const clearHistory = () => {
+    setRecentItems([]);
+    // Auto-close after short delay so user sees the empty state briefly
+    setTimeout(() => setIsRecentsOpen(false), 600);
   };
 
   const handleSearchSubmit = (e) => {
@@ -207,7 +228,7 @@ const Navbar = () => {
                         animate={{ opacity: 1, y: 0, scale: 1 }}
                         exit={{ opacity: 0, y: 10, scale: 0.95 }}
                         transition={{ duration: 0.2, ease: "easeOut" }}
-                        className="absolute right-0 top-full mt-4 w-[320px] bg-white rounded-2xl shadow-[0_20px_40px_rgba(0,0,0,0.12)] border border-gray-100 z-50 overflow-hidden origin-top-right"
+                        className="fixed top-[60px] left-[2.5%] right-[2.5%] md:absolute md:top-full md:left-auto md:right-0 md:mt-4 w-[95%] md:w-[320px] bg-white rounded-2xl shadow-[0_20px_40px_rgba(0,0,0,0.12)] border border-gray-100 z-50 overflow-hidden origin-top md:origin-top-right"
                       >
                         <div className="bg-[#054425] px-5 py-4 flex justify-between items-center relative overflow-hidden">
                           <div className="absolute inset-0 bg-[url('/footer_pattern.png')] opacity-10 mix-blend-overlay"></div>
@@ -215,35 +236,43 @@ const Navbar = () => {
                             <FiClock className="text-[#D4AF37]" /> Recently Viewed
                           </h3>
                         </div>
-                        <div className="max-h-[350px] overflow-y-auto custom-sidebar-scrollbar bg-gray-50/50 p-2 space-y-2 overscroll-contain" data-lenis-prevent="true">
-                          {[
-                            { id: '1', name: 'Bhringraj Hair Oil', price: '₹349', time: '10 mins ago', img: '/bhringraj_hair_oil.png' },
-                            { id: '2', name: 'Tulsi Green Tea', price: '₹199', time: '2 hours ago', img: '/tulsi_green_tea.png' },
-                            { id: '3', name: 'Neem Tulsi Face Wash', price: '₹299', time: '5 hours ago', img: '/neem_tulsi_face_wash.png' },
-                          ].map((item, i) => (
+                        <div className="max-h-[350px] overflow-y-auto custom-sidebar-scrollbar bg-gray-50/50 p-1.5 space-y-1.5 overscroll-contain" data-lenis-prevent="true">
+                          {recentItems.length === 0 ? (
+                            <div className="flex flex-col items-center justify-center py-8 text-center">
+                              <FiClock className="text-gray-300 text-3xl mb-2" />
+                              <p className="text-xs text-gray-400 font-medium">No recently viewed products</p>
+                            </div>
+                          ) : recentItems.map((item, i) => (
                             <motion.div
                               key={item.id}
                               initial={{ opacity: 0, x: 20 }}
                               animate={{ opacity: 1, x: 0 }}
                               transition={{ delay: i * 0.05 }}
-                              className="bg-white p-3 rounded-xl flex gap-3 hover:shadow-md transition-shadow cursor-pointer border border-gray-100 group/recent"
+                              className="bg-white p-2 rounded-lg flex gap-2.5 hover:shadow-md transition-shadow cursor-pointer border border-gray-100 group/recent"
                             >
-                              <div className="w-12 h-12 bg-gray-50 rounded-lg overflow-hidden shrink-0 flex items-center justify-center">
+                              <div className="w-10 h-10 bg-gray-50 rounded-md overflow-hidden shrink-0 flex items-center justify-center">
                                 <img src={item.img} alt={item.name} className="w-full h-full object-cover group-hover/recent:scale-110 transition-transform" />
                               </div>
                               <div className="flex-1 min-w-0 flex flex-col justify-center">
-                                <h4 className="text-[11px] font-bold text-gray-800 truncate">{item.name}</h4>
-                                <div className="flex items-center justify-between mt-1">
-                                  <span className="text-[12px] font-bold text-[#054425]">{item.price}</span>
-                                  <span className="text-[9px] text-gray-400 font-medium">{item.time}</span>
+                                <h4 className="text-[13px] md:text-sm font-bold text-gray-800 truncate">{item.name}</h4>
+                                <div className="flex items-center justify-between mt-0.5">
+                                  <span className="text-[13px] md:text-[15px] font-bold text-[#054425]">{item.price}</span>
+                                  <span className="text-[10px] text-gray-400 font-medium">{item.time}</span>
                                 </div>
                               </div>
                             </motion.div>
                           ))}
                         </div>
-                        <div className="p-3 bg-white border-t border-gray-100 text-center">
-                          <button className="text-[10px] font-bold uppercase text-[#D4AF37] hover:text-[#054425] tracking-widest transition-colors">Clear History</button>
-                        </div>
+                        {recentItems.length > 0 && (
+                          <div className="p-2.5 bg-white border-t border-gray-100 text-center">
+                            <button
+                              onClick={clearHistory}
+                              className="text-[11px] md:text-xs font-bold uppercase text-[#D4AF37] hover:text-[#054425] tracking-widest transition-colors"
+                            >
+                              Clear History
+                            </button>
+                          </div>
+                        )}
                       </motion.div>
                     </>
                   )}
@@ -276,7 +305,7 @@ const Navbar = () => {
                         animate={{ opacity: 1, y: 0, scale: 1 }}
                         exit={{ opacity: 0, y: 10, scale: 0.95 }}
                         transition={{ duration: 0.2, ease: "easeOut" }}
-                        className="absolute right-0 top-full mt-4 w-[340px] bg-white rounded-2xl shadow-[0_20px_40px_rgba(0,0,0,0.15)] border border-gray-100 z-50 overflow-hidden origin-top-right"
+                        className="fixed top-[60px] left-[2.5%] right-[2.5%] md:absolute md:top-full md:left-auto md:right-0 md:mt-4 w-[95%] md:w-[340px] bg-white rounded-2xl shadow-[0_20px_40px_rgba(0,0,0,0.15)] border border-gray-100 z-50 overflow-hidden origin-top md:origin-top-right"
                       >
                         <div className="bg-[#054425] px-5 py-4 flex justify-between items-center relative overflow-hidden">
                           <div className="absolute inset-0 bg-[url('/footer_pattern.png')] opacity-10 mix-blend-overlay"></div>
@@ -285,12 +314,13 @@ const Navbar = () => {
                           </h3>
                           <button onClick={markAllRead} className="text-[9px] font-black uppercase text-[#D4AF37] hover:text-white transition-colors relative z-10 bg-white/10 px-2 py-1 rounded-full">Mark all read</button>
                         </div>
-                        <div className="max-h-[350px] overflow-y-auto custom-sidebar-scrollbar bg-gray-50/50 p-2 space-y-2 overscroll-contain" data-lenis-prevent="true">
-                          {(notifications.length > 0 ? notifications : [
-                            { _id: 'mock1', title: 'Flash Sale Alert!', body: 'Get flat 20% off on all wellness supplements today.', read: false, type: 'promo' },
-                            { _id: 'mock2', title: 'Order Dispatched', body: 'Your order #SB-1029 is on its way. Track it now.', read: true, type: 'order' },
-                            { _id: 'mock3', title: 'New Arrival', flow: true, body: 'Experience the magic of Ayurveda with our newest glow serum.', read: true, type: 'product' },
-                          ]).map((n, i) => (
+                        <div className="max-h-[350px] overflow-y-auto custom-sidebar-scrollbar bg-gray-50/50 p-1.5 space-y-1.5 overscroll-contain" data-lenis-prevent="true">
+                          {notifications.length === 0 ? (
+                            <div className="flex flex-col items-center justify-center py-8 text-center">
+                              <FiBell className="text-gray-300 text-3xl mb-2" />
+                              <p className="text-xs text-gray-400 font-medium">You're all caught up!</p>
+                            </div>
+                          ) : notifications.map((n, i) => (
                             <motion.div
                               key={n._id}
                               initial={{ opacity: 0, x: 20 }}
@@ -300,18 +330,18 @@ const Navbar = () => {
                               <Link
                                 to="/profile?tab=orders"
                                 onClick={() => setIsNotificationsOpen(false)}
-                                className={`block p-3 rounded-xl border transition-all ${!n.read ? 'bg-white border-[#054425]/20 shadow-sm' : 'bg-transparent border-transparent hover:bg-white hover:border-gray-100'}`}
+                                className={`block p-2 rounded-lg border transition-all ${!n.read ? 'bg-white border-[#054425]/20 shadow-sm' : 'bg-transparent border-transparent hover:bg-white hover:border-gray-100'}`}
                               >
-                                <div className="flex gap-3 items-start">
-                                  <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${!n.read ? 'bg-[#054425] text-white shadow-md' : 'bg-gray-100 text-gray-400'}`}>
-                                    <FiBell size={14} />
+                                <div className="flex gap-2.5 items-start">
+                                  <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${!n.read ? 'bg-[#054425] text-white shadow-md' : 'bg-gray-100 text-gray-400'}`}>
+                                    <FiBell size={12} />
                                   </div>
                                   <div className="flex-1 min-w-0">
                                     <div className="flex justify-between items-start mb-0.5">
-                                      <p className={`text-[11px] uppercase tracking-wider truncate pr-2 ${!n.read ? 'font-black text-[#054425]' : 'font-bold text-gray-600'}`}>{n.title}</p>
-                                      {!n.read && <span className="w-2 h-2 rounded-full bg-red-500 shrink-0 mt-1"></span>}
+                                      <p className={`text-xs md:text-[13px] tracking-wide truncate pr-2 ${!n.read ? 'font-black text-[#054425]' : 'font-bold text-gray-600'}`}>{n.title}</p>
+                                      {!n.read && <span className="w-1.5 h-1.5 rounded-full bg-red-500 shrink-0 mt-1.5"></span>}
                                     </div>
-                                    <p className="text-[10px] text-gray-500 leading-relaxed line-clamp-2">{n.body}</p>
+                                    <p className="text-[11px] text-gray-500 leading-snug line-clamp-2">{n.body}</p>
                                   </div>
                                 </div>
                               </Link>
@@ -593,23 +623,43 @@ const Navbar = () => {
       </AnimatePresence>
 
       {/* Mobile Bottom Navigation */}
-      <div className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-gray-100 shadow-[0_-4px_10px_rgba(0,0,0,0.05)] px-6 py-2">
-        <div className="flex justify-around items-center h-12">
-          <Link to="/" className={`flex flex-col items-center gap-1 group transition-colors ${location.pathname === '/' ? 'text-[#054425]' : 'text-gray-400'}`}>
-            <FiHome className="text-xl" />
-            <span className="text-[8px] font-bold uppercase tracking-wider">Home</span>
+      <div className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-gray-100 shadow-[0_-4px_20px_rgba(0,0,0,0.06)] pb-safe">
+        <div className="flex justify-around items-center h-16 px-4">
+          <Link 
+            to="/" 
+            onClick={() => {
+              if (location.pathname === '/') {
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+              }
+            }}
+            className={`flex flex-col items-center justify-center w-[60px] h-[50px] rounded-lg transition-all duration-300 ${location.pathname === '/' ? 'text-[#054425] border-2 border-[#054425] shadow-sm bg-green-50/30' : 'text-gray-400 hover:text-gray-600 border-2 border-transparent'}`}
+          >
+            <FiHome className="text-[20px] mb-0.5" strokeWidth={location.pathname === '/' ? 2.5 : 2} />
+            <span className="text-[8px] font-black uppercase tracking-widest" style={{ fontFamily: "'Poppins', sans-serif" }}>Home</span>
           </Link>
-          <Link to="/shop" className={`flex flex-col items-center gap-1 group transition-colors ${location.pathname === '/shop' ? 'text-[#054425]' : 'text-gray-400'}`}>
-            <FiGrid className="text-xl" />
-            <span className="text-[8px] font-bold uppercase tracking-wider">Shop</span>
+          
+          <Link 
+            to="/shop" 
+            className={`flex flex-col items-center justify-center w-[60px] h-[50px] rounded-lg transition-all duration-300 ${location.pathname === '/shop' ? 'text-[#054425] border-2 border-[#054425] shadow-sm bg-green-50/30' : 'text-gray-400 hover:text-gray-600 border-2 border-transparent'}`}
+          >
+            <FiGrid className="text-[20px] mb-0.5" strokeWidth={location.pathname === '/shop' ? 2.5 : 2} />
+            <span className="text-[8px] font-black uppercase tracking-widest" style={{ fontFamily: "'Poppins', sans-serif" }}>Shop</span>
           </Link>
-          <Link to="/offers" className={`flex flex-col items-center gap-1 group transition-colors ${location.pathname === '/offers' ? 'text-[#054425]' : 'text-gray-400'}`}>
-            <FiPercent className="text-xl" />
-            <span className="text-[8px] font-bold uppercase tracking-wider">Offers</span>
+          
+          <Link 
+            to="/offers" 
+            className={`flex flex-col items-center justify-center w-[60px] h-[50px] rounded-lg transition-all duration-300 ${location.pathname === '/offers' ? 'text-[#054425] border-2 border-[#054425] shadow-sm bg-green-50/30' : 'text-gray-400 hover:text-gray-600 border-2 border-transparent'}`}
+          >
+            <FiPercent className="text-[20px] mb-0.5" strokeWidth={location.pathname === '/offers' ? 2.5 : 2} />
+            <span className="text-[8px] font-black uppercase tracking-widest" style={{ fontFamily: "'Poppins', sans-serif" }}>Offers</span>
           </Link>
-          <Link to={isAuthenticated ? "/profile" : "/login"} className={`flex flex-col items-center gap-1 group transition-colors ${location.pathname === '/profile' || location.pathname === '/login' ? 'text-[#054425]' : 'text-gray-400'}`}>
-            <FiUser className="text-xl" />
-            <span className="text-[8px] font-bold uppercase tracking-wider">Account</span>
+          
+          <Link 
+            to={isAuthenticated ? "/profile" : "/login"} 
+            className={`flex flex-col items-center justify-center w-[60px] h-[50px] rounded-lg transition-all duration-300 ${location.pathname === '/profile' || location.pathname === '/login' ? 'text-[#054425] border-2 border-[#054425] shadow-sm bg-green-50/30' : 'text-gray-400 hover:text-gray-600 border-2 border-transparent'}`}
+          >
+            <FiUser className="text-[20px] mb-0.5" strokeWidth={location.pathname === '/profile' || location.pathname === '/login' ? 2.5 : 2} />
+            <span className="text-[8px] font-black uppercase tracking-widest" style={{ fontFamily: "'Poppins', sans-serif" }}>Account</span>
           </Link>
         </div>
       </div>

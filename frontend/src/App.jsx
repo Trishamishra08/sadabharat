@@ -1,5 +1,5 @@
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, useLocation, Outlet } from 'react-router-dom';
 import { ShopProvider, useShop } from './context/ShopContext';
 import Lenis from 'lenis';
 import 'lenis/dist/lenis.css';
@@ -69,81 +69,116 @@ import AdminLogistics from './components/admin/AdminLogistics';
 import AdminLocations from './components/admin/AdminLocations';
 import { FiBox, FiRotateCcw, FiRefreshCw, FiTag, FiShoppingBag, FiUsers } from 'react-icons/fi';
 
-const UserRoutes = () => (
-  <>
-    <CartDrawer />
-    <div className="min-h-screen bg-brand-light">
-      <Navbar />
-      <main>
-        <Routes>
-          {/* Public Routes */}
-          <Route path="/" element={<Home />} />
-          <Route path="/about" element={<AboutSection />} />
-          <Route path="/contact" element={<Contact />} />
-          <Route path="/shop" element={<Shop />} />
-          <Route path="/product/:id" element={<ProductDetail />} />
-          <Route path="/blog" element={<BlogSection />} />
-          <Route path="/blog/:id" element={<BlogDetail />} />
-          <Route path="/offers" element={<Offers />} />
-          <Route path="/consultation" element={<Consultation />} />
-          <Route path="/bag" element={<Bag />} />
-          <Route path="/privacy-policy" element={<PrivacyPolicy />} />
-          <Route path="/return-policy" element={<ReturnPolicy />} />
-          <Route path="/terms-conditions" element={<TermsAndConditions />} />
-          <Route path="/cancellation-policy" element={<CancelPolicy />} />
-          <Route path="/shipping-policy" element={<ShippingPolicy />} />
+// Vendor Module Imports
+import VendorLayout from './components/vendor/VendorLayout';
+import VendorDashboard from './components/vendor/VendorDashboard';
+import VendorProducts from './components/vendor/VendorProducts';
+import VendorAddProduct from './components/vendor/VendorAddProduct';
+import VendorInventory from './components/vendor/VendorInventory';
+import VendorOrders from './components/vendor/VendorOrders';
+import VendorReturns from './components/vendor/VendorReturns';
+import VendorEarnings from './components/vendor/VendorEarnings';
+import VendorPayouts from './components/vendor/VendorPayouts';
+import VendorCoupons from './components/vendor/VendorCoupons';
+import VendorReviews from './components/vendor/VendorReviews';
+import VendorNotifications from './components/vendor/VendorNotifications';
+import VendorAnalytics from './components/vendor/VendorAnalytics';
+import VendorSupport from './components/vendor/VendorSupport';
+import VendorSettings from './components/vendor/VendorSettings';
+import VendorLogin from './components/vendor/VendorLogin';
+import VendorRegister from './components/vendor/VendorRegister';
+import VendorAuthGuard from './components/vendor/VendorAuthGuard';
 
-          {/* Guest Routes (Only unauthenticated users) */}
-          <Route element={<GuestRoute />}>
-            <Route path="/login" element={<Auth />} />
-            <Route path="/register" element={<Register />} />
-          </Route>
+const PublicLayout = () => {
+  const location = useLocation();
+  const hideWhatsApp = ['/login', '/register'].includes(location.pathname);
 
-          {/* Protected User Routes (Only authenticated users) */}
-          <Route element={<ProtectedRoute />}>
-            <Route path="/profile" element={<Profile />} />
-            <Route path="/reviews" element={<MyReviews />} />
-            <Route path="/coupons" element={<Coupons />} />
-            <Route path="/notifications" element={<Notifications />} />
-            <Route path="/change-password" element={<ChangePassword />} />
-            <Route path="/settings" element={<Settings />} />
-            <Route path="/orders" element={<UserOrders />} />
-            <Route path="/wishlist" element={<Wishlist />} />
-            <Route path="/checkout" element={<Checkout />} />
-            <Route path="/track-order" element={<TrackOrder />} />
-            <Route path="/support" element={<RaiseTicket />} />
-          </Route>
-        </Routes>
-      </main>
-      <Footer />
+  return (
+    <>
+      <CartDrawer />
+      <div className="min-h-screen bg-brand-light">
+        <Navbar />
+        <main>
+          <Outlet />
+        </main>
+        <Footer />
 
-      {/* Global Animated WhatsApp Chat Widget */}
-      <motion.a
-        drag
-        dragMomentum={false}
-        draggable={false}
-        whileDrag={{ scale: 1.05 }}
-        href="https://wa.me/917407175567?text=Hello%20Sada%20Bharat%20Ayurvedic,%20I%20have%20an%20inquiry%20regarding%20your%20organic%20products."
-        target="_blank"
-        rel="noopener noreferrer"
-        className="fixed bottom-24 lg:bottom-6 right-4 lg:right-6 z-[9999] flex items-center gap-3 group cursor-grab active:cursor-grabbing"
-      >
-        <div className="bg-white text-[#054425] border border-[#054425]/10 text-[11px] font-black uppercase tracking-widest px-4 py-2 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 shadow-xl pointer-events-none select-none translate-x-4 group-hover:translate-x-0 hidden lg:block">
-          Chat with us
-        </div>
-        
-        <div className="relative pointer-events-none">
-          {/* Ripple Effect */}
-          <div className="absolute inset-0 bg-[#25D366] rounded-full animate-ping opacity-60"></div>
-          
-          <div className="relative w-14 h-14 md:w-16 md:h-16 rounded-full bg-[#25D366] flex items-center justify-center shadow-[0_8px_20px_rgba(37,211,102,0.4)] transition-transform duration-300 hover:scale-110 active:scale-95 border-2 border-white">
-            <FaWhatsapp className="w-8 h-8 md:w-10 md:h-10 text-white drop-shadow-sm" />
-          </div>
-        </div>
-      </motion.a>
-    </div>
-  </>
-);
+        {/* Global Animated WhatsApp Chat Widget */}
+        {!hideWhatsApp && (
+          <motion.a
+            drag
+            dragMomentum={false}
+            draggable={false}
+            whileDrag={{ scale: 1.05 }}
+            href="https://wa.me/917407175567?text=Hello%20Sada%20Bharat%20Ayurvedic,%20I%20have%20an%20inquiry%20regarding%20your%20organic%20products."
+            target="_blank"
+            rel="noopener noreferrer"
+            className="fixed bottom-24 lg:bottom-6 right-4 lg:right-6 z-[9999] flex items-center gap-3 group cursor-grab active:cursor-grabbing"
+          >
+            <div className="bg-white text-[#054425] border border-[#054425]/10 text-[11px] font-black uppercase tracking-widest px-4 py-2 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 shadow-xl pointer-events-none select-none translate-x-4 group-hover:translate-x-0 hidden lg:block">
+              Chat with us
+            </div>
+            
+            <div className="relative pointer-events-none">
+              {/* Ripple Effect */}
+              <div className="absolute inset-0 bg-[#25D366] rounded-full animate-ping opacity-60"></div>
+              
+              <div className="relative w-14 h-14 md:w-16 md:h-16 rounded-full bg-[#25D366] flex items-center justify-center shadow-[0_8px_20px_rgba(37,211,102,0.4)] transition-transform duration-300 hover:scale-110 active:scale-95 border-2 border-white">
+                <FaWhatsapp className="w-8 h-8 md:w-10 md:h-10 text-white drop-shadow-sm" />
+              </div>
+            </div>
+          </motion.a>
+        )}
+      </div>
+    </>
+  );
+};
+
+const UserRoutes = () => {
+  return (
+    <Routes>
+      <Route element={<PublicLayout />}>
+        {/* Public Routes */}
+        <Route path="/" element={<Home />} />
+        <Route path="/about" element={<AboutSection />} />
+        <Route path="/contact" element={<Contact />} />
+        <Route path="/shop" element={<Shop />} />
+        <Route path="/product/:id" element={<ProductDetail />} />
+        <Route path="/blog" element={<BlogSection />} />
+        <Route path="/blog/:id" element={<BlogDetail />} />
+        <Route path="/offers" element={<Offers />} />
+        <Route path="/consultation" element={<Consultation />} />
+        <Route path="/bag" element={<Bag />} />
+        <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+        <Route path="/return-policy" element={<ReturnPolicy />} />
+        <Route path="/terms-conditions" element={<TermsAndConditions />} />
+        <Route path="/cancellation-policy" element={<CancelPolicy />} />
+        <Route path="/shipping-policy" element={<ShippingPolicy />} />
+
+        {/* Guest Routes (Only unauthenticated users) */}
+        <Route element={<GuestRoute />}>
+          <Route path="/login" element={<Auth />} />
+          <Route path="/register" element={<Register />} />
+        </Route>
+
+        {/* Protected User Routes (Only authenticated users) */}
+        <Route element={<ProtectedRoute />}>
+          <Route path="/profile" element={<Profile />} />
+          <Route path="/reviews" element={<MyReviews />} />
+          <Route path="/coupons" element={<Coupons />} />
+          <Route path="/notifications" element={<Notifications />} />
+          <Route path="/change-password" element={<ChangePassword />} />
+          <Route path="/settings" element={<Settings />} />
+          <Route path="/orders" element={<UserOrders />} />
+          <Route path="/wishlist" element={<Wishlist />} />
+          <Route path="/checkout" element={<Checkout />} />
+          <Route path="/track-order" element={<TrackOrder />} />
+          <Route path="/support" element={<RaiseTicket />} />
+        </Route>
+      </Route>
+    </Routes>
+  );
+};
 
 const AdminRoutes = () => (
   <Routes>
@@ -172,6 +207,34 @@ const AdminRoutes = () => (
       <Route path="/support" element={<AdminSupport />} />
       <Route path="/logistics" element={<AdminLogistics />} />
       <Route path="/locations" element={<AdminLocations />} />
+    </Route>
+  </Routes>
+);
+
+const VendorRoutes = () => (
+  <Routes>
+    {/* Public Vendor Routes */}
+    <Route path="/login" element={<VendorLogin />} />
+    <Route path="/register" element={<VendorRegister />} />
+
+    {/* Protected Vendor Routes */}
+    <Route element={<VendorAuthGuard />}>
+      <Route element={<VendorLayout />}>
+        <Route path="/" element={<VendorDashboard />} />
+        <Route path="/products" element={<VendorProducts />} />
+        <Route path="/add-product" element={<VendorAddProduct />} />
+        <Route path="/inventory" element={<VendorInventory />} />
+        <Route path="/orders" element={<VendorOrders />} />
+        <Route path="/returns" element={<VendorReturns />} />
+        <Route path="/earnings" element={<VendorEarnings />} />
+        <Route path="/payouts" element={<VendorPayouts />} />
+        <Route path="/coupons" element={<VendorCoupons />} />
+        <Route path="/reviews" element={<VendorReviews />} />
+        <Route path="/notifications" element={<VendorNotifications />} />
+        <Route path="/analytics" element={<VendorAnalytics />} />
+        <Route path="/support" element={<VendorSupport />} />
+        <Route path="/settings" element={<VendorSettings />} />
+      </Route>
     </Route>
   </Routes>
 );
@@ -263,6 +326,7 @@ function App() {
         <ScrollToTop />
         <Routes>
           <Route path="/admin/*" element={<AdminRoutes />} />
+          <Route path="/vendor/*" element={<VendorRoutes />} />
           <Route path="/*" element={<UserRoutes />} />
         </Routes>
       </Router>

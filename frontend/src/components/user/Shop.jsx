@@ -55,6 +55,10 @@ const Shop = () => {
   const [isSortOpen, setIsSortOpen] = useState(false);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
 
+  const [isCategoryOpen, setIsCategoryOpen] = useState(true);
+  const [isPriceOpen, setIsPriceOpen] = useState(true);
+  const [isRatingOpen, setIsRatingOpen] = useState(true);
+
   // Advanced Filters State
   const [skinTypeFilter, setSkinTypeFilter] = useState('All');
   const [concernFilter, setConcernFilter] = useState('All');
@@ -103,10 +107,10 @@ const Shop = () => {
     <div className="min-h-screen bg-[#FDFCFB] font-sans selection:bg-brand-pink selection:text-white pb-20">
 
       {/* MAIN CONTENT AREA: SIDEBAR + GRID */}
-      <div className="w-full px-4 lg:px-8 pt-6 lg:pt-8 pb-8 flex flex-col lg:flex-row gap-8 items-start">
+      <div className="w-full px-4 lg:px-8 pt-4 lg:pt-8 pb-8 flex flex-col lg:flex-row gap-4 lg:gap-8 items-start">
         
         {/* MOBILE FILTER TOGGLE & SEARCH */}
-        <div className="lg:hidden w-full flex flex-col gap-4 mb-4">
+        <div className="lg:hidden w-full flex flex-col gap-3">
           <div className="flex justify-between items-center">
             <button
               onClick={() => setIsFilterOpen(!isFilterOpen)}
@@ -156,13 +160,28 @@ const Shop = () => {
         </div>
 
         {/* LEFT SIDEBAR FILTERS (Hidden on mobile unless toggled) */}
-        <aside data-lenis-prevent="true" className={`${isFilterOpen ? 'block' : 'hidden'} lg:flex w-full lg:w-[260px] shrink-0 flex-col gap-6 bg-white lg:bg-transparent p-6 lg:p-0 rounded-2xl lg:rounded-none lg:sticky lg:top-20 lg:h-[calc(100vh-5rem)] overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:'none'] [scrollbar-width:'none'] pr-2 mb-6 lg:mb-0 z-10`}>
-          <div className="flex items-center justify-between lg:hidden mb-4">
+        <aside data-lenis-prevent="true" className={`${isFilterOpen ? 'fixed inset-0 z-[100] bg-white p-5 pt-8 flex' : 'hidden'} lg:flex w-full lg:w-[260px] shrink-0 flex-col gap-4 lg:bg-transparent lg:p-0 rounded-none lg:sticky lg:top-24 lg:h-[calc(100vh-6rem)] overflow-y-auto overscroll-contain pb-10 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:'none'] [scrollbar-width:'none'] lg:pr-2 lg:z-10`}>
+          <div className="flex items-center justify-between lg:hidden mb-2">
             <h2 className="text-lg font-black text-[#054425]">Filters</h2>
-            <button onClick={() => setIsFilterOpen(false)} className="p-2 bg-gray-50 rounded-full"><FiX /></button>
+            <button onClick={() => setIsFilterOpen(false)} className="p-2 bg-gray-100 hover:bg-gray-200 text-gray-800 rounded-full transition-colors"><FiX size={18} /></button>
+          </div>
+          
+          <div className="lg:hidden flex items-center justify-between border-b border-gray-200 pb-3 mb-2">
+            <button 
+              onClick={() => { setActiveCategory('all'); setPriceSegment('All'); setConcernFilter('All'); setIsFilterOpen(false); }}
+              className="text-xs font-bold text-[#054425] hover:text-brand-pink"
+            >
+              Clear All Filters
+            </button>
+            <button 
+              onClick={() => setIsFilterOpen(false)}
+              className="text-xs font-bold text-white bg-[#054425] px-4 py-1.5 rounded-full"
+            >
+              Apply
+            </button>
           </div>
 
-          <div className="hidden lg:flex items-center justify-between border-b border-gray-200 pb-4 mb-4">
+          <div className="hidden lg:flex items-center justify-between border-b border-gray-200 pb-4 mb-2">
             <h2 className="text-lg font-black text-[#054425]">Filters</h2>
             <button 
               onClick={() => { setActiveCategory('all'); setPriceSegment('All'); setConcernFilter('All'); }}
@@ -173,59 +192,108 @@ const Shop = () => {
           </div>
 
           {/* Category Filter */}
-          <div className="space-y-3">
-            <h3 className="text-sm font-bold text-gray-900 flex justify-between items-center">
-              Category <FiChevronDown />
-            </h3>
-            <div className="space-y-2">
-              <label className="flex items-center gap-3 cursor-pointer group">
-                <input type="radio" name="category" checked={activeCategory === 'all'} onChange={() => handleCategoryChange('all')} className="w-4 h-4 accent-[#054425]" />
-                <span className={`text-sm ${activeCategory === 'all' ? 'text-[#054425] font-medium' : 'text-gray-600 group-hover:text-gray-900'}`}>All Products</span>
-              </label>
-              {dynamicCategories.map(cat => (
-                <label key={cat.name} className="flex items-center gap-3 cursor-pointer group">
-                  <input type="radio" name="category" checked={activeCategory === cat.name} onChange={() => handleCategoryChange(cat.name)} className="w-4 h-4 accent-[#054425]" />
-                  <span className={`text-sm ${activeCategory === cat.name ? 'text-[#054425] font-medium' : 'text-gray-600 group-hover:text-gray-900'}`}>{cat.name}</span>
-                </label>
-              ))}
-            </div>
+          <div className="space-y-2">
+            <button 
+              onClick={() => setIsCategoryOpen(!isCategoryOpen)} 
+              className="w-full text-[15px] font-black text-[#054425] flex justify-between items-center"
+            >
+              Category 
+              <motion.div animate={{ rotate: isCategoryOpen ? 180 : 0 }} transition={{ duration: 0.2 }}>
+                <FiChevronDown />
+              </motion.div>
+            </button>
+            <AnimatePresence>
+              {isCategoryOpen && (
+                <motion.div 
+                  initial={{ height: 0, opacity: 0 }} 
+                  animate={{ height: 'auto', opacity: 1 }} 
+                  exit={{ height: 0, opacity: 0 }} 
+                  className="space-y-1.5 overflow-hidden"
+                >
+                  <label className="flex items-center gap-3 cursor-pointer group pt-1">
+                    <input type="radio" name="category" checked={activeCategory === 'all'} onChange={() => handleCategoryChange('all')} className="w-3.5 h-3.5 accent-[#054425]" />
+                    <span className={`text-[13px] md:text-sm ${activeCategory === 'all' ? 'text-[#054425] font-medium' : 'text-gray-600 group-hover:text-gray-900'}`}>All Products</span>
+                  </label>
+                  {dynamicCategories.map(cat => (
+                    <label key={cat.name} className="flex items-center gap-3 cursor-pointer group">
+                      <input type="radio" name="category" checked={activeCategory === cat.name} onChange={() => handleCategoryChange(cat.name)} className="w-3.5 h-3.5 accent-[#054425]" />
+                      <span className={`text-[13px] md:text-sm ${activeCategory === cat.name ? 'text-[#054425] font-medium' : 'text-gray-600 group-hover:text-gray-900'}`}>{cat.name}</span>
+                    </label>
+                  ))}
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
 
           {/* Price Range Filter */}
-          <div className="space-y-3 pt-4 border-t border-gray-100">
-            <h3 className="text-sm font-bold text-gray-900 flex justify-between items-center">
-              Price Range <FiChevronDown />
-            </h3>
-            <div className="space-y-2">
-              {[
-                { id: 'All', label: 'All Prices' },
-                { id: 'Budget', label: '₹0 - ₹500' },
-                { id: 'Daily', label: '₹500 - ₹1000' },
-                { id: 'Luxury', label: '₹1000+' }
-              ].map(s => (
-                <label key={s.id} className="flex items-center gap-3 cursor-pointer group">
-                  <input type="radio" name="price" checked={priceSegment === s.id} onChange={() => setPriceSegment(s.id)} className="w-4 h-4 accent-[#054425]" />
-                  <span className={`text-sm ${priceSegment === s.id ? 'text-[#054425] font-medium' : 'text-gray-600 group-hover:text-gray-900'}`}>{s.label}</span>
-                </label>
-              ))}
-            </div>
+          <div className="space-y-2 pt-3 border-t border-gray-100">
+            <button 
+              onClick={() => setIsPriceOpen(!isPriceOpen)}
+              className="w-full text-[15px] font-black text-[#054425] flex justify-between items-center"
+            >
+              Price Range
+              <motion.div animate={{ rotate: isPriceOpen ? 180 : 0 }} transition={{ duration: 0.2 }}>
+                <FiChevronDown />
+              </motion.div>
+            </button>
+            <AnimatePresence>
+              {isPriceOpen && (
+                <motion.div 
+                  initial={{ height: 0, opacity: 0 }} 
+                  animate={{ height: 'auto', opacity: 1 }} 
+                  exit={{ height: 0, opacity: 0 }} 
+                  className="space-y-1.5 overflow-hidden"
+                >
+                  <div className="pt-1 space-y-1.5">
+                    {[
+                      { id: 'All', label: 'All Prices' },
+                      { id: 'Budget', label: '₹0 - ₹500' },
+                      { id: 'Daily', label: '₹500 - ₹1000' },
+                      { id: 'Luxury', label: '₹1000+' }
+                    ].map(s => (
+                      <label key={s.id} className="flex items-center gap-3 cursor-pointer group">
+                        <input type="radio" name="price" checked={priceSegment === s.id} onChange={() => setPriceSegment(s.id)} className="w-3.5 h-3.5 accent-[#054425]" />
+                        <span className={`text-[13px] md:text-sm ${priceSegment === s.id ? 'text-[#054425] font-medium' : 'text-gray-600 group-hover:text-gray-900'}`}>{s.label}</span>
+                      </label>
+                    ))}
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
 
           {/* Rating Filter (Visual) */}
-          <div className="space-y-3 pt-4 border-t border-gray-100">
-            <h3 className="text-sm font-bold text-gray-900 flex justify-between items-center">
-              Rating <FiChevronDown />
-            </h3>
-            <div className="space-y-2">
-              {[4, 3, 2, 1].map(stars => (
-                <label key={stars} className="flex items-center gap-3 cursor-pointer group">
-                  <input type="radio" name="rating" className="w-4 h-4 accent-[#054425]" />
-                  <span className="text-sm text-gray-600 flex items-center gap-1">
-                    {stars} <FiStar className="fill-[#054425] text-[#054425] w-3 h-3" /> & above
-                  </span>
-                </label>
-              ))}
-            </div>
+          <div className="space-y-2 pt-3 border-t border-gray-100 pb-12 lg:pb-16">
+            <button 
+              onClick={() => setIsRatingOpen(!isRatingOpen)}
+              className="w-full text-[15px] font-black text-[#054425] flex justify-between items-center"
+            >
+              Rating
+              <motion.div animate={{ rotate: isRatingOpen ? 180 : 0 }} transition={{ duration: 0.2 }}>
+                <FiChevronDown />
+              </motion.div>
+            </button>
+            <AnimatePresence>
+              {isRatingOpen && (
+                <motion.div 
+                  initial={{ height: 0, opacity: 0 }} 
+                  animate={{ height: 'auto', opacity: 1 }} 
+                  exit={{ height: 0, opacity: 0 }} 
+                  className="space-y-1.5 overflow-hidden"
+                >
+                  <div className="pt-1 space-y-1.5">
+                    {[4, 3, 2, 1].map(stars => (
+                      <label key={stars} className="flex items-center gap-3 cursor-pointer group">
+                        <input type="radio" name="rating" className="w-3.5 h-3.5 accent-[#054425]" />
+                        <span className="text-[13px] md:text-sm text-gray-600 flex items-center gap-1">
+                          {stars} <FiStar className="fill-[#054425] text-[#054425] w-3 h-3" /> & above
+                        </span>
+                      </label>
+                    ))}
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
         </aside>
 
@@ -284,11 +352,16 @@ const Shop = () => {
 
           <motion.div layout className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
             <AnimatePresence mode="popLayout">
-              {filteredProducts.slice(0, visibleCount).map((product) => (
-                <motion.div key={product._id} layout initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.9 }} transition={{ duration: 0.2 }}>
-                  <ProductCard product={product} />
-                </motion.div>
-              ))}
+              {filteredProducts.slice(0, visibleCount).map((product) => {
+                let badge;
+                if (sortBy === 'New Arrivals') badge = 'new';
+                
+                return (
+                  <motion.div key={product._id} layout initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.9 }} transition={{ duration: 0.2 }}>
+                    <ProductCard product={product} badge={badge} />
+                  </motion.div>
+                );
+              })}
             </AnimatePresence>
           </motion.div>
 

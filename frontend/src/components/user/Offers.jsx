@@ -117,7 +117,7 @@ const Offers = () => {
       <div className="w-full px-4 lg:px-8 pt-2 lg:pt-4 pb-8 flex flex-col lg:flex-row gap-8 items-start">
         
         {/* MOBILE FILTER TOGGLE & SEARCH */}
-        <div className="lg:hidden w-full flex flex-col gap-4 mb-4">
+        <div className="lg:hidden w-full flex flex-col gap-4">
           <div className="flex justify-between items-center">
             <button
               onClick={() => setIsFilterOpen(!isFilterOpen)}
@@ -221,42 +221,65 @@ const Offers = () => {
         </aside>
 
         {/* RIGHT CONTENT: PRODUCT GRID */}
-        <main className="flex-1 w-full">
-          {/* Flash Sale / Deal of the Day Banner */}
-          <div className="mb-6 rounded-2xl overflow-hidden bg-gradient-to-r from-[#054425] to-[#0a6338] text-white p-4 md:py-3 md:px-5 relative flex flex-col md:flex-row items-center justify-between gap-4 shadow-xl border border-[#054425]/20">
-            {/* Background decoration */}
+        <main className="flex-1 w-full lg:mt-0 mt-0">
+          {/* Flash Sale / Deal of the Day Banner — compact on mobile, full on desktop */}
+          <div className="mb-4 rounded-xl overflow-hidden bg-gradient-to-r from-[#054425] to-[#0a6338] text-white relative shadow-xl border border-[#054425]/20">
             <div className="absolute inset-0 opacity-10 pointer-events-none" style={{ backgroundImage: 'radial-gradient(circle at 20% 50%, rgba(255,255,255,0.4) 0%, transparent 50%)' }} />
-            
-            <div className="relative z-10 flex flex-col md:flex-row items-center gap-4 text-center md:text-left w-full md:w-auto">
-              <div className="bg-gradient-to-br from-[#E5C158] to-[#D4AF37] text-[#054425] font-black text-lg md:text-2xl px-4 py-2 rounded-xl transform -rotate-2 shadow-lg drop-shadow-md whitespace-nowrap">
-                SAVE 20%
+
+            {/* MOBILE: Compact horizontal row */}
+            <div className="flex md:hidden items-center justify-between px-3 py-2.5 gap-2 relative z-10">
+              <div className="flex items-center gap-2 min-w-0">
+                <div className="bg-gradient-to-br from-[#E5C158] to-[#D4AF37] text-[#054425] font-black text-[11px] px-2 py-1 rounded-lg transform -rotate-2 shadow-md whitespace-nowrap shrink-0">
+                  SAVE 20%
+                </div>
+                <div className="min-w-0">
+                  <h2 className="text-[13px] font-black font-serif italic text-white leading-tight truncate">Deal of the Day</h2>
+                  <div className="flex gap-1.5 mt-0.5">
+                    <span className="px-1.5 py-0.5 bg-white/10 rounded-full text-[8px] uppercase tracking-wide font-bold">Free Ship</span>
+                    <span className="px-1.5 py-0.5 bg-white/10 rounded-full text-[8px] uppercase tracking-wide font-bold">+5% Prepaid</span>
+                  </div>
+                </div>
               </div>
-              <div>
-                <h2 className="text-xl md:text-2xl font-black font-serif italic mb-0.5 text-white drop-shadow-sm leading-tight">Deal of the Day</h2>
-                <p className="text-xs md:text-sm text-gray-200 mb-1.5">Exclusive discount on all Ayurvedic Skincare & Wellness</p>
-                <div className="flex gap-2 justify-center md:justify-start">
-                  <span className="px-2.5 py-0.5 bg-white/10 rounded-full text-[9px] uppercase tracking-widest font-bold">Free Shipping</span>
-                  <span className="px-2.5 py-0.5 bg-white/10 rounded-full text-[9px] uppercase tracking-widest font-bold">Extra 5% on Prepaid</span>
+              {/* Mini Timer */}
+              <div className="flex flex-col items-end shrink-0">
+                <p className="text-[8px] font-bold uppercase tracking-widest text-[#D4AF37] mb-1">Ends In</p>
+                <div className="flex items-center gap-0.5">
+                  <div className="bg-white/10 rounded w-7 h-7 flex items-center justify-center text-[12px] font-black">{String(timeLeft.hours).padStart(2, '0')}</div>
+                  <span className="text-[#D4AF37] font-black text-xs">:</span>
+                  <div className="bg-white/10 rounded w-7 h-7 flex items-center justify-center text-[12px] font-black">{String(timeLeft.minutes).padStart(2, '0')}</div>
+                  <span className="text-[#D4AF37] font-black text-xs">:</span>
+                  <div className="bg-white/10 rounded w-7 h-7 flex items-center justify-center text-[12px] font-black">{String(timeLeft.seconds).padStart(2, '0')}</div>
                 </div>
               </div>
             </div>
 
-            <div className="relative z-10 flex flex-col items-center md:items-end gap-1.5 mt-2 md:mt-0 shrink-0">
-              <p className="text-[10px] font-bold uppercase tracking-widest text-[#D4AF37] drop-shadow-sm">Offer Ends In</p>
-              <div className="flex gap-1.5">
-                <div className="flex flex-col items-center">
-                  <div className="bg-white/10 backdrop-blur-md rounded-lg w-10 h-10 md:w-11 md:h-11 flex items-center justify-center text-lg md:text-xl font-black border border-white/10 shadow-inner">{String(timeLeft.hours).padStart(2, '0')}</div>
-                  <span className="text-[8px] md:text-[9px] uppercase tracking-wider mt-0.5 text-gray-300 font-medium">Hours</span>
+            {/* DESKTOP: Full layout */}
+            <div className="hidden md:flex items-center justify-between py-3 px-5 relative z-10 gap-4">
+              <div className="flex items-center gap-4 text-left">
+                <div className="bg-gradient-to-br from-[#E5C158] to-[#D4AF37] text-[#054425] font-black text-2xl px-4 py-2 rounded-xl transform -rotate-2 shadow-lg drop-shadow-md whitespace-nowrap">
+                  SAVE 20%
                 </div>
-                <span className="text-xl font-black animate-pulse mt-1.5 text-[#D4AF37] opacity-80">:</span>
-                <div className="flex flex-col items-center">
-                  <div className="bg-white/10 backdrop-blur-md rounded-lg w-10 h-10 md:w-11 md:h-11 flex items-center justify-center text-lg md:text-xl font-black border border-white/10 shadow-inner">{String(timeLeft.minutes).padStart(2, '0')}</div>
-                  <span className="text-[8px] md:text-[9px] uppercase tracking-wider mt-0.5 text-gray-300 font-medium">Mins</span>
+                <div>
+                  <h2 className="text-2xl font-black font-serif italic mb-0.5 text-white drop-shadow-sm leading-tight">Deal of the Day</h2>
+                  <p className="text-sm text-gray-200 mb-1.5">Exclusive discount on all Ayurvedic Skincare &amp; Wellness</p>
+                  <div className="flex gap-2">
+                    <span className="px-2.5 py-0.5 bg-white/10 rounded-full text-[9px] uppercase tracking-widest font-bold">Free Shipping</span>
+                    <span className="px-2.5 py-0.5 bg-white/10 rounded-full text-[9px] uppercase tracking-widest font-bold">Extra 5% on Prepaid</span>
+                  </div>
                 </div>
-                <span className="text-xl font-black animate-pulse mt-1.5 text-[#D4AF37] opacity-80">:</span>
-                <div className="flex flex-col items-center">
-                  <div className="bg-white/10 backdrop-blur-md rounded-lg w-10 h-10 md:w-11 md:h-11 flex items-center justify-center text-lg md:text-xl font-black border border-white/10 shadow-inner">{String(timeLeft.seconds).padStart(2, '0')}</div>
-                  <span className="text-[8px] md:text-[9px] uppercase tracking-wider mt-0.5 text-gray-300 font-medium">Secs</span>
+              </div>
+              <div className="flex flex-col items-end gap-1.5 shrink-0">
+                <p className="text-[10px] font-bold uppercase tracking-widest text-[#D4AF37]">Offer Ends In</p>
+                <div className="flex gap-1.5">
+                  {[{ val: timeLeft.hours, label: 'Hours' }, { val: timeLeft.minutes, label: 'Mins' }, { val: timeLeft.seconds, label: 'Secs' }].map((t, i, arr) => (
+                    <React.Fragment key={t.label}>
+                      <div className="flex flex-col items-center">
+                        <div className="bg-white/10 backdrop-blur-md rounded-lg w-11 h-11 flex items-center justify-center text-xl font-black border border-white/10">{String(t.val).padStart(2, '0')}</div>
+                        <span className="text-[9px] uppercase tracking-wider mt-0.5 text-gray-300 font-medium">{t.label}</span>
+                      </div>
+                      {i < arr.length - 1 && <span className="text-xl font-black animate-pulse mt-1.5 text-[#D4AF37] opacity-80">:</span>}
+                    </React.Fragment>
+                  ))}
                 </div>
               </div>
             </div>

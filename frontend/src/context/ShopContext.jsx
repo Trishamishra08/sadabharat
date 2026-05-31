@@ -397,7 +397,7 @@ export const ShopProvider = ({ children }) => {
       clearCart,
       verifyAndClearCart,
       settings,
-      cartCount: cart.reduce((acc, item) => acc + item.quantity, 0),
+      cartCount: cart.length,
       wishlistCount: wishlist.length,
       cartTotal: cart.reduce((acc, item) => acc + (item.price * item.quantity), 0)
     }}>

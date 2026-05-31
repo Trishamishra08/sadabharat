@@ -189,7 +189,7 @@ const SizeChartModal = ({ onClose, onSelect, currentSize }) => {
 const ProductDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { products, addToCart, toggleWishlist, isInWishlist, loading, isAuthenticated, user, setIsCartDrawerOpen, triggerFlyToCart } = useShop();
+  const { products, addToCart, removeFromCart, updateQuantity, cart, toggleWishlist, isInWishlist, loading, isAuthenticated, user, setIsCartDrawerOpen, triggerFlyToCart } = useShop();
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [isAdded, setIsAdded] = useState(false);
   const [isCouponModalOpen, setIsCouponModalOpen] = useState(false);
@@ -308,19 +308,35 @@ const ProductDetail = () => {
     );
   }
 
+  const variants = product ? (product.variants || (product.name.toLowerCase().includes('milk') || product.name.toLowerCase().includes('bhringraj') ? [
+    { size: '100 ml', price: product.price, oldPrice: product.oldPrice },
+    { size: '200 ml', price: Math.round(product.price * 1.8), oldPrice: Math.round((product.oldPrice || product.price) * 1.8) }
+  ] : (Array.isArray(product.sizes) && product.sizes.length > 0 ? product.sizes.map(s => ({ size: s, price: product.price, oldPrice: product.oldPrice })) : [
+    { size: '100 ml', price: product.price, oldPrice: product.oldPrice },
+    { size: '200 ml', price: Math.round(product.price * 1.8), oldPrice: Math.round((product.oldPrice || product.price) * 1.8) },
+    { size: '300 ml', price: Math.round(product.price * 2.5), oldPrice: Math.round((product.oldPrice || product.price) * 2.5) }
+  ]))) : [];
+
+  const currentSize = selectedSize || (variants.length > 0 ? variants[0].size : null);
+  const selectedVariant = variants.find(v => v.size === currentSize) || variants[0] || product;
+  const basePrice = selectedVariant?.price || product?.price || 0;
+  const oldPrice = selectedVariant?.oldPrice || product?.oldPrice || Math.round(basePrice * 1.3);
+
+  const cartItems = cart ? cart.filter(item => item._id === product._id && item.selectedSize === currentSize) : [];
+  const totalQtyInCart = cartItems.reduce((sum, item) => sum + item.quantity, 0);
+
   const calculateDiscountedPrice = () => {
-    if (!appliedCoupon) return product.price;
+    if (!appliedCoupon) return basePrice;
     if (appliedCoupon.discountType === 'percentage') {
-      return Math.round(product.price * (1 - appliedCoupon.discountValue / 100));
+      return Math.round(basePrice * (1 - appliedCoupon.discountValue / 100));
     }
-    return Math.max(0, product.price - appliedCoupon.discountValue);
+    return Math.max(0, basePrice - appliedCoupon.discountValue);
   };
 
   const finalPrice = calculateDiscountedPrice();
 
   const handleAddToCart = (e) => {
-    const validSizes = Array.isArray(product.sizes) ? product.sizes : [];
-    if (validSizes.length > 0 && !selectedSize) {
+    if (variants.length > 0 && !currentSize) {
       alert("Please select a size before adding to bag.");
       return;
     }
@@ -329,15 +345,21 @@ const ProductDetail = () => {
       triggerFlyToCart(e, (product.gallery && product.gallery[selectedImageIndex]) || product.image);
     }
 
-    addToCart({ ...product, price: finalPrice, quantity, couponApplied: appliedCoupon?.code, selectedSize });
+    addToCart({
+      ...product,
+      price: finalPrice,
+      oldPrice: oldPrice,
+      quantity: 1,
+      couponApplied: appliedCoupon?.code,
+      selectedSize: currentSize,
+      packSize: currentSize
+    });
     setIsAdded(true);
     setTimeout(() => setIsAdded(false), 2000);
   };
 
-
   const handleBuyNow = () => {
-    const validSizes = Array.isArray(product.sizes) ? product.sizes : [];
-    if (validSizes.length > 0 && !selectedSize) {
+    if (variants.length > 0 && !currentSize) {
       alert("Please select a size before proceeding.");
       return;
     }
@@ -345,9 +367,11 @@ const ProductDetail = () => {
     const directProductData = {
       ...product,
       price: finalPrice,
-      quantity: quantity,
+      oldPrice: oldPrice,
+      quantity: 1,
       couponApplied: appliedCoupon?.code,
-      selectedSize,
+      selectedSize: currentSize,
+      packSize: currentSize
     };
     setIsCartDrawerOpen(false);
     navigate('/checkout', { state: { directProduct: directProductData } });
@@ -371,52 +395,52 @@ const ProductDetail = () => {
 
       <main className="w-full max-w-[1300px] ml-0 px-4 md:px-8 lg:px-8 mt-2">
         <div className="flex flex-col lg:grid lg:grid-cols-12 gap-6 lg:gap-8">
-          
+
           {/* Left Column container */}
           <div className="contents lg:block lg:col-span-5 relative">
-            
+
             {/* Images */}
             <div className="order-1">
               <div className="w-full flex flex-col-reverse md:flex-row justify-start gap-4 md:gap-4 bg-[#FDFBF7] rounded-md p-4 md:py-4 md:pr-4 md:pl-0 relative ml-0">
-               <button className="absolute top-6 right-6 p-3 bg-white rounded-full shadow-sm z-10 transition-all hover:scale-110 border border-gray-100" onClick={() => toggleWishlist(product)}>
-                 <FiHeart className={`w-5 h-5 ${isInWishlist(product._id) ? 'fill-current text-red-500' : 'text-gray-800'}`} />
-               </button>
-               {/* Vertical Thumbnails */}
-               <div className="flex md:flex-col gap-3 shrink-0 overflow-x-auto md:overflow-visible items-center justify-center z-10 w-[76px] pl-0 ml-0 md:pl-0 md:-ml-2">
+                <button className="absolute top-6 right-6 p-3 bg-white rounded-full shadow-sm z-10 transition-all hover:scale-110 border border-gray-100" onClick={() => toggleWishlist(product)}>
+                  <FiHeart className={`w-5 h-5 ${isInWishlist(product._id) ? 'fill-current text-red-500' : 'text-gray-800'}`} />
+                </button>
+                {/* Vertical Thumbnails */}
+                <div className="flex md:flex-col gap-3 shrink-0 overflow-x-auto md:overflow-visible items-center justify-center z-10 w-[76px] pl-0 ml-0 md:pl-0 md:-ml-2">
                   <button className="hidden md:flex items-center justify-center p-1 text-gray-600 hover:text-black transition-colors bg-white rounded-full shadow-sm w-9 h-9 border border-gray-200" onClick={() => setSelectedImageIndex(prev => Math.max(0, prev - 1))}>
-                     <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" /></svg>
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" /></svg>
                   </button>
                   <div className="flex md:flex-col gap-4">
-                     {[0,1,2,3].map((idx) => {
-                       const img = (Array.isArray(product.gallery) && product.gallery[idx]) || (idx === 0 ? product.image : null);
-                       if (!img) return null;
-                       return (
-                         <button
-                           key={idx}
-                           onClick={() => setSelectedImageIndex(idx)}
-                           className={`w-16 h-16 md:w-[76px] md:h-[76px] shrink-0 rounded-md overflow-hidden transition-all border-2 bg-white shadow-sm ${selectedImageIndex === idx ? 'border-[#054425]' : 'border-gray-100 hover:border-gray-300'}`}
-                         >
-                           <img src={img} alt={`${product.name} ${idx}`} className="w-full h-full object-cover" />
-                         </button>
-                       );
-                     })}
+                    {[0, 1, 2, 3].map((idx) => {
+                      const img = (Array.isArray(product.gallery) && product.gallery[idx]) || (idx === 0 ? product.image : null);
+                      if (!img) return null;
+                      return (
+                        <button
+                          key={idx}
+                          onClick={() => setSelectedImageIndex(idx)}
+                          className={`w-16 h-16 md:w-[76px] md:h-[76px] shrink-0 rounded-md overflow-hidden transition-all border-2 bg-white shadow-sm ${selectedImageIndex === idx ? 'border-[#054425]' : 'border-gray-100 hover:border-gray-300'}`}
+                        >
+                          <img src={img} alt={`${product.name} ${idx}`} className="w-full h-full object-cover" />
+                        </button>
+                      );
+                    })}
                   </div>
                   <button className="hidden md:flex items-center justify-center p-1 text-gray-600 hover:text-black transition-colors bg-white rounded-full shadow-sm w-9 h-9 border border-gray-200" onClick={() => setSelectedImageIndex(prev => Math.min(3, prev + 1))}>
-                     <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
                   </button>
-               </div>
-               
-               {/* Main Image */}
-               <div className="relative flex-1 aspect-square md:aspect-auto md:min-h-[340px] rounded-md overflow-hidden flex items-center justify-center md:ml-6 lg:ml-8">
-                 <motion.img
-                   key={selectedImageIndex}
-                   initial={{ opacity: 0 }}
-                   animate={{ opacity: 1 }}
-                   src={(Array.isArray(product.gallery) && product.gallery[selectedImageIndex]) || product.image}
-                   alt={product.name}
-                   className="max-w-full max-h-full object-contain drop-shadow-2xl scale-95 hover:scale-100 transition-transform duration-700"
-                 />
-               </div>
+                </div>
+
+                {/* Main Image */}
+                <div className="relative flex-1 aspect-square md:aspect-auto md:min-h-[340px] rounded-md overflow-hidden flex items-center justify-center md:ml-6 lg:ml-8">
+                  <motion.img
+                    key={selectedImageIndex}
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    src={(Array.isArray(product.gallery) && product.gallery[selectedImageIndex]) || product.image}
+                    alt={product.name}
+                    className="max-w-full max-h-full object-contain drop-shadow-2xl scale-95 hover:scale-100 transition-transform duration-700"
+                  />
+                </div>
               </div>
             </div>
 
@@ -424,237 +448,272 @@ const ProductDetail = () => {
             <div className="order-3 mt-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-0 border border-gray-100 rounded-md bg-white shadow-sm overflow-hidden">
                 <div className="p-5 border-b md:border-b-0 md:border-r border-gray-100">
-                   <h3 className="text-[13px] font-bold text-gray-900 mb-3">About this product</h3>
-                   <p className="text-[11px] text-gray-600 mb-4 leading-relaxed">
-                     {product.description || `Sada Bharat ${product.name} is a blend of pure ingredients & herbs that nourishes the body.`}
-                   </p>
-                   <ul className="space-y-2.5">
-                     {(Array.isArray(product.about) && product.about.length > 0 ? product.about : [
-                       "Enriched with Bhringraj & Amla",
-                       "Reduces Hair Fall & Dandruff",
-                       "Strengthens Roots",
-                       "Suitable for All Hair Types"
-                     ]).slice(0, 4).map((point, idx) => (
-                       <li key={idx} className="flex items-center gap-2.5">
-                         <svg className="w-4 h-4 text-[#054425] shrink-0" viewBox="0 0 20 20" fill="currentColor">
-                           <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                         </svg>
-                         <span className="text-[11px] text-gray-700 font-bold">{point}</span>
-                       </li>
-                     ))}
-                   </ul>
+                  <h3 className="text-[13px] font-bold text-gray-900 mb-3">About this product</h3>
+                  <p className="text-[11px] text-gray-600 mb-4 leading-relaxed">
+                    {product.description || `Sada Bharat ${product.name} is a blend of pure ingredients & herbs that nourishes the body.`}
+                  </p>
+                  <ul className="space-y-2.5">
+                    {(Array.isArray(product.about) && product.about.length > 0 ? product.about : [
+                      "Enriched with Bhringraj & Amla",
+                      "Reduces Hair Fall & Dandruff",
+                      "Strengthens Roots",
+                      "Suitable for All Hair Types"
+                    ]).slice(0, 4).map((point, idx) => (
+                      <li key={idx} className="flex items-center gap-2.5">
+                        <svg className="w-4 h-4 text-[#054425] shrink-0" viewBox="0 0 20 20" fill="currentColor">
+                          <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                        </svg>
+                        <span className="text-[11px] text-gray-700 font-bold">{point}</span>
+                      </li>
+                    ))}
+                  </ul>
                 </div>
                 <div className="p-5 flex flex-col justify-between">
-                   <div>
-                     <h3 className="text-[13px] font-bold text-gray-900 mb-4">Key Ingredients</h3>
-                     <div className="space-y-3">
-                        {[
-                          { name: 'Bhringraj', fallbackImg: 'https://cdn-icons-png.flaticon.com/512/1892/1892695.png' },
-                          { name: 'Amla', fallbackImg: 'https://cdn-icons-png.flaticon.com/512/1892/1892695.png' },
-                          { name: 'Coconut Oil', fallbackImg: 'https://cdn-icons-png.flaticon.com/512/1892/1892695.png' },
-                          { name: 'Brahmi', fallbackImg: 'https://cdn-icons-png.flaticon.com/512/1892/1892695.png' }
-                        ].map((ing, idx) => (
-                          <div key={idx} className="flex items-center gap-3">
-                             <div className="w-8 h-8 rounded-full bg-[#F9F7F3] flex items-center justify-center text-sm shadow-inner overflow-hidden border border-gray-50">
-                               <img src={ing.fallbackImg} alt={ing.name} className="w-5 h-5 object-contain" />
-                             </div>
-                             <span className="text-[11px] font-semibold text-gray-700">{ing.name}</span>
+                  <div>
+                    <h3 className="text-[13px] font-bold text-gray-900 mb-4">Key Ingredients</h3>
+                    <div className="space-y-3">
+                      {[
+                        { name: 'Bhringraj', fallbackImg: 'https://cdn-icons-png.flaticon.com/512/1892/1892695.png' },
+                        { name: 'Amla', fallbackImg: 'https://cdn-icons-png.flaticon.com/512/1892/1892695.png' },
+                        { name: 'Coconut Oil', fallbackImg: 'https://cdn-icons-png.flaticon.com/512/1892/1892695.png' },
+                        { name: 'Brahmi', fallbackImg: 'https://cdn-icons-png.flaticon.com/512/1892/1892695.png' }
+                      ].map((ing, idx) => (
+                        <div key={idx} className="flex items-center gap-3">
+                          <div className="w-8 h-8 rounded-full bg-[#F9F7F3] flex items-center justify-center text-sm shadow-inner overflow-hidden border border-gray-50">
+                            <img src={ing.fallbackImg} alt={ing.name} className="w-5 h-5 object-contain" />
                           </div>
-                        ))}
-                     </div>
-                   </div>
-                   <button className="text-[10px] font-bold text-[#054425] hover:underline self-start mt-4">View full ingredients</button>
+                          <span className="text-[11px] font-semibold text-gray-700">{ing.name}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                  <button className="text-[10px] font-bold text-[#054425] hover:underline self-start mt-4">View full ingredients</button>
                 </div>
               </div>
 
               {/* Bottom Features */}
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4 border border-gray-100 rounded-md p-5 bg-white shadow-sm mt-2">
-                 {[
-                   { icon: <svg className="w-[22px] h-[22px] text-[#054425]" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" /></svg>, label: 'Natural & Safe Ingredients' },
-                   { icon: <svg className="w-[22px] h-[22px] text-[#054425]" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" /></svg>, label: 'No Mineral Oil' },
-                   { icon: <svg className="w-[22px] h-[22px] text-[#054425]" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>, label: 'Paraben Free' },
-                   { icon: <svg className="w-[22px] h-[22px] text-[#054425]" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" /></svg>, label: 'Cruelty Free' }
-                 ].map((f, i) => (
-                   <div key={i} className="flex items-center justify-center gap-3">
-                     {f.icon}
-                     <span className="text-[11px] text-gray-700 font-bold leading-tight">{f.label}</span>
-                   </div>
-                 ))}
+                {[
+                  { icon: <svg className="w-[22px] h-[22px] text-[#054425]" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" /></svg>, label: 'Natural & Safe Ingredients' },
+                  { icon: <svg className="w-[22px] h-[22px] text-[#054425]" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" /></svg>, label: 'No Mineral Oil' },
+                  { icon: <svg className="w-[22px] h-[22px] text-[#054425]" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>, label: 'Paraben Free' },
+                  { icon: <svg className="w-[22px] h-[22px] text-[#054425]" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" /></svg>, label: 'Cruelty Free' }
+                ].map((f, i) => (
+                  <div key={i} className="flex items-center justify-center gap-3">
+                    {f.icon}
+                    <span className="text-[11px] text-gray-700 font-bold leading-tight">{f.label}</span>
+                  </div>
+                ))}
               </div>
 
               {/* Consultation CTA */}
               <div className="mt-2">
-                 <ConsultationCTA />
+                <ConsultationCTA />
               </div>
             </div>
           </div>
 
           {/* Right Column Container */}
           <div className="contents lg:block lg:col-span-7">
-           
-           {/* Top part of right column (Title, Price, Cart) */}
-           <div className="order-2 space-y-2 lg:pl-0 lg:pt-2">
-              <div>
-                 <h1 className="text-2xl md:text-[24px] font-serif font-bold text-[#054425] mb-1 leading-tight tracking-tight">{product.name}</h1>
-                 <p className="text-[12px] text-gray-600 mb-2 font-medium">{product.subtitle || 'Nourishes roots & promotes healthy growth'}</p>
-                 <div className="flex items-center gap-3 text-[11px] mb-3">
-                    <div className="flex items-center text-[#F59E0B]">
-                       <FiStar className="fill-current w-3.5 h-3.5" />
-                       <span className="ml-1.5 font-bold text-gray-900 text-[12px]">{product.rating || '4.8'}</span>
-                    </div>
-                    <span className="text-gray-500 font-medium">(230 Reviews)</span>
-                    <span className="bg-[#E6F4EA] text-[#054425] px-1.5 py-0.5 rounded text-[9px] font-bold flex items-center gap-1 ml-1">
-                       <FiCheckCircle size={9} /> Bestseller
-                    </span>
-                 </div>
 
-                 <div className="flex items-baseline gap-3 mb-0">
-                    <span className="text-2xl font-medium font-sans text-gray-900 tracking-tight">₹{finalPrice.toFixed(2)}</span>
-                    {appliedCoupon ? (
-                      <span className="text-[14px] text-gray-400 line-through font-medium">₹{product.price.toFixed(2)}</span>
-                    ) : (
-                      <span className="text-[14px] text-gray-400 line-through font-medium">₹{(product.price * 1.3).toFixed(2)}</span>
-                    )}
-                    {appliedCoupon && appliedCoupon.discountType === 'percentage' ? (
-                      <span className="text-[13px] font-bold text-[#054425]">{appliedCoupon.discountValue}% OFF</span>
-                    ) : (
-                      <span className="text-[13px] font-bold text-[#054425]">30% OFF</span>
-                    )}
-                 </div>
-                 <p className="text-[11px] text-gray-500 font-medium">Inclusive of all taxes</p>
+            {/* Top part of right column (Title, Price, Cart) */}
+            <div className="order-2 space-y-2 lg:pl-0 lg:pt-2">
+              <div>
+                <h1 className="text-2xl md:text-[24px] font-serif font-bold text-[#054425] mb-1 leading-tight tracking-tight">{product.name}</h1>
+                <p className="text-[12px] text-gray-600 mb-2 font-medium">{product.subtitle || 'Nourishes roots & promotes healthy growth'}</p>
+                <div className="flex items-center gap-3 text-[11px] mb-3">
+                  <div className="flex items-center text-[#F59E0B]">
+                    <FiStar className="fill-current w-3.5 h-3.5" />
+                    <span className="ml-1.5 font-bold text-gray-900 text-[12px]">{product.rating || '4.8'}</span>
+                  </div>
+                  <span className="text-gray-500 font-medium">(230 Reviews)</span>
+                  <span className="bg-[#E6F4EA] text-[#054425] px-1.5 py-0.5 rounded text-[9px] font-bold flex items-center gap-1 ml-1">
+                    <FiCheckCircle size={9} /> Bestseller
+                  </span>
+                </div>
+
+                <div className="flex items-baseline gap-3 mb-0">
+                  <span className="text-2xl font-medium font-sans text-gray-900 tracking-tight">₹{finalPrice.toFixed(2)}</span>
+                  {appliedCoupon ? (
+                    <span className="text-[14px] text-gray-400 line-through font-medium">₹{basePrice.toFixed(2)}</span>
+                  ) : (
+                    <span className="text-[14px] text-gray-400 line-through font-medium">₹{oldPrice.toFixed(2)}</span>
+                  )}
+                  {appliedCoupon && appliedCoupon.discountType === 'percentage' ? (
+                    <span className="text-[13px] font-bold text-[#054425]">{appliedCoupon.discountValue}% OFF</span>
+                  ) : (
+                    <span className="text-[13px] font-bold text-[#054425]">
+                      {Math.round(((oldPrice - basePrice) / oldPrice) * 100)}% OFF
+                    </span>
+                  )}
+                </div>
+                <p className="text-[11px] text-gray-500 font-medium">Inclusive of all taxes</p>
               </div>
 
-             {/* Benefit Icons Row */}
-             <div className="grid grid-cols-4 gap-2 mt-2 mb-3">
+              {/* Benefit Icons Row */}
+              <div className="grid grid-cols-4 gap-2 mt-2 mb-3">
                 {[
-                  { 
-                    icon: <FiTarget className="w-4 h-4 text-[#054425]" />, 
-                    label: 'Strengthens\nHair Roots' 
+                  {
+                    icon: <FiTarget className="w-4 h-4 text-[#054425]" />,
+                    label: 'Strengthens\nHair Roots'
                   },
-                  { 
-                    icon: <FiActivity className="w-4 h-4 text-[#054425]" />, 
-                    label: 'Reduces\nHair Fall' 
+                  {
+                    icon: <FiActivity className="w-4 h-4 text-[#054425]" />,
+                    label: 'Reduces\nHair Fall'
                   },
-                  { 
-                    icon: <FiDroplet className="w-4 h-4 text-[#054425]" />, 
-                    label: 'Promotes\nHair Growth' 
+                  {
+                    icon: <FiDroplet className="w-4 h-4 text-[#054425]" />,
+                    label: 'Promotes\nHair Growth'
                   },
-                  { 
-                    icon: <FiFeather className="w-4 h-4 text-[#054425]" />, 
-                    label: 'Natural\nIngredients' 
+                  {
+                    icon: <FiFeather className="w-4 h-4 text-[#054425]" />,
+                    label: 'Natural\nIngredients'
                   }
                 ].map((benefit, i) => (
                   <div key={i} className="flex flex-col items-center justify-start text-center gap-1.5">
-                     <div className="w-[40px] h-[40px] rounded-full border border-transparent flex items-center justify-center bg-[#EAF0EC] hover:bg-[#054425] hover:text-white transition-all cursor-default shadow-sm group">
-                        <div className="group-hover:brightness-0 group-hover:invert transition-all">{benefit.icon}</div>
-                     </div>
-                     <span className="text-[10px] text-gray-600 font-medium leading-tight whitespace-pre-line">{benefit.label}</span>
+                    <div className="w-[40px] h-[40px] rounded-full border border-transparent flex items-center justify-center bg-[#EAF0EC] hover:bg-[#054425] hover:text-white transition-all cursor-default shadow-sm group">
+                      <div className="group-hover:brightness-0 group-hover:invert transition-all">{benefit.icon}</div>
+                    </div>
+                    <span className="text-[10px] text-gray-600 font-medium leading-tight whitespace-pre-line">{benefit.label}</span>
                   </div>
                 ))}
-             </div>
+              </div>
 
-             {/* Size Selector */}
-             <div className="space-y-1.5 pt-1">
-               <h3 className="text-[13px] font-sans font-bold text-gray-900">Size</h3>
-               <div className="flex flex-wrap gap-2">
-                 {(Array.isArray(product.sizes) && product.sizes.length > 0 ? product.sizes : ['100 ml', '200 ml', '300 ml']).map((size, idx) => (
-                   <button
-                     key={idx}
-                     onClick={() => setSelectedSize(size)}
-                     className={`w-[80px] h-[34px] rounded-md border text-[10px] font-bold transition-all ${
-                       selectedSize === size
-                         ? 'border-[#054425] text-gray-900 shadow-sm ring-1 ring-[#054425]'
-                         : 'border-gray-200 text-gray-600 hover:border-gray-300'
-                     }`}
-                   >
-                     {size}
-                   </button>
-                 ))}
-               </div>
-             </div>
+              {/* Size Selector */}
+              {variants.length > 0 && (
+                <div className="space-y-2 pt-2">
+                  <h3 className="text-[13px] font-sans font-bold text-gray-900">Select Unit</h3>
+                  <div className="flex flex-wrap gap-3">
+                    {variants.map((v, idx) => (
+                      <button
+                        key={idx}
+                        onClick={() => setSelectedSize(v.size)}
+                        className={`flex flex-col items-center justify-center min-w-[80px] p-2 rounded-lg border transition-all relative overflow-hidden ${currentSize === v.size
+                          ? 'border-[#054425] shadow-sm ring-1 ring-[#054425] bg-green-50'
+                          : 'border-gray-200 bg-white hover:border-gray-300'
+                          }`}
+                      >
+                        {currentSize === v.size && (
+                          <div className="absolute top-0 right-0 bg-[#054425] w-4 h-4 rounded-bl-lg flex items-center justify-center text-white">
+                            <svg viewBox="0 0 12 12" className="w-2.5 h-2.5 fill-none stroke-white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                              <path d="M10 3L4.5 8.5 2 6" />
+                            </svg>
+                          </div>
+                        )}
+                        <span className="text-[11px] text-gray-600 font-bold mb-0.5">{v.size}</span>
+                        <span className="text-[12px] font-black text-gray-900">₹{v.price}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
 
-             {/* Quantity and Actions */}
-             <div className="pt-2 space-y-4">
-               <div className="flex items-center gap-4">
-                 <h3 className="text-[13px] font-sans font-bold text-gray-900 w-[60px]">Quantity</h3>
-                 <div className="flex items-center border border-gray-200 rounded-md h-[34px] bg-white w-[100px] overflow-hidden">
-                    <button onClick={() => setQuantity(q => Math.max(1, q - 1))} className="w-8 flex items-center justify-center text-gray-500 hover:text-black hover:bg-gray-50 transition-colors h-full">
-                       <span className="text-lg">−</span>
-                    </button>
-                    <span className="flex-1 text-center text-[12px] font-bold text-gray-900">{quantity}</span>
-                    <button onClick={() => setQuantity(q => q + 1)} className="w-8 flex items-center justify-center text-gray-500 hover:text-black hover:bg-gray-50 transition-colors h-full">
-                       <span className="text-lg">+</span>
-                    </button>
-                 </div>
-               </div>
-               
-               <div className="flex flex-row gap-2 md:gap-3">
-                 <button
-                    onClick={handleAddToCart}
-                    className="flex-1 h-[52px] md:h-[40px] flex items-center justify-center gap-1.5 md:gap-2 border border-[#054425] text-[#054425] rounded-md text-[11px] md:text-[12px] font-bold hover:bg-[#054425]/5 transition-colors tracking-wide"
-                 >
-                    <FiShoppingCart className="w-[14px] h-[14px]" /> Add to Cart
-                 </button>
-                 <button
+              {/* Selected Variant Detail & Add to Cart */}
+              <div className="pt-6 pb-2">
+                <div className="flex items-center justify-between">
+                  <div className="flex flex-col">
+                    <span className="text-[13px] font-bold text-gray-600">{currentSize || '100 ml'}</span>
+                    <span className="text-xl font-black text-gray-900 tracking-tight mt-1">₹{finalPrice.toFixed(2)}</span>
+                    <span className="text-[10px] text-gray-500 font-medium mt-0.5">(Inclusive of all taxes)</span>
+                  </div>
+
+                  <div className="flex items-center">
+                    {totalQtyInCart === 0 ? (
+                      <button
+                        onClick={handleAddToCart}
+                        className="h-[38px] px-8 flex items-center justify-center bg-[#054425] text-white rounded-md text-[13px] font-bold hover:bg-[#04331c] transition-colors tracking-wide shadow-sm"
+                      >
+                        Add to cart
+                      </button>
+                    ) : (
+                      <div className="flex items-center justify-between bg-[#054425] rounded-md px-2 h-[38px] w-[100px] shadow-sm">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if (totalQtyInCart <= 1) {
+                              removeFromCart(product._id, currentSize);
+                            } else {
+                              updateQuantity(product._id, currentSize, -1);
+                            }
+                          }}
+                          className="text-white hover:text-white/80 p-1"
+                        >
+                          <FiMinus size={15} strokeWidth={3} />
+                        </button>
+                        <span className="text-white text-[13px] font-bold px-2">{totalQtyInCart}</span>
+                        <button
+                          onClick={(e) => { e.stopPropagation(); updateQuantity(product._id, currentSize, 1); }}
+                          className="text-white hover:text-white/80 p-1"
+                        >
+                          <FiPlus size={15} strokeWidth={3} />
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Buy Now Button */}
+                {totalQtyInCart === 0 && (
+                  <button
                     onClick={handleBuyNow}
-                    className="flex-1 h-[52px] md:h-[40px] flex items-center justify-center bg-[#054425] text-white rounded-md text-[11px] md:text-[12px] font-bold hover:bg-[#04331c] transition-colors tracking-wide"
-                 >
+                    className="w-full mt-4 h-[40px] flex items-center justify-center border border-[#054425] text-[#054425] rounded-md text-[13px] font-bold hover:bg-[#EAF0EC] transition-colors tracking-wide"
+                  >
                     Buy Now
-                 </button>
-               </div>
-             </div>
+                  </button>
+                )}
+              </div>
 
-             {/* Delivery Features */}
-             <div className="grid grid-cols-3 gap-2 sm:gap-4 border border-gray-100 rounded-xl p-3 sm:p-5 bg-white shadow-sm mt-6">
+              {/* Delivery Features */}
+              <div className="grid grid-cols-3 gap-2 sm:gap-4 border border-gray-100 rounded-xl p-3 sm:p-5 bg-white shadow-sm mt-6">
                 <div className="flex flex-col sm:flex-row items-center sm:items-start gap-1.5 sm:gap-3 text-center sm:text-left">
-                   <div className="w-8 h-8 rounded-md bg-gray-50 flex items-center justify-center text-gray-600 shrink-0">
-                      <FiTruck size={14} />
-                   </div>
-                   <div className="mt-0 sm:mt-1">
-                     <p className="text-[9px] sm:text-[10px] font-bold text-gray-900 leading-tight">Free Delivery</p>
-                     <p className="text-[8px] sm:text-[9px] text-gray-500 mt-0.5">On orders ₹499+</p>
-                   </div>
+                  <div className="w-8 h-8 rounded-md bg-gray-50 flex items-center justify-center text-gray-600 shrink-0">
+                    <FiTruck size={14} />
+                  </div>
+                  <div className="mt-0 sm:mt-1">
+                    <p className="text-[9px] sm:text-[10px] font-bold text-gray-900 leading-tight">Free Delivery</p>
+                    <p className="text-[8px] sm:text-[9px] text-gray-500 mt-0.5">On orders ₹499+</p>
+                  </div>
                 </div>
                 <div className="flex flex-col sm:flex-row items-center sm:items-start gap-1.5 sm:gap-3 text-center sm:text-left">
-                   <div className="w-8 h-8 rounded-md bg-gray-50 flex items-center justify-center text-gray-600 shrink-0">
-                      <FiRefreshCw size={14} />
-                   </div>
-                   <div className="mt-0 sm:mt-1">
-                     <p className="text-[9px] sm:text-[10px] font-bold text-gray-900 leading-tight">7 Days Return</p>
-                     <p className="text-[8px] sm:text-[9px] text-gray-500 mt-0.5">Easy Returns</p>
-                   </div>
+                  <div className="w-8 h-8 rounded-md bg-gray-50 flex items-center justify-center text-gray-600 shrink-0">
+                    <FiRefreshCw size={14} />
+                  </div>
+                  <div className="mt-0 sm:mt-1">
+                    <p className="text-[9px] sm:text-[10px] font-bold text-gray-900 leading-tight">7 Days Return</p>
+                    <p className="text-[8px] sm:text-[9px] text-gray-500 mt-0.5">Easy Returns</p>
+                  </div>
                 </div>
                 <div className="flex flex-col sm:flex-row items-center sm:items-start gap-1.5 sm:gap-3 text-center sm:text-left">
-                   <div className="w-8 h-8 rounded-md bg-gray-50 flex items-center justify-center text-gray-600 shrink-0">
-                      <FiShield size={14} />
-                   </div>
-                   <div className="mt-0 sm:mt-1">
-                     <p className="text-[9px] sm:text-[10px] font-bold text-gray-900 leading-tight">100% Secure</p>
-                     <p className="text-[8px] sm:text-[9px] text-gray-500 mt-0.5">Payments</p>
-                   </div>
+                  <div className="w-8 h-8 rounded-md bg-gray-50 flex items-center justify-center text-gray-600 shrink-0">
+                    <FiShield size={14} />
+                  </div>
+                  <div className="mt-0 sm:mt-1">
+                    <p className="text-[9px] sm:text-[10px] font-bold text-gray-900 leading-tight">100% Secure</p>
+                    <p className="text-[8px] sm:text-[9px] text-gray-500 mt-0.5">Payments</p>
+                  </div>
                 </div>
-             </div>
+              </div>
 
-             {/* Price Breakdown Card */}
-             <div className="mt-6 border border-[#054425]/10 rounded-xl p-4 bg-[#FDFBF7] shadow-sm">
+              {/* Price Breakdown Card */}
+              <div className="mt-6 border border-[#054425]/10 rounded-xl p-4 bg-[#FDFBF7] shadow-sm">
                 <h3 className="text-[11px] font-bold text-[#054425] mb-3 uppercase tracking-widest flex items-center gap-1.5">
                   <FiTag className="w-3.5 h-3.5" /> Price Breakdown
                 </h3>
                 <div className="space-y-2 text-[11px] text-gray-600 font-medium">
                   <div className="flex justify-between items-center">
                     <span>M.R.P. <span className="text-[9px] text-gray-400 font-normal">(Incl. of all taxes)</span></span>
-                    <span className="text-gray-900 font-bold">₹{appliedCoupon ? product.price.toFixed(2) : (product.price * 1.3).toFixed(2)}</span>
+                    <span className="text-gray-900 font-bold">₹{appliedCoupon ? basePrice.toFixed(2) : oldPrice.toFixed(2)}</span>
                   </div>
                   {!appliedCoupon && (
                     <div className="flex justify-between items-center text-[#054425]">
-                      <span>Product Discount (30%)</span>
-                      <span>- ₹{((product.price * 1.3) - product.price).toFixed(2)}</span>
+                      <span>Product Discount ({Math.round(((oldPrice - basePrice) / oldPrice) * 100)}%)</span>
+                      <span>- ₹{(oldPrice - basePrice).toFixed(2)}</span>
                     </div>
                   )}
                   {appliedCoupon && (
                     <div className="flex justify-between items-center text-[#054425]">
                       <span>Coupon Discount ({appliedCoupon.code})</span>
-                      <span>- ₹{(product.price - finalPrice).toFixed(2)}</span>
+                      <span>- ₹{(basePrice - finalPrice).toFixed(2)}</span>
                     </div>
                   )}
                   <div className="flex justify-between items-center text-gray-400 pt-2 border-t border-gray-200">
@@ -666,70 +725,70 @@ const ProductDetail = () => {
                     <span>₹{finalPrice.toFixed(2)}</span>
                   </div>
                 </div>
-             </div>
-           </div>
+              </div>
+            </div>
 
-           {/* Customer Feedback Section */}
-           <div className="order-4 mt-10 border-t border-gray-100 pt-8 pb-4">
-             <h3 className="text-lg font-serif font-black text-brand-dark uppercase tracking-widest mb-2">Verified Insights</h3>
-               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
-                 <div>
-                   <div className="flex items-center gap-2 mb-1">
-                     <div className="flex items-center">
-                       {[...Array(5)].map((_, i) => (
-                         <FiStar key={i} className={`w-3.5 h-3.5 ${i < Math.floor(product.rating) ? 'fill-brand-gold text-brand-gold' : 'text-gray-200'}`} />
-                       ))}
-                     </div>
-                     <span className="text-base font-black text-brand-dark">{Number(product.rating).toFixed(1)} / 5.0</span>
-                   </div>
-                   <p className="text-[10px] text-gray-400 font-medium">Global Ratings & Testimony</p>
-                 </div>
-                 
-                 {canSubmitReview && (
-                   <div className="flex items-center">
-                      <button className="text-[10px] font-bold uppercase text-brand-gold hover:text-brand-dark transition-colors tracking-widest border border-brand-gold rounded-full px-4 py-2 hover:bg-brand-gold/10">
-                        Write a Review
-                      </button>
-                   </div>
-                 )}
-               </div>
+            {/* Customer Feedback Section */}
+            <div className="order-4 mt-10 border-t border-gray-100 pt-8 pb-4">
+              <h3 className="text-lg font-serif font-black text-brand-dark uppercase tracking-widest mb-2">Verified Insights</h3>
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+                <div>
+                  <div className="flex items-center gap-2 mb-1">
+                    <div className="flex items-center">
+                      {[...Array(5)].map((_, i) => (
+                        <FiStar key={i} className={`w-3.5 h-3.5 ${i < Math.floor(product.rating) ? 'fill-brand-gold text-brand-gold' : 'text-gray-200'}`} />
+                      ))}
+                    </div>
+                    <span className="text-base font-black text-brand-dark">{Number(product.rating).toFixed(1)} / 5.0</span>
+                  </div>
+                  <p className="text-[10px] text-gray-400 font-medium">Global Ratings & Testimony</p>
+                </div>
 
-               <div className="space-y-6">
-                 {reviewLoading ? (
-                   <div className="animate-pulse space-y-4">
-                     {[1, 2].map(i => <div key={i} className="h-16 bg-gray-50 rounded-xl" />)}
-                   </div>
-                 ) : reviews.length > 0 ? (
-                   reviews.map((r, i) => (
-                     <div key={r._id} className="border-b border-gray-50 pb-6 last:border-0">
-                       <div className="flex items-center justify-between mb-2">
-                         <div className="flex items-center gap-2">
-                           <div className="w-6 h-6 bg-brand-light/50 rounded-full flex items-center justify-center text-brand-dark font-black text-[9px] uppercase shadow-inner">
-                             {r.user?.name?.charAt(0) || 'A'}
-                           </div>
-                           <div>
-                             <p className="text-[9px] font-black text-brand-dark uppercase tracking-widest">{r.user?.name || 'Verified Beauty'}</p>
-                             <div className="flex items-center gap-0.5 text-brand-gold">
-                               {[...Array(5)].map((_, idx) => (
-                                 <FiStar key={idx} size={7} className={idx < r.rating ? 'fill-current' : 'text-gray-200'} />
-                               ))}
-                             </div>
-                           </div>
-                         </div>
-                         <span className="text-[8px] font-bold text-gray-300 uppercase tracking-tighter">
-                           {new Date(r.createdAt).toLocaleDateString()}
-                         </span>
-                       </div>
-                       <p className="text-[11px] text-gray-600 leading-relaxed font-serif italic">"{r.review}"</p>
-                     </div>
-                   ))
-                 ) : (
-                   <div className="text-center py-8 bg-gray-50 rounded-xl border border-dashed border-gray-200">
-                     <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest italic">No testimony yet</p>
-                   </div>
-                 )}
-               </div>
-             </div>
+                {canSubmitReview && (
+                  <div className="flex items-center">
+                    <button className="text-[10px] font-bold uppercase text-brand-gold hover:text-brand-dark transition-colors tracking-widest border border-brand-gold rounded-full px-4 py-2 hover:bg-brand-gold/10">
+                      Write a Review
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              <div className="space-y-6">
+                {reviewLoading ? (
+                  <div className="animate-pulse space-y-4">
+                    {[1, 2].map(i => <div key={i} className="h-16 bg-gray-50 rounded-xl" />)}
+                  </div>
+                ) : reviews.length > 0 ? (
+                  reviews.map((r, i) => (
+                    <div key={r._id} className="border-b border-gray-50 pb-6 last:border-0">
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center gap-2">
+                          <div className="w-6 h-6 bg-brand-light/50 rounded-full flex items-center justify-center text-brand-dark font-black text-[9px] uppercase shadow-inner">
+                            {r.user?.name?.charAt(0) || 'A'}
+                          </div>
+                          <div>
+                            <p className="text-[9px] font-black text-brand-dark uppercase tracking-widest">{r.user?.name || 'Verified Beauty'}</p>
+                            <div className="flex items-center gap-0.5 text-brand-gold">
+                              {[...Array(5)].map((_, idx) => (
+                                <FiStar key={idx} size={7} className={idx < r.rating ? 'fill-current' : 'text-gray-200'} />
+                              ))}
+                            </div>
+                          </div>
+                        </div>
+                        <span className="text-[8px] font-bold text-gray-300 uppercase tracking-tighter">
+                          {new Date(r.createdAt).toLocaleDateString()}
+                        </span>
+                      </div>
+                      <p className="text-[11px] text-gray-600 leading-relaxed font-serif italic">"{r.review}"</p>
+                    </div>
+                  ))
+                ) : (
+                  <div className="text-center py-8 bg-gray-50 rounded-xl border border-dashed border-gray-200">
+                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest italic">No testimony yet</p>
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
         </div>
 
