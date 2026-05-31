@@ -1,126 +1,338 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { 
   TrendingUp, TrendingDown, ShoppingBag, ClipboardList, 
-  Users, Star, ArrowRight, Eye, MoreHorizontal, ShoppingCart, 
-  Package, Truck, CheckCircle, XCircle
+  User, Star, Eye, Calendar
 } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 
-const StatCard = ({ title, value, trend, trendUp, date, icon: Icon, iconBg }) => (
-  <div className="bg-white p-5 rounded-[20px] shadow-[0_2px_10px_rgba(0,0,0,0.02)] border border-gray-50 flex flex-col justify-between h-full hover:shadow-[0_4px_20px_rgba(0,0,0,0.04)] transition-shadow">
-    <div className="flex justify-between items-start mb-4">
-      <div>
-        <p className="text-gray-500 text-[13px] font-medium font-poppins mb-1">{title}</p>
-        <h3 className="text-2xl font-serif font-black text-gray-900">{value}</h3>
+import bannerImg1 from '../../assets/images/sadabharat_banner.png';
+import bannerImg2 from '../../assets/images/sadabharat_banner1.png';
+
+
+const StatCard = ({ title, value, trend, trendUp, date, icon: Icon, iconBg, iconColor, cardBg }) => {
+  return (
+    <motion.div 
+      initial={{ opacity: 0, y: 20 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: false, amount: 0.2 }}
+      transition={{ type: "spring", stiffness: 300, damping: 24 }}
+      className={`${cardBg} p-1.5 xs:p-2 sm:p-3 rounded-lg sm:rounded-xl shadow-sm border border-gray-100/50 flex flex-col justify-between h-full hover:shadow-md transition-shadow`}
+    >
+      <div className="flex justify-between items-start mb-1 sm:mb-2">
+        <div className="min-w-0 flex-1">
+          <p className="text-gray-700 text-[9px] sm:text-[10px] md:text-[11px] font-bold font-sans mb-0.5 truncate">{title}</p>
+          <h3 className="text-sm sm:text-base md:text-lg text-gray-800 font-bold font-sans tracking-tight truncate">
+            {value}
+          </h3>
+        </div>
+        <div className={`w-6 h-6 sm:w-7 sm:h-7 md:w-8 md:h-8 rounded-full flex items-center justify-center shrink-0 ${iconBg} ${iconColor} ml-1`}>
+          <Icon size={12} className="sm:w-4 sm:h-4" strokeWidth={2.5} />
+        </div>
       </div>
-      <div className={`w-10 h-10 rounded-full flex items-center justify-center ${iconBg}`}>
-        <Icon size={18} />
+      <div className="flex items-center gap-0.5 sm:gap-1 mt-auto flex-wrap sm:flex-nowrap">
+        {trendUp ? (
+          <TrendingUp size={11} className="text-green-700 shrink-0" strokeWidth={2.5} />
+        ) : (
+          <TrendingDown size={11} className="text-red-600 shrink-0" strokeWidth={2.5} />
+        ) }
+        <span className={`text-[10px] sm:text-[12px] font-black shrink-0 ${trendUp ? 'text-green-700' : 'text-red-600'}`}>
+          {trend}
+        </span>
+        <span className="text-[8px] sm:text-[11px] text-gray-600 font-bold ml-0.5 shrink-0">vs {date}</span>
       </div>
-    </div>
-    <div className="flex items-center gap-1.5 mt-auto">
-      {trendUp ? (
-        <TrendingUp size={14} className="text-green-500" />
-      ) : (
-        <TrendingDown size={14} className="text-red-500" />
-      )}
-      <span className={`text-[12px] font-bold ${trendUp ? 'text-green-500' : 'text-red-500'}`}>
-        {trend}
-      </span>
-      <span className="text-[11px] text-gray-400 font-medium ml-1">vs {date}</span>
-    </div>
-  </div>
-);
+    </motion.div>
+  );
+};
 
 const VendorDashboard = () => {
+  const navigate = useNavigate();
+  const [showCalendar, setShowCalendar] = useState(false);
+  const [selectedMonth, setSelectedMonth] = useState('May 2024');
+  const [currentSlide, setCurrentSlide] = useState(0);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentSlide((prev) => (prev + 1) % 3);
+    }, 4500);
+    return () => clearInterval(timer);
+  }, []);
+
+  const dataMap = {
+    'May 2024': { sales: '₹1,25,680', orders: '248', cust: '186', trendSales: '↑ 18.6%', trendOrders: '↑ 12.4%', up: true },
+    'April 2024': { sales: '₹98,450', orders: '190', cust: '142', trendSales: '↓ 4.2%', trendOrders: '↓ 2.1%', up: false },
+    'March 2024': { sales: '₹1,10,200', orders: '215', cust: '168', trendSales: '↑ 5.1%', trendOrders: '↑ 8.3%', up: true }
+  };
+
+  const currentData = dataMap[selectedMonth] || dataMap['May 2024'];
+
   return (
-    <div className="space-y-6 pb-10">
+    <div className="space-y-4 pb-6 max-w-[1400px] mx-auto -mt-2">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div>
-          <h1 className="text-2xl md:text-[28px] font-serif font-black text-gray-900 leading-tight">Dashboard</h1>
-          <p className="text-sm text-gray-500 mt-1 font-poppins">Welcome back! Here's what's happening with your store today.</p>
+      <motion.div 
+        initial={{ opacity: 0, y: -10 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="flex justify-between items-center relative z-20 gap-1.5 w-full px-0.5 py-1"
+      >
+        <div className="min-w-0 flex-1">
+          <h1 className="text-base sm:text-2xl font-serif font-black text-gray-900 leading-none truncate">Dashboard</h1>
+          <p className="hidden sm:block text-[12px] text-gray-500 mt-1 font-sans">Welcome back! Here's what's happening with your store.</p>
         </div>
-        <div className="bg-white border border-gray-200 text-gray-700 text-[13px] font-medium px-4 py-2 rounded-xl shadow-sm flex items-center gap-2 cursor-pointer hover:bg-gray-50">
-          May 1 – May 31, 2024
-          <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+        <div className="relative shrink-0">
+          <button 
+            onClick={() => setShowCalendar(!showCalendar)}
+            className="bg-white border border-gray-200 text-gray-700 text-[10px] sm:text-[12px] font-bold px-2 py-1.5 sm:px-3 sm:py-1.5 rounded-lg shadow-sm flex items-center gap-1 sm:gap-2 cursor-pointer hover:bg-gray-50 transition-colors whitespace-nowrap"
+          >
+            <Calendar size={12} className="text-[#054425] shrink-0" />
+            <span className="shrink-0 leading-none">{selectedMonth}</span>
+            <svg className="w-2.5 h-2.5 text-gray-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M19 9l-7 7-7-7"></path></svg>
+          </button>
+          
+          {showCalendar && (
+            <div className="absolute right-0 mt-2 w-40 bg-white border border-gray-200 shadow-lg rounded-xl overflow-hidden flex flex-col z-30">
+              <div className="px-3 py-2 bg-gray-50 border-b border-gray-100 font-bold text-[10px] text-gray-700 uppercase tracking-wide">
+                Select Month
+              </div>
+              {Object.keys(dataMap).map(month => (
+                <button 
+                  key={month}
+                  onClick={() => { setSelectedMonth(month); setShowCalendar(false); }}
+                  className={`px-3 py-1.5 text-left text-[11px] font-medium transition-colors ${selectedMonth === month ? 'bg-green-50 text-[#054425] font-bold' : 'text-gray-700 hover:bg-gray-50'}`}
+                >
+                  {month}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
-      </div>
+      </motion.div>
 
       {/* Top Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
+      <div className="grid grid-cols-2 xl:grid-cols-4 gap-1.5 sm:gap-3">
         <StatCard 
           title="Total Sales" 
-          value="₹1,25,680" 
-          trend="↑ 18.6%" 
-          trendUp={true} 
-          date="Apr 1 - Apr 30"
+          value={currentData.sales} 
+          trend={currentData.trendSales} 
+          trendUp={currentData.up} 
+          date="last month"
           icon={ShoppingBag}
-          iconBg="bg-green-50 text-[#054425]"
+          iconBg="bg-green-200/60"
+          iconColor="text-green-800"
+          cardBg="bg-green-100"
         />
         <StatCard 
           title="Total Orders" 
-          value="248" 
-          trend="↑ 12.4%" 
-          trendUp={true} 
-          date="Apr 1 - Apr 30"
+          value={currentData.orders} 
+          trend={currentData.trendOrders} 
+          trendUp={currentData.up} 
+          date="last month"
           icon={ClipboardList}
-          iconBg="bg-blue-50 text-blue-600"
+          iconBg="bg-blue-200/60"
+          iconColor="text-blue-800"
+          cardBg="bg-blue-100"
         />
         <StatCard 
           title="Total Customers" 
-          value="186" 
-          trend="↑ 10.3%" 
-          trendUp={true} 
-          date="Apr 1 - Apr 30"
-          icon={Users}
-          iconBg="bg-purple-50 text-purple-600"
+          value={currentData.cust} 
+          trend={currentData.trendSales} 
+          trendUp={currentData.up} 
+          date="last month"
+          icon={User}
+          iconBg="bg-purple-200/60"
+          iconColor="text-purple-800"
+          cardBg="bg-purple-100"
         />
         <StatCard 
           title="Store Rating" 
           value="4.7" 
           trend="↑ 0.2" 
           trendUp={true} 
-          date="Apr 1 - Apr 30"
+          date="last month"
           icon={Star}
-          iconBg="bg-yellow-50 text-yellow-600"
+          iconBg="bg-orange-200/60"
+          iconColor="text-orange-800"
+          cardBg="bg-orange-100"
         />
       </div>
 
-      {/* Middle Row: Charts & Order Status */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Sales Overview Chart (Mock) */}
-        <div className="lg:col-span-2 bg-white p-6 rounded-[20px] shadow-[0_2px_10px_rgba(0,0,0,0.02)] border border-gray-50 flex flex-col">
-          <div className="flex justify-between items-center mb-6">
-            <h3 className="font-bold text-gray-900">Sales Overview</h3>
-            <select className="text-[12px] bg-gray-50 border border-gray-200 rounded-lg px-3 py-1.5 font-medium text-gray-600 outline-none">
+      {/* Compact Image-based Sliding Advertisement Banner */}
+      <div className="relative w-full rounded-xl overflow-hidden shadow-sm h-[135px] sm:h-[185px] md:h-[220px] border border-green-100/70 group select-none">
+        <div className="absolute inset-0 z-10 bg-gradient-to-r from-black/60 via-black/45 to-transparent pointer-events-none"></div>
+        
+        {/* Slides */}
+        <AnimatePresence mode="wait">
+          {[
+            {
+              image: bannerImg1,
+              badge: "📈 Partner Spotlight",
+              title: "Boost Sales By 45% with Prime Badge",
+              desc: "Join our exclusive Prime Seller network and show up in top searches across India.",
+              btn: "Upgrade Now",
+              action: () => window.showVendorToast?.('Redirecting to partner benefits...', 'info')
+            },
+            {
+              image: bannerImg2,
+              badge: "🌿 Flat 5% Platform Fees",
+              title: "Keep More Profits In Your Pocket",
+              desc: "Special seasonal discount: Platform fee slashed to flat 5% for all Premium Ayurvedic Sellers.",
+              btn: "Learn More",
+              action: () => window.showVendorToast?.('Opening commission guide...', 'info')
+            },
+            {
+              image: bannerImg1,
+              badge: "🏆 Seller of the Month",
+              title: "Herbal Essence Achieved Highest Growth!",
+              desc: "Upgrade to premium today to unlock a dedicated home-page showcase feature next month.",
+              btn: "Get Premium",
+              action: () => window.showVendorToast?.('Opening Premium dashboard...', 'info')
+            }
+          ].map((slide, idx) => {
+            if (idx !== currentSlide) return null;
+            return (
+              <motion.div 
+                key={idx}
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+                transition={{ duration: 0.4 }}
+                className="absolute inset-0 w-full h-full"
+              >
+                {/* Background Image */}
+                <img 
+                  src={slide.image} 
+                  alt="Banner slide" 
+                  className="w-full h-full object-cover object-center"
+                />
+                
+                {/* Overlaid Content */}
+                <div className="absolute inset-0 z-20 flex flex-col justify-center px-6 sm:px-10 text-white max-w-[75%] md:max-w-[65%]">
+                  <span className="inline-block bg-[#054425]/90 border border-green-300/30 text-[9px] font-black tracking-wider uppercase px-2 py-0.5 rounded-full w-fit mb-1.5 shadow-sm text-yellow-400 font-sans">
+                    {slide.badge}
+                  </span>
+                  <h3 className="text-sm sm:text-base md:text-lg font-serif font-black tracking-wide leading-tight mb-1 text-white text-shadow-sm">
+                    {slide.title}
+                  </h3>
+                  <p className="text-[10px] text-gray-200 leading-normal line-clamp-1 mb-2.5 font-sans">
+                    {slide.desc}
+                  </p>
+                  <button 
+                    onClick={slide.action}
+                    className="bg-white hover:bg-gray-100 text-[#054425] text-[9px] font-black px-3.5 py-1.5 rounded-lg w-fit transition-all duration-300 hover:scale-105 active:scale-95 shadow-md font-sans"
+                  >
+                    {slide.btn}
+                  </button>
+                </div>
+              </motion.div>
+            );
+          })}
+        </AnimatePresence>
+
+        {/* Navigation Dot Indicators */}
+        <div className="absolute bottom-2.5 right-4 z-20 flex gap-1.5 pointer-events-auto">
+          {[0, 1, 2].map((i) => (
+            <button
+              key={i}
+              onClick={() => setCurrentSlide(i)}
+              className={`w-1.5 h-1.5 rounded-full transition-all duration-300 ${
+                currentSlide === i ? 'bg-white scale-125' : 'bg-white/40 hover:bg-white/70'
+              }`}
+            />
+          ))}
+        </div>
+      </div>
+
+      {/* Middle Row: Charts, Order Status, Earnings */}
+      <div className="grid grid-cols-1 xl:grid-cols-12 gap-2 sm:gap-3">
+        
+        {/* Sales Overview Chart */}
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: false, amount: 0.2 }}
+          transition={{ type: "spring", stiffness: 300, damping: 24, delay: 0.1 }}
+          className="xl:col-span-6 bg-white p-1.5 xs:p-2 sm:p-3 rounded-lg sm:rounded-xl shadow-[0_2px_10px_rgba(0,0,0,0.02)] border border-gray-100 flex flex-col"
+        >
+          <div className="flex justify-between items-center mb-1.5 sm:mb-2">
+            <h3 className="text-xs sm:text-[13px] font-bold font-sans text-gray-900">Sales Overview</h3>
+            <select className="text-[9px] sm:text-[10px] bg-white border border-gray-200 rounded-md px-1.5 py-0.5 sm:px-2 sm:py-1 font-semibold text-gray-600 outline-none shadow-sm cursor-pointer">
               <option>This Month</option>
               <option>Last Month</option>
               <option>This Year</option>
             </select>
           </div>
-          <div className="flex-1 relative min-h-[200px] flex items-end">
-             {/* Mock Chart SVG */}
+          <div className="flex-1 relative min-h-[110px] sm:min-h-[140px] flex items-end pt-2">
              <svg viewBox="0 0 500 150" className="w-full h-full preserve-3d" preserveAspectRatio="none">
                 <defs>
-                  <linearGradient id="chartGradient" x1="0" x2="0" y1="0" y2="1">
-                    <stop offset="0%" stopColor="#054425" stopOpacity="0.2"/>
-                    <stop offset="100%" stopColor="#054425" stopOpacity="0"/>
+                  <linearGradient id="chartGradient2" x1="0" x2="0" y1="0" y2="1">
+                    <stop offset="0%" stopColor="#388E3C" stopOpacity="0.2"/>
+                    <stop offset="100%" stopColor="#388E3C" stopOpacity="0"/>
                   </linearGradient>
                 </defs>
-                <path d="M0,150 L0,80 Q25,60 50,90 T100,50 T150,110 T200,80 T250,100 T300,50 T350,90 T400,20 T450,70 T500,40 L500,150 Z" fill="url(#chartGradient)" />
-                <path d="M0,80 Q25,60 50,90 T100,50 T150,110 T200,80 T250,100 T300,50 T350,90 T400,20 T450,70 T500,40" fill="none" stroke="#054425" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
-                <circle cx="100" cy="50" r="4" fill="white" stroke="#054425" strokeWidth="2" />
-                <circle cx="200" cy="80" r="4" fill="white" stroke="#054425" strokeWidth="2" />
-                <circle cx="300" cy="50" r="4" fill="white" stroke="#054425" strokeWidth="2" />
-                <circle cx="400" cy="20" r="4" fill="white" stroke="#054425" strokeWidth="2" />
+                
+                {/* Dynamically building the SVG path based on currentData.graphPts */}
+                {(() => {
+                  const pts = currentData.graphPts || [90, 112, 56, 101, 71, 90, 45, 105, 15, 78, 41];
+                  // x goes from 0 to 500 in steps of 50
+                  const dPath = `M0,${pts[0]} ` + pts.slice(1).map((y, i) => {
+                    const x = (i + 1) * 50;
+                    const prevX = i * 50;
+                    // Simple curve approximation
+                    const cX = prevX + 25;
+                    return `S${cX},${y} ${x},${y}`;
+                  }).join(' ');
+ 
+                  return (
+                    <>
+                      <motion.path 
+                        d={`${dPath} L500,150 L0,150 Z`}
+                        fill="url(#chartGradient2)" 
+                        initial={{ opacity: 0 }}
+                        animate={{ d: `${dPath} L500,150 L0,150 Z`, opacity: 1 }}
+                        transition={{ duration: 0.8 }}
+                      />
+                      <motion.path 
+                        d={dPath}
+                        fill="none" 
+                        stroke="#388E3C" 
+                        strokeWidth="2.5" 
+                        strokeLinecap="round" 
+                        strokeLinejoin="round" 
+                        initial={{ pathLength: 0 }}
+                        animate={{ d: dPath, pathLength: 1 }}
+                        transition={{ duration: 0.8, ease: "linear" }}
+                      />
+                    </>
+                  );
+                })()}
+                
+                {/* Data points */}
+                {[
+                  {x: 0, y: 90, val: "₹16,000"}, {x: 50, y: 112, val: "₹10,000"}, {x: 100, y: 56, val: "₹25,000"}, 
+                  {x: 150, y: 101, val: "₹13,000"}, {x: 200, y: 71, val: "₹21,000"}, {x: 250, y: 90, val: "₹16,000"}, 
+                  {x: 300, y: 45, val: "₹28,000"}, {x: 350, y: 105, val: "₹12,000"}, {x: 400, y: 15, val: "₹36,000"},
+                  {x: 450, y: 78, val: "₹19,000"}, {x: 500, y: 41, val: "₹29,000"}
+                ].map((point, index) => (
+                  <motion.circle 
+                    key={index}
+                    cx={point.x} cy={point.y} r="4" 
+                    fill="white" stroke="#388E3C" strokeWidth="2.5" 
+                    className="cursor-pointer hover:stroke-[4px] hover:r-5 transition-all"
+                    initial={{ scale: 0, opacity: 0 }}
+                    whileInView={{ scale: 1, opacity: 1 }}
+                    transition={{ delay: 1 + (index * 0.1), type: "spring" }}
+                  >
+                    <title>{point.val} on May {index * 3 + 1}</title>
+                  </motion.circle>
+                ))}
              </svg>
-             <div className="absolute left-0 top-0 h-full flex flex-col justify-between text-[10px] text-gray-400 pb-6">
+             <div className="absolute left-0 top-0 h-full flex flex-col justify-between text-[8px] sm:text-[9px] text-gray-400 pb-5 font-semibold">
                 <span>₹40K</span>
                 <span>₹30K</span>
                 <span>₹20K</span>
                 <span>₹10K</span>
                 <span>₹0</span>
              </div>
-             <div className="absolute bottom-0 left-8 right-0 flex justify-between text-[10px] text-gray-400">
+             <div className="absolute bottom-0 left-10 right-0 flex justify-between text-[8px] sm:text-[10px] text-gray-400 font-semibold">
                 <span>May 1</span>
                 <span>May 7</span>
                 <span>May 13</span>
@@ -129,168 +341,215 @@ const VendorDashboard = () => {
                 <span>May 31</span>
              </div>
           </div>
-        </div>
-
+        </motion.div>
+ 
         {/* Order Status Donut */}
-        <div className="bg-white p-6 rounded-[20px] shadow-[0_2px_10px_rgba(0,0,0,0.02)] border border-gray-50 flex flex-col">
-          <h3 className="font-bold text-gray-900 mb-6">Order Status</h3>
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: false, amount: 0.2 }}
+          transition={{ type: "spring", stiffness: 300, damping: 24, delay: 0.2 }}
+          className="xl:col-span-3 bg-white p-1.5 xs:p-2 sm:p-3 rounded-lg sm:rounded-xl shadow-[0_2px_10px_rgba(0,0,0,0.02)] border border-gray-100 flex flex-col relative"
+        >
+          <h3 className="text-xs sm:text-[13px] font-bold font-sans text-gray-900 mb-1.5 sm:mb-2">Order Status</h3>
           <div className="flex-1 flex flex-col items-center justify-center">
-             <div className="relative w-40 h-40 mb-6">
+             <div className="relative w-20 h-20 sm:w-28 sm:h-28 mb-2 sm:mb-3">
                <svg viewBox="0 0 36 36" className="w-full h-full circular-chart">
-                  <path className="text-green-600 stroke-current" strokeWidth="4" strokeDasharray="65, 100" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-                  <path className="text-yellow-500 stroke-current" strokeWidth="4" strokeDasharray="18, 100" strokeDashoffset="-65" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-                  <path className="text-gray-800 stroke-current" strokeWidth="4" strokeDasharray="11, 100" strokeDashoffset="-83" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-                  <path className="text-red-500 stroke-current" strokeWidth="4" strokeDasharray="6, 100" strokeDashoffset="-94" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                  <motion.path 
+                    className="text-[#388E3C] stroke-current cursor-pointer hover:stroke-[#2E7D32] transition-colors" strokeWidth="4.5" fill="none" 
+                    d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" 
+                    initial={{ strokeDasharray: "0, 100" }}
+                    whileInView={{ strokeDasharray: "65, 100" }}
+                    transition={{ duration: 1.2, ease: "easeOut" }}
+                  >
+                    <title>Delivered: 162 Orders (₹82,450)</title>
+                  </motion.path>
+                  <motion.path 
+                    className="text-[#FBC02D] stroke-current cursor-pointer hover:stroke-[#F9A825] transition-colors" strokeWidth="4.5" strokeDashoffset="-65" fill="none" 
+                    d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" 
+                    initial={{ strokeDasharray: "0, 100" }}
+                    whileInView={{ strokeDasharray: "18, 100" }}
+                    transition={{ duration: 1.2, ease: "easeOut", delay: 0.2 }}
+                  >
+                    <title>Processing: 45 Orders (₹21,130)</title>
+                  </motion.path>
+                  <motion.path 
+                    className="text-[#1B5E20] stroke-current cursor-pointer hover:stroke-[#154618] transition-colors" strokeWidth="4.5" strokeDashoffset="-83" fill="none" 
+                    d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" 
+                    initial={{ strokeDasharray: "0, 100" }}
+                    whileInView={{ strokeDasharray: "11, 100" }}
+                    transition={{ duration: 1.2, ease: "easeOut", delay: 0.4 }}
+                  >
+                    <title>Shipped: 28 Orders (₹17,300)</title>
+                  </motion.path>
+                  <motion.path 
+                    className="text-[#D32F2F] stroke-current cursor-pointer hover:stroke-[#C62828] transition-colors" strokeWidth="4.5" strokeDashoffset="-94" fill="none" 
+                    d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" 
+                    initial={{ strokeDasharray: "0, 100" }}
+                    whileInView={{ strokeDasharray: "6, 100" }}
+                    transition={{ duration: 1.2, ease: "easeOut", delay: 0.6 }}
+                  >
+                    <title>Cancelled: 13 Orders (₹4,800)</title>
+                  </motion.path>
                </svg>
-               <div className="absolute inset-0 flex flex-col items-center justify-center">
-                  <span className="text-2xl font-black text-gray-900">248</span>
-                  <span className="text-[9px] text-gray-500 uppercase tracking-wider font-bold">Total Orders</span>
-               </div>
+               <motion.div 
+                 className="absolute inset-0 flex flex-col items-center justify-center"
+                 initial={{ opacity: 0, scale: 0.8 }}
+                 whileInView={{ opacity: 1, scale: 1 }}
+                 transition={{ delay: 0.8, duration: 0.4 }}
+               >
+                  <span className="text-sm sm:text-xl font-bold font-sans text-gray-800 leading-none">248</span>
+                  <span className="text-[7px] sm:text-[9px] text-gray-500 font-bold mt-0.5 whitespace-nowrap">Total Orders</span>
+               </motion.div>
              </div>
              
-             <div className="w-full space-y-3 text-[12px] font-medium">
-               <div className="flex justify-between items-center"><div className="flex items-center gap-2"><div className="w-2.5 h-2.5 rounded-full bg-green-600"></div><span className="text-gray-600">Delivered</span></div><span className="text-gray-900 font-bold">162 (65.3%)</span></div>
-               <div className="flex justify-between items-center"><div className="flex items-center gap-2"><div className="w-2.5 h-2.5 rounded-full bg-yellow-500"></div><span className="text-gray-600">Processing</span></div><span className="text-gray-900 font-bold">45 (18.1%)</span></div>
-               <div className="flex justify-between items-center"><div className="flex items-center gap-2"><div className="w-2.5 h-2.5 rounded-full bg-gray-800"></div><span className="text-gray-600">Shipped</span></div><span className="text-gray-900 font-bold">28 (11.3%)</span></div>
-               <div className="flex justify-between items-center"><div className="flex items-center gap-2"><div className="w-2.5 h-2.5 rounded-full bg-red-500"></div><span className="text-gray-600">Cancelled</span></div><span className="text-gray-900 font-bold">13 (5.2%)</span></div>
+             <div className="w-full grid grid-cols-2 gap-y-1 sm:gap-y-2 gap-x-1.5 text-[8px] sm:text-[10px]">
+               <div className="flex items-center gap-1.5"><div className="w-2 h-2 rounded-full bg-[#388E3C] shrink-0"></div><span className="text-gray-600 font-semibold flex-1 truncate">Delivered</span><span className="text-gray-800 font-bold">162</span></div>
+               <div className="flex items-center gap-1.5"><div className="w-2 h-2 rounded-full bg-[#FBC02D] shrink-0"></div><span className="text-gray-600 font-semibold flex-1 truncate">Processing</span><span className="text-gray-800 font-bold">45</span></div>
+               <div className="flex items-center gap-1.5"><div className="w-2 h-2 rounded-full bg-[#1B5E20] shrink-0"></div><span className="text-gray-600 font-semibold flex-1 truncate">Shipped</span><span className="text-gray-800 font-bold">28</span></div>
+               <div className="flex items-center gap-1.5"><div className="w-2 h-2 rounded-full bg-[#D32F2F] shrink-0"></div><span className="text-gray-600 font-semibold flex-1 truncate">Cancelled</span><span className="text-gray-800 font-bold">13</span></div>
              </div>
           </div>
-        </div>
+          <div className="absolute top-3.5 right-3.5">
+             <button className="text-[11px] font-bold text-gray-400 hover:text-[#054425] transition-colors"><Eye size={14}/></button>
+          </div>
+        </motion.div>
+ 
+        {/* Earnings Overview */}
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: false, amount: 0.2 }}
+          transition={{ type: "spring", stiffness: 300, damping: 24, delay: 0.3 }}
+          className="xl:col-span-3 bg-white p-1.5 xs:p-2 sm:p-3 rounded-lg sm:rounded-xl shadow-[0_2px_10px_rgba(0,0,0,0.02)] border border-gray-100 flex flex-col justify-between relative"
+        >
+          <div>
+            <div className="flex justify-between items-center mb-1.5 sm:mb-2">
+              <h3 className="text-xs sm:text-[13px] font-bold font-sans text-gray-900">Earnings</h3>
+            </div>
+            
+            <div className="space-y-1.5 sm:space-y-2.5 text-[9px] sm:text-[11px]">
+              <div className="flex justify-between items-center">
+                <span className="text-gray-600 font-semibold">Total Earnings</span>
+                <span className="text-gray-800 font-medium">₹1,25,680</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-gray-600 font-semibold">Commission</span>
+                <span className="text-gray-800 font-medium">₹18,852</span>
+              </div>
+              <div className="flex justify-between items-center pb-1">
+                <span className="text-gray-600 font-semibold">Payouts</span>
+                <span className="text-gray-800 font-medium">- ₹1,06,000</span>
+              </div>
+            </div>
+          </div>
+ 
+          <div className="mt-2 bg-[#F6FBF7] rounded-lg sm:rounded-xl p-2 sm:p-3 border border-green-100/50 flex flex-col gap-1 sm:gap-1.5">
+            <div>
+              <p className="text-[8px] sm:text-[10px] text-gray-600 font-medium">Available Balance</p>
+              <p className="text-xs sm:text-[15px] font-bold text-[#054425]">₹19,680</p>
+            </div>
+            <button 
+              onClick={() => navigate('/vendor/payouts')}
+              className="w-full bg-[#054425] hover:bg-[#04331c] text-white text-[9px] sm:text-[10px] font-bold py-1.5 rounded-lg shadow-sm transition-colors active:scale-95"
+            >
+              Request Payout
+            </button>
+          </div>
+        </motion.div>
       </div>
 
-      {/* Bottom Row: Top Products, Recent Orders, Store Performance */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+      {/* Bottom Row */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-3">
         
-        {/* Top Selling Products */}
-        <div className="lg:col-span-4 bg-white p-6 rounded-[20px] shadow-[0_2px_10px_rgba(0,0,0,0.02)] border border-gray-50 flex flex-col">
-          <div className="flex justify-between items-center mb-6">
-            <h3 className="font-bold text-gray-900">Top Selling Products</h3>
-            <button className="text-xs font-bold text-[#054425] hover:underline">View All</button>
-          </div>
-          <div className="space-y-4">
-            {[
-              { name: 'NEEM TULSI Face Wash', size: '100 ml', sales: '₹18,750', units: '250 Units' },
-              { name: 'BHRINGRAJ Hair Oil', size: '200 ml', sales: '₹16,420', units: '180 Units' },
-              { name: 'AMLA Powder', size: '100 gm', sales: '₹12,890', units: '210 Units' },
-              { name: 'ASHWAGANDHA Capsules', size: '60 Capsules', sales: '₹9,650', units: '150 Units' },
-            ].map((p, i) => (
-              <div key={i} className="flex items-center gap-3">
-                <div className="w-12 h-12 bg-gray-50 rounded-xl flex items-center justify-center p-1 border border-gray-100">
-                  <img src="https://via.placeholder.com/40" alt={p.name} className="max-w-full max-h-full mix-blend-multiply" />
-                </div>
-                <div className="flex-1">
-                  <p className="text-[12px] font-bold text-gray-900 leading-tight">{p.name}</p>
-                  <p className="text-[10px] text-gray-500">{p.size}</p>
-                </div>
-                <div className="text-right">
-                  <p className="text-[13px] font-black text-gray-900">{p.sales}</p>
-                  <p className="text-[10px] text-gray-500">{p.units}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-
         {/* Recent Orders */}
-        <div className="lg:col-span-5 bg-white p-6 rounded-[20px] shadow-[0_2px_10px_rgba(0,0,0,0.02)] border border-gray-50">
-          <div className="flex justify-between items-center mb-6">
-            <h3 className="font-bold text-gray-900">Recent Orders</h3>
-            <button className="text-xs font-bold text-[#054425] hover:underline">View All</button>
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: false, amount: 0.2 }}
+          transition={{ type: "spring", stiffness: 300, damping: 24, delay: 0.1 }}
+          className="lg:col-span-8 bg-white p-3 rounded-xl shadow-[0_2px_10px_rgba(0,0,0,0.02)] border border-gray-100"
+        >
+          <div className="flex justify-between items-center mb-2">
+            <h3 className="text-[13px] font-bold font-sans text-gray-900">Recent Orders</h3>
+            <button className="text-[10px] font-medium text-[#054425] hover:underline">View All</button>
           </div>
           <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse">
+            <table className="w-full text-left border-collapse whitespace-nowrap">
               <thead>
-                <tr className="text-[10px] text-gray-400 uppercase tracking-widest border-b border-gray-100">
-                  <th className="pb-3 font-semibold">Order ID</th>
-                  <th className="pb-3 font-semibold">Customer</th>
-                  <th className="pb-3 font-semibold">Date</th>
-                  <th className="pb-3 font-semibold">Amount</th>
-                  <th className="pb-3 font-semibold">Status</th>
-                  <th className="pb-3 font-semibold text-center">Action</th>
+                <tr className="text-[11px] text-gray-500 font-semibold border-b border-gray-100">
+                  <th className="pb-2">Order ID</th>
+                  <th className="pb-2">Customer</th>
+                  <th className="pb-2">Date</th>
+                  <th className="pb-2">Amount</th>
+                  <th className="pb-2">Status</th>
+                  <th className="pb-2 text-center">Action</th>
                 </tr>
               </thead>
-              <tbody className="text-[12px] text-gray-800">
+              <tbody className="text-[11px] text-gray-800 font-sans font-medium">
                 {[
-                  { id: '#SB12345678', customer: 'Rohit Sharma', date: 'May 31, 2024', amount: '₹1,250', status: 'Delivered', color: 'bg-green-100 text-green-700' },
-                  { id: '#SB12345679', customer: 'Neha Verma', date: 'May 31, 2024', amount: '₹890', status: 'Processing', color: 'bg-yellow-100 text-yellow-700' },
-                  { id: '#SB12345680', customer: 'Amit Patel', date: 'May 30, 2024', amount: '₹2,450', status: 'Shipped', color: 'bg-blue-100 text-blue-700' },
-                  { id: '#SB12345681', customer: 'Pooja Singh', date: 'May 30, 2024', amount: '₹1,150', status: 'Delivered', color: 'bg-green-100 text-green-700' },
-                  { id: '#SB12345682', customer: 'Vikas Mehta', date: 'May 29, 2024', amount: '₹760', status: 'Cancelled', color: 'bg-red-100 text-red-700' },
+                  { id: '#SB12345678', customer: 'Rohit Sharma', date: 'May 31, 2024', amount: '₹1,250', status: 'Delivered', color: 'bg-[#E8F5E9] text-[#2E7D32] border border-[#C8E6C9]' },
+                  { id: '#SB12345679', customer: 'Neha Verma', date: 'May 31, 2024', amount: '₹890', status: 'Processing', color: 'bg-[#FFF8E1] text-[#F9A825] border border-[#FFECB3]' },
+                  { id: '#SB12345680', customer: 'Amit Patel', date: 'May 30, 2024', amount: '₹2,450', status: 'Shipped', color: 'bg-gray-50 text-gray-700 border border-gray-200' },
+                  { id: '#SB12345681', customer: 'Pooja Singh', date: 'May 30, 2024', amount: '₹1,150', status: 'Delivered', color: 'bg-[#E8F5E9] text-[#2E7D32] border border-[#C8E6C9]' },
+                  { id: '#SB12345682', customer: 'Vikas Mehta', date: 'May 29, 2024', amount: '₹760', status: 'Cancelled', color: 'bg-[#FFEBEE] text-[#C62828] border border-[#FFCDD2]' },
                 ].map((order, i) => (
                   <tr key={i} className="border-b border-gray-50 last:border-0 hover:bg-gray-50/50 transition-colors">
-                    <td className="py-3 font-semibold text-gray-900">{order.id}</td>
-                    <td className="py-3 font-medium">{order.customer}</td>
-                    <td className="py-3 text-gray-500">{order.date}</td>
-                    <td className="py-3 font-bold">{order.amount}</td>
-                    <td className="py-3">
-                      <span className={`px-2 py-1 rounded-md text-[10px] font-bold ${order.color}`}>
+                    <td className="py-2 font-medium text-gray-800">{order.id}</td>
+                    <td className="py-2 font-medium">{order.customer}</td>
+                    <td className="py-2 text-gray-500 font-medium">{order.date}</td>
+                    <td className="py-2 font-medium">{order.amount}</td>
+                    <td className="py-2">
+                      <span className={`px-1.5 py-0.5 rounded text-[9px] font-bold ${order.color}`}>
                         {order.status}
                       </span>
                     </td>
-                    <td className="py-3 text-center">
-                      <button className="text-gray-400 hover:text-[#054425] transition-colors"><Eye size={16} /></button>
+                    <td className="py-2 text-center">
+                      <button className="text-gray-400 hover:text-[#054425] transition-colors"><Eye size={14} /></button>
                     </td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
-        </div>
+        </motion.div>
 
-        {/* Store Performance */}
-        <div className="lg:col-span-3 bg-white p-6 rounded-[20px] shadow-[0_2px_10px_rgba(0,0,0,0.02)] border border-gray-50 flex flex-col">
-          <div className="flex justify-between items-center mb-6">
-            <h3 className="font-bold text-gray-900">Store Performance</h3>
-            <select className="text-[10px] bg-gray-50 border border-gray-200 rounded-lg px-2 py-1 font-medium text-gray-600 outline-none">
-              <option>This Month</option>
-            </select>
+        {/* Top Selling Products */}
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: false, amount: 0.2 }}
+          transition={{ type: "spring", stiffness: 300, damping: 24, delay: 0.2 }}
+          className="lg:col-span-4 bg-white p-3 rounded-xl shadow-[0_2px_10px_rgba(0,0,0,0.02)] border border-gray-100 flex flex-col"
+        >
+          <div className="flex justify-between items-center mb-2">
+            <h3 className="text-[13px] font-bold font-sans text-gray-900">Top Selling Products</h3>
+            <button className="text-[10px] font-medium text-[#054425] hover:underline">View All</button>
           </div>
-          <div className="space-y-5">
-            <div className="flex items-center gap-4">
-              <div className="w-10 h-10 rounded-full bg-green-50 flex items-center justify-center text-green-600 shrink-0"><TrendingUp size={18} /></div>
-              <div className="flex-1">
-                <p className="text-[11px] text-gray-500 font-medium mb-0.5">Conversion Rate</p>
-                <div className="flex items-center justify-between">
-                  <p className="text-lg font-black text-gray-900">3.24%</p>
-                  <p className="text-[11px] font-bold text-green-500 flex items-center gap-0.5"><TrendingUp size={12}/> 8.6%</p>
+          <div className="space-y-2.5 pt-1">
+            {[
+              { name: 'NEEM TULSI Face Wash', size: '100 ml', sales: '₹18,750', units: '250 Units' },
+              { name: 'BHRINGRAJ Hair Oil', size: '200 ml', sales: '₹16,420', units: '180 Units' },
+              { name: 'AMLA Powder', size: '100 gm', sales: '₹12,890', units: '210 Units' },
+              { name: 'ASHWAGANDHA Capsules', size: '60 Caps', sales: '₹9,650', units: '150 Units' },
+              { name: 'KUMKUMADI Tailam', size: '30 ml', sales: '₹8,400', units: '110 Units' },
+            ].map((p, i) => (
+              <div key={i} className="flex items-center gap-2.5">
+                <div className="w-10 h-10 bg-[#F6FBF7] rounded-lg flex items-center justify-center p-1 border border-green-50">
+                  <img src="https://via.placeholder.com/40" alt={p.name} className="max-w-full max-h-full mix-blend-multiply opacity-90" />
+                </div>
+                <div className="flex-1">
+                  <p className="text-[12px] font-medium text-gray-800 leading-tight mb-0.5">{p.name}</p>
+                  <p className="text-[11px] text-gray-500 font-medium">{p.size}</p>
+                </div>
+                <div className="text-right">
+                  <p className="text-[12px] text-gray-800 font-medium">{p.sales}</p>
+                  <p className="text-[10px] text-gray-500 font-medium">{p.units}</p>
                 </div>
               </div>
-            </div>
-            
-            <div className="flex items-center gap-4">
-              <div className="w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center text-blue-600 shrink-0"><ShoppingCart size={18} /></div>
-              <div className="flex-1">
-                <p className="text-[11px] text-gray-500 font-medium mb-0.5">Average Order Value</p>
-                <div className="flex items-center justify-between">
-                  <p className="text-lg font-black text-gray-900">₹506</p>
-                  <p className="text-[11px] font-bold text-green-500 flex items-center gap-0.5"><TrendingUp size={12}/> 6.2%</p>
-                </div>
-              </div>
-            </div>
-            
-            <div className="flex items-center gap-4">
-              <div className="w-10 h-10 rounded-full bg-purple-50 flex items-center justify-center text-purple-600 shrink-0"><Eye size={18} /></div>
-              <div className="flex-1">
-                <p className="text-[11px] text-gray-500 font-medium mb-0.5">Page Views</p>
-                <div className="flex items-center justify-between">
-                  <p className="text-lg font-black text-gray-900">12,680</p>
-                  <p className="text-[11px] font-bold text-green-500 flex items-center gap-0.5"><TrendingUp size={12}/> 15.4%</p>
-                </div>
-              </div>
-            </div>
-            
-            <div className="flex items-center gap-4">
-              <div className="w-10 h-10 rounded-full bg-orange-50 flex items-center justify-center text-orange-600 shrink-0"><Users size={18} /></div>
-              <div className="flex-1">
-                <p className="text-[11px] text-gray-500 font-medium mb-0.5">Returning Customers</p>
-                <div className="flex items-center justify-between">
-                  <p className="text-lg font-black text-gray-900">68</p>
-                  <p className="text-[11px] font-bold text-green-500 flex items-center gap-0.5"><TrendingUp size={12}/> 9.3%</p>
-                </div>
-              </div>
-            </div>
+            ))}
           </div>
-        </div>
+        </motion.div>
       </div>
     </div>
   );

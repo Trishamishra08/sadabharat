@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Mail, Lock, ArrowRight, Eye, EyeOff } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 
 const VendorLogin = () => {
   const [email, setEmail] = useState('');
@@ -17,8 +18,10 @@ const VendorLogin = () => {
     if (!password) return setError('Password Required');
 
     if (email === 's@gmail.com' && password === '123456') {
-      // Simulate successful login
       localStorage.setItem('vendor_auth', 'true');
+      if (window.showVendorToast) {
+        window.showVendorToast('Logged in successfully!', 'success');
+      }
       navigate('/vendor');
     } else {
       setError('Invalid Credentials');
@@ -26,133 +29,202 @@ const VendorLogin = () => {
   };
 
   return (
-    <div className="min-h-screen flex font-poppins bg-[#FDFBF7]">
-      {/* Left Banner */}
-      <div className="hidden lg:flex lg:w-1/2 relative bg-[#054425] flex-col justify-between overflow-hidden">
-        {/* Background Image / Pattern */}
-        <div className="absolute inset-0 z-0 opacity-20 mix-blend-overlay">
-           <img src="https://images.unsplash.com/photo-1542332213-9b5a5a3fad35?q=80&w=2070&auto=format&fit=crop" alt="Ayurvedic Banner" className="w-full h-full object-cover" />
-        </div>
-        
-        {/* Organic Wave Divider */}
-        <div className="absolute top-0 bottom-0 right-0 w-24 overflow-hidden z-10 pointer-events-none translate-x-[4px]">
-          <svg viewBox="0 0 100 1000" preserveAspectRatio="none" className="h-full w-full fill-[#FDFBF7]">
-            <path d="M100,0 L100,1000 L0,1000 C30,800 100,600 20,400 C-30,250 80,100 0,0 Z" />
-          </svg>
-        </div>
+    <div className="fixed inset-0 z-[999] w-full h-[100dvh] bg-[#F4F1E1] font-vendor-panel overflow-hidden !m-0 !p-0">
+      <motion.div 
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.2 }}
+        className="flex flex-col md:flex-row w-full h-full relative"
+      >
 
-        <div className="relative z-20 p-12">
-          <div className="flex items-center gap-4 mb-16">
-            <div className="w-12 h-12 bg-white rounded-full p-1 shadow-lg">
-              <img src="/logo.png" alt="Sada Bharat" className="w-full h-full object-contain" onError={(e)=>{e.target.style.display='none'}} />
-            </div>
-            <div className="text-white">
-              <h1 className="font-serif font-black text-xl tracking-wide leading-tight">SADA BHARAT</h1>
-              <p className="text-[10px] uppercase tracking-[0.2em] text-white/70">Ayurvedic</p>
-            </div>
+        {/* Decorative Leaves (Matching user style with slight twist) */}
+        <img 
+          src="https://cdn-icons-png.flaticon.com/512/3257/3257635.png" 
+          alt="leaf" 
+          className="absolute top-0 right-0 w-32 h-32 opacity-25 object-contain translate-x-8 -translate-y-8 rotate-45 z-10 pointer-events-none hidden md:block" 
+          style={{ filter: 'brightness(0.8) sepia(1) hue-rotate(80deg) saturate(3)' }} 
+        />
+        <img 
+          src="https://cdn-icons-png.flaticon.com/512/3257/3257635.png" 
+          alt="leaf" 
+          className="absolute bottom-0 right-0 w-24 h-24 md:w-32 md:h-32 opacity-25 object-contain translate-x-2 translate-y-2 md:translate-x-4 md:translate-y-8 -rotate-90 z-[1000] pointer-events-none" 
+          style={{ filter: 'brightness(0.8) sepia(1) hue-rotate(80deg) saturate(3)' }} 
+        />
+        
+        {/* Back to Home Button */}
+        <Link 
+          to="/" 
+          className="absolute top-4 right-4 md:top-8 md:right-12 z-[1000] flex items-center gap-1.5 md:gap-2 px-3 py-1.5 md:px-4 md:py-2 bg-white/70 backdrop-blur-md border border-gray-200 text-[#054425] text-[11px] md:text-sm font-semibold rounded-full shadow-sm hover:bg-white transition-all group"
+        >
+          <svg className="w-3 h-3 md:w-4 md:h-4 transition-transform group-hover:-translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+          </svg>
+          <span className="hidden sm:inline">Back to Home</span>
+          <span className="sm:hidden">Back</span>
+        </Link>
+
+        {/* LEFT PANEL (Image & Wave) - Uses a distinct Unsplash image and custom wave */}
+        <div className="relative w-full md:w-[50%] lg:w-[55%] h-[32vh] sm:h-[40vh] md:h-full shrink-0">
+          <img 
+            src="https://images.unsplash.com/photo-1611080626919-7cf5a9dbab5b?q=80&w=1000&auto=format&fit=crop" 
+            alt="Ayurvedic Background" 
+            className="absolute inset-0 w-full h-full object-cover" 
+          />
+          {/* Greenish Overlay for High Contrast and Premium Feel */}
+          <div className="absolute inset-0 bg-gradient-to-tr from-[#054425]/90 via-[#054425]/45 to-transparent z-10" />
+
+          {/* SVG Wave separator for Desktop - Distinct asymmetric curve */}
+          <div className="hidden md:block absolute top-0 -right-[2px] h-full w-[250px] z-20">
+            <svg viewBox="0 0 250 1000" preserveAspectRatio="none" className="w-full h-full text-[#F4F1E1] fill-current">
+              <path d="M250,0 L250,1000 L0,1000 C180,920 60,680 120,450 C180,220 80,80 250,0 Z" />
+            </svg>
           </div>
           
-          <div className="max-w-md">
-            <h2 className="text-4xl md:text-5xl font-serif font-black text-white leading-[1.2] mb-6">
-              Grow Your<br />Ayurvedic Business
-            </h2>
-            <p className="text-lg text-white/80 font-light leading-relaxed">
-              Manage products, orders and earnings from one beautifully designed dashboard.
-            </p>
+          {/* Top-right corner cream leaf overlay (different curve) */}
+          <div className="hidden md:block absolute top-0 -right-[2px] w-[300px] h-[200px] z-10 pointer-events-none">
+            <svg viewBox="0 0 300 200" preserveAspectRatio="none" className="w-full h-full text-[#F2EFE8] fill-current opacity-80">
+              <path d="M300,0 L300,200 C180,180 120,80 0,0 Z" />
+            </svg>
+          </div>
+
+          {/* Bottom-left cream wave overlay on image (different curve) */}
+          <div className="hidden md:block absolute bottom-0 left-0 w-full h-[150px] z-20 pointer-events-none">
+            <svg viewBox="0 0 1000 150" preserveAspectRatio="none" className="w-full h-full text-[#F4F1E1] fill-current opacity-90">
+              <path d="M0,150 L1000,150 L1000,80 C600,120 400,20 0,50 Z" />
+            </svg>
+          </div>
+
+          {/* SVG Wave separator for Mobile - Distinct curve */}
+          <div className="block md:hidden absolute bottom-0 left-0 w-full h-[80px] z-20">
+            <svg viewBox="0 0 1000 100" preserveAspectRatio="none" className="w-full h-full text-[#F4F1E1] fill-current">
+              <path d="M0,100 L1000,100 L1000,40 C800,120 400,0 0,60 Z" />
+            </svg>
+          </div>
+
+          {/* Logo & Welcome Text */}
+          <div className="absolute inset-0 p-4 pt-4 md:p-12 flex flex-col z-30 text-white">
+            <div className="flex items-center gap-3 md:gap-4">
+              <div className="w-9 h-9 md:w-16 md:h-16 bg-white rounded-full flex items-center justify-center p-1 shrink-0 shadow-md">
+                <img src="/logo.png" alt="Sada Bharat" className="w-full h-full object-contain rounded-full" />
+              </div>
+              <div className="flex flex-col">
+                <h1 className="text-base md:text-2xl font-bold tracking-wider leading-none text-white" style={{ fontFamily: "'Cormorant Garamond', serif" }}>SADA BHARAT</h1>
+                <p className="text-[10px] md:text-xs font-semibold tracking-widest text-white/90 mt-1">AYURVEDIC</p>
+              </div>
+            </div>
+
+            <div className="mt-4 md:mt-32">
+              <h2 className="text-2xl md:text-5xl font-serif font-bold text-white mb-2 md:mb-4">Welcome Back!</h2>
+              <p className="text-xs md:text-lg text-white/95 font-medium max-w-[200px] md:max-w-sm leading-tight md:leading-normal">Sign in to access your seller dashboard.</p>
+            </div>
           </div>
         </div>
-      </div>
 
-      {/* Right Form */}
-      <div className="w-full lg:w-1/2 flex items-center justify-center p-6 sm:p-12">
-        <div className="w-full max-w-md">
-          <div className="lg:hidden flex items-center gap-3 mb-8">
-            <div className="w-10 h-10 bg-white rounded-full p-1 shadow-sm border border-gray-100">
-              <img src="/logo.png" alt="Sada Bharat" className="w-full h-full object-contain" onError={(e)=>{e.target.style.display='none'}} />
+        {/* RIGHT PANEL (Login Form) */}
+        <div className="flex-1 flex flex-col justify-start items-center px-6 pt-2 pb-6 md:pb-12 md:px-12 md:pt-16 relative z-20 bg-[#F4F1E1] overflow-y-auto overscroll-contain" data-lenis-prevent="true">
+          
+          <div className="w-full max-w-md md:-translate-x-8 lg:-translate-x-16 relative z-10 pt-4 md:pt-10">
+            <div className="text-center mb-6">
+              <h2 className="text-3xl md:text-5xl font-serif font-bold text-[#054425]" style={{ fontFamily: "'Cormorant Garamond', serif" }}>Sign In</h2>
+              <div className="flex items-center justify-center gap-3 mt-4">
+                <div className="w-16 h-[1.5px] bg-gradient-to-l from-[#CFA767] to-transparent"></div>
+                <svg className="w-7 h-7 text-[#054425]" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M12 2C10 4.5 8.5 7.5 8.5 10.5C8.5 13 10.5 15 12 15C13.5 15 15.5 13 15.5 10.5C15.5 7.5 14 4.5 12 2Z"/>
+                  <path d="M10.5 13.5C7.5 13.5 4 11 2.5 8.5C2.5 11.5 4 15 7 16C8.5 16.5 9.5 16 10.5 15V13.5Z"/>
+                  <path d="M13.5 13.5C16.5 13.5 20 11 21.5 8.5C21.5 11.5 20 15 17 16C15.5 16.5 14.5 16 13.5 15V13.5Z"/>
+                  <path d="M11 14H13V22H11V14Z"/>
+                </svg>
+                <div className="w-16 h-[1.5px] bg-gradient-to-r from-[#CFA767] to-transparent"></div>
+              </div>
             </div>
-            <div>
-              <h1 className="font-serif font-black text-lg tracking-wide text-[#054425] leading-tight">SADA BHARAT</h1>
-              <p className="text-[9px] uppercase tracking-[0.2em] text-gray-500">Ayurvedic</p>
-            </div>
-          </div>
-
-          <div className="bg-white p-8 sm:p-10 rounded-[24px] shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-50">
-            <h2 className="text-3xl font-serif font-black text-gray-900 mb-2">Welcome Back</h2>
-            <p className="text-sm text-gray-500 mb-8">Sign in to access your seller dashboard.</p>
 
             {error && (
-              <div className="mb-6 p-4 bg-red-50 text-red-600 rounded-xl text-sm font-medium border border-red-100 flex items-center gap-2">
-                <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+              <div className="mb-4 p-3.5 bg-red-50 text-red-600 rounded-xl text-xs font-semibold border border-red-100 flex items-center gap-2">
+                <span className="text-sm">⚠️</span>
                 {error}
               </div>
             )}
 
-            <form onSubmit={handleLogin} className="space-y-5">
-              <div className="relative">
-                <label className="block text-xs font-bold text-gray-700 mb-1.5 uppercase tracking-wide">Email Address</label>
-                <div className="relative">
-                  <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
-                  <input 
-                    type="email" 
+            <form onSubmit={handleLogin} className="space-y-3.5">
+              
+              {/* Email Address */}
+              <div>
+                <div className="relative shadow-sm rounded-xl">
+                  <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 text-lg" size={18} />
+                  <input
+                    type="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    placeholder="s@gmail.com"
-                    className="w-full pl-11 pr-4 py-3.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-[#054425] focus:ring-1 focus:ring-[#054425] transition-all"
+                    placeholder="Email Address *"
+                    className="w-full bg-white border border-gray-200 focus:border-[#054425] focus:ring-[#054425] pl-11 pr-4 py-2.5 md:py-3 rounded-xl text-xs sm:text-sm font-semibold outline-none transition-all text-gray-800 placeholder:text-gray-400"
+                    required
                   />
                 </div>
               </div>
 
-              <div className="relative">
-                <div className="flex justify-between items-center mb-1.5">
-                  <label className="block text-xs font-bold text-gray-700 uppercase tracking-wide">Password</label>
-                  <a href="#" className="text-xs font-bold text-[#054425] hover:underline">Forgot Password?</a>
-                </div>
-                <div className="relative">
-                  <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
-                  <input 
-                    type={showPassword ? 'text' : 'password'} 
+              {/* Password */}
+              <div>
+                <div className="relative shadow-sm rounded-xl">
+                  <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 text-lg" size={18} />
+                  <input
+                    type={showPassword ? 'text' : 'password'}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    placeholder="••••••••"
-                    className="w-full pl-11 pr-11 py-3.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-[#054425] focus:ring-1 focus:ring-[#054425] transition-all"
+                    placeholder="Password *"
+                    className="w-full bg-white border border-gray-200 focus:border-[#054425] focus:ring-[#054425] pl-11 pr-12 py-2.5 md:py-3 rounded-xl text-xs sm:text-sm font-semibold outline-none transition-all text-gray-800 placeholder:text-gray-400"
+                    required
                   />
                   <button 
                     type="button" 
                     onClick={() => setShowPassword(!showPassword)}
                     className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
                   >
-                    {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                    {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                   </button>
                 </div>
               </div>
 
-              <div className="flex items-center gap-2 mb-6">
-                <input type="checkbox" id="remember" className="w-4 h-4 text-[#054425] border-gray-300 rounded focus:ring-[#054425]" />
-                <label htmlFor="remember" className="text-sm text-gray-600">Remember Me</label>
+              {/* Remember & Forgot */}
+              <div className="flex items-center justify-between py-1 px-1">
+                <label className="flex items-center gap-2 cursor-pointer select-none">
+                  <input type="checkbox" id="remember" className="w-3.5 h-3.5 text-[#054425] border-gray-300 rounded focus:ring-[#054425] accent-[#054425]" />
+                  <span className="text-[11px] sm:text-xs text-gray-600 font-semibold">Remember Me</span>
+                </label>
+                <a href="#" className="text-[11px] sm:text-xs font-bold text-[#054425] hover:underline">Forgot Password?</a>
               </div>
 
-              <button type="submit" className="w-full bg-[#054425] text-white font-bold py-3.5 rounded-xl shadow-[0_4px_14px_rgba(5,68,37,0.3)] hover:bg-[#04331c] hover:shadow-[0_6px_20px_rgba(5,68,37,0.4)] transition-all flex items-center justify-center gap-2">
-                Sign In <ArrowRight size={18} />
+              {/* Sign In Button */}
+              <button
+                type="submit"
+                className="w-full bg-[#0F3520] text-white py-3.5 rounded-xl text-xs sm:text-sm font-semibold tracking-wide hover:bg-[#0d2a1a] transition-all shadow-md active:scale-95 flex items-center justify-center gap-2 mt-4"
+              >
+                Sign In <ArrowRight size={16} />
               </button>
 
-              <div className="relative flex items-center justify-center py-4">
+              {/* OR Divider */}
+              <div className="relative flex items-center justify-center py-3">
                 <div className="border-t border-gray-200 w-full absolute"></div>
-                <span className="bg-white px-4 text-xs text-gray-400 relative z-10 uppercase font-bold tracking-widest">Or</span>
+                <span className="bg-[#F4F1E1] px-3 text-[10px] text-gray-450 relative z-10 uppercase font-black tracking-widest">Or</span>
               </div>
 
-              <button type="button" className="w-full bg-white border border-gray-200 text-gray-700 font-bold py-3 rounded-xl hover:bg-gray-50 transition-colors flex items-center justify-center gap-3 shadow-sm">
-                <img src="https://www.svgrepo.com/show/475656/google-color.svg" alt="Google" className="w-5 h-5" />
+              {/* Google Login */}
+              <button 
+                type="button" 
+                className="w-full bg-white border border-gray-200 text-gray-700 text-xs sm:text-sm font-bold py-2.5 sm:py-3 rounded-xl hover:bg-gray-50 transition-colors flex items-center justify-center gap-2.5 shadow-sm"
+              >
+                <img src="https://www.svgrepo.com/show/475656/google-color.svg" alt="Google" className="w-4 h-4" />
                 Login with Google
               </button>
             </form>
-          </div>
 
-          <p className="text-center mt-8 text-sm text-gray-600">
-            Don't have a seller account?{' '}
-            <Link to="/vendor/register" className="font-bold text-[#054425] hover:underline">Register as Vendor</Link>
-          </p>
+            <div className="mt-8 text-center">
+              <p className="text-xs sm:text-sm font-semibold text-gray-600">
+                Don't have a seller account? <Link to="/vendor/register" className="text-[#054425] font-bold hover:underline">Register as Vendor</Link>
+              </p>
+            </div>
+          </div>
         </div>
-      </div>
+      </motion.div>
     </div>
   );
 };
