@@ -41,12 +41,12 @@ const CancelPolicy = () => {
               <span className="w-4 h-[2px] bg-brand-gold"></span> 4. Store's Rights
             </h2>
             <p className="pl-6">
-              Under rare circumstances, Saundarya Shringar reserves the right to cancel an order due to stock unavailability, pricing errors, or suspicion of fraudulent activity. You will be notified via email or phone if such a situation arises.
+              Under rare circumstances, Sada Bharat reserves the right to cancel an order due to stock unavailability, pricing errors, or suspicion of fraudulent activity. You will be notified via email or phone if such a situation arises.
             </p>
           </section>
 
           <div className="mt-8 p-4 bg-brand-pink/5 border-l-2 border-brand-gold italic text-[12px] opacity-80">
-            "We strive to provide a seamless shopping experience. For any queries regarding your order status, please reach out to us at care@saundaryashringar.com"
+            "We strive to provide a seamless shopping experience. For any queries regarding your order status, please reach out to us at care@sadabharat.com"
           </div>
         </div>
       </div>

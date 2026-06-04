@@ -1,8 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { FiPlus, FiEdit2, FiTrash2, FiUsers, FiStar, FiCheckCircle, FiUpload } from 'react-icons/fi';
-import api from '../../utils/api';
-import { uploadToCloudinary } from '../../utils/cloudinary';
+
+// MOCK API for Frontend-Only mode
+const api = {
+  get: async () => ({ data: { data: { products: [], categories: [], banners: [], settings: {}, orders: [], users: [], stats: [], recentTransactions: [], dailyRevenue: [], vendors: [], blogs: [], returns: [], testimonials: [], reviews: [], replacements: [], supportTickets: [], locations: [], coupons: [], logs: [] }, status: 'success' } }),
+  post: async () => ({ data: { data: { order: { orderId: 'MOCK-ORDER-123' } }, status: 'success' } }),
+  patch: async () => ({ data: { status: 'success' } }),
+  delete: async () => ({ data: { status: 'success' } })
+};
+
+
 
 const AdminTestimonials = () => {
     const [testimonials, setTestimonials] = useState([]);
@@ -28,7 +36,7 @@ const AdminTestimonials = () => {
 
         try {
             setUploading(true);
-            const url = await uploadToCloudinary(file);
+            const url = URL.createObjectURL(file);
             setFormData(prev => ({ ...prev, image: url }));
         } catch (err) {
             console.error('Upload failed:', err);
@@ -85,10 +93,12 @@ const AdminTestimonials = () => {
         <div className="p-4 md:p-8 space-y-8 max-w-7xl mx-auto font-serif">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
-                    <h1 className="text-2xl font-black text-brand-dark uppercase tracking-widest flex items-center gap-3 italic">
-                        <FiUsers className="text-brand-pink" /> Social Proof Vault
+                    <h1 className="text-3xl font-['Cormorant',_serif] font-bold text-admin-dark leading-none mb-2">
+                        <FiUsers className="text-admin-accent" /> Social Proof Vault
                     </h1>
-                    <p className="text-[10px] text-gray-400 font-bold uppercase tracking-[0.2em] mt-1 font-sans">Human Stories & Customer Credibility</p>
+                    <p className="text-gray-500 text-[13px] font-poppins">
+                        Human stories & customer credibility
+                    </p>
                 </div>
                 <button
                     onClick={() => { setEditingId(null); setFormData(initialFormState); setIsModalOpen(true); }}

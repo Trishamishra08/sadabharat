@@ -20,7 +20,15 @@ import {
 import { HiCurrencyRupee } from 'react-icons/hi2';
 import { Link, useNavigate } from 'react-router-dom';
 import { useShop } from '../../context/ShopContext';
-import api from '../../utils/api';
+
+// MOCK API for Frontend-Only mode
+const api = {
+  get: async () => ({ data: { data: { products: [], categories: [], banners: [], settings: {}, orders: [], users: [], stats: [], recentTransactions: [], dailyRevenue: [], vendors: [], blogs: [], returns: [], testimonials: [], reviews: [], replacements: [], supportTickets: [], locations: [], coupons: [], logs: [] }, status: 'success' } }),
+  post: async () => ({ data: { data: { order: { orderId: 'MOCK-ORDER-123' } }, status: 'success' } }),
+  patch: async () => ({ data: { status: 'success' } }),
+  delete: async () => ({ data: { status: 'success' } })
+};
+
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
@@ -70,26 +78,26 @@ const AdminDashboard = () => {
   return (
     <div className="max-w-7xl mx-auto space-y-6 pb-6">
       {/* Welcome Section */}
-      <div className="pt-2">
-        <h1 className="text-xl md:text-2xl font-serif font-black text-brand-dark uppercase tracking-widest leading-none mb-1">
-          Store Overview
+      <div>
+        <h1 className="text-2xl md:text-3xl font-['Cormorant',_serif] font-black text-black leading-none mb-1">
+          Dashboard
         </h1>
-        <p className="text-gray-600 text-[9px] font-black uppercase tracking-[0.2em] opacity-70">
-          Platform Analytics & Quick Controls
+        <p className="text-gray-600 text-[13px] font-poppins">
+          Welcome back! Here's what's happening with your store.
         </p>
       </div>
 
       {/* Quick Management Section */}
       <div className="space-y-3">
-        <h3 className="text-[9px] font-bold text-gray-600 uppercase tracking-widest px-1">QUICK MANAGEMENT</h3>
+        <h3 className="text-lg font-sans font-bold text-black tracking-wide px-1">Quick Management</h3>
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
           {[
-            { title: 'ADD PRODUCT', icon: <FiPlus />, color: 'bg-[#D1F2E1]', iconColor: 'text-[#50C878]', link: '/admin/products?add=true' },
-            { title: 'CREATE COUPON', icon: <FiTag />, color: 'bg-[#FEE2EC]', iconColor: 'text-[#FF69B4]', link: '/admin/coupons' },
-            { title: 'PENDING ORDERS', icon: <FiClock />, color: 'bg-[#FEF0D5]', iconColor: 'text-[#FFB347]', link: '/admin/orders' },
-            { title: 'CHECK RETURNS', icon: <FiRotateCcw />, color: 'bg-[#FEE2E2]', iconColor: 'text-[#FF5C5C]', link: '/admin/returns' },
-            { title: 'STOCK ALERTS', icon: <FiAlertTriangle />, color: 'bg-[#FEE7DC]', iconColor: 'text-[#FF8C69]', link: '/admin/products' },
-            { title: 'MANAGE USERS', icon: <FiHome />, color: 'bg-[#E1F0FF]', iconColor: 'text-[#4A90E2]', link: '/admin/users' },
+            { title: 'Add Product', icon: <FiPlus />, color: 'bg-[#D1F2E1]', iconColor: 'text-[#50C878]', link: '/admin/products?add=true' },
+            { title: 'Create Coupon', icon: <FiTag />, color: 'bg-[#FEE2EC]', iconColor: 'text-[#FF69B4]', link: '/admin/coupons' },
+            { title: 'Pending Orders', icon: <FiClock />, color: 'bg-[#FEF0D5]', iconColor: 'text-[#FFB347]', link: '/admin/orders' },
+            { title: 'Check Returns', icon: <FiRotateCcw />, color: 'bg-[#FEE2E2]', iconColor: 'text-[#FF5C5C]', link: '/admin/returns' },
+            { title: 'Stock Alerts', icon: <FiAlertTriangle />, color: 'bg-[#FEE7DC]', iconColor: 'text-[#FF8C69]', link: '/admin/products' },
+            { title: 'Manage Users', icon: <FiHome />, color: 'bg-[#E1F0FF]', iconColor: 'text-[#4A90E2]', link: '/admin/users' },
           ].map((item, i) => (
             <Link to={item.link} key={i}>
               <motion.div
@@ -99,7 +107,7 @@ const AdminDashboard = () => {
                 <div className={`p-1 rounded-lg ${item.iconColor}`}>
                   {React.cloneElement(item.icon, { size: 16 })}
                 </div>
-                <span className="text-[8px] font-black text-gray-800 uppercase tracking-wider text-center px-1 leading-tight">
+                <span className="text-[10px] font-poppins font-bold text-black text-center px-1 leading-tight">
                   {item.title}
                 </span>
               </motion.div>
@@ -111,10 +119,10 @@ const AdminDashboard = () => {
       {/* Summary Stats Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
         {[
-          { title: 'TOTAL USERS', value: stats.totalUsers, icon: <FiUsers />, iconBg: 'bg-[#D1E9FF]', iconColor: 'text-[#1976D2]', link: '/admin/users' },
-          { title: 'TOTAL REVENUE', value: stats.totalRevenue, icon: <HiCurrencyRupee />, iconBg: 'bg-[#D7F2D9]', iconColor: 'text-[#43A047]', link: '/admin/finance' },
-          { title: 'TOTAL ORDERS', value: stats.totalOrders, icon: <FiShoppingBag />, iconBg: 'bg-[#D1F0FF]', iconColor: 'text-[#039BE5]', link: '/admin/orders' },
-          { title: 'PENDING ORDERS', value: stats.pendingOrders, icon: <FiClock />, iconBg: 'bg-[#FEE7C8]', iconColor: 'text-[#FB8C00]', link: '/admin/orders' }
+          { title: 'Total Users', value: stats.totalUsers, icon: <FiUsers />, iconBg: 'bg-[#D1E9FF]', iconColor: 'text-[#1976D2]', link: '/admin/users' },
+          { title: 'Total Revenue', value: stats.totalRevenue, icon: <HiCurrencyRupee />, iconBg: 'bg-[#D7F2D9]', iconColor: 'text-[#43A047]', link: '/admin/finance' },
+          { title: 'Total Orders', value: stats.totalOrders, icon: <FiShoppingBag />, iconBg: 'bg-[#D1F0FF]', iconColor: 'text-[#039BE5]', link: '/admin/orders' },
+          { title: 'Pending Orders', value: stats.pendingOrders, icon: <FiClock />, iconBg: 'bg-[#FEE7C8]', iconColor: 'text-[#FB8C00]', link: '/admin/orders' }
         ].map((stat, i) => (
           <Link to={stat.link} key={i}>
             <motion.div
@@ -122,8 +130,8 @@ const AdminDashboard = () => {
               className="bg-white p-3.5 rounded-xl border border-gray-100 shadow-sm flex items-center justify-between cursor-pointer"
             >
               <div className="flex flex-col">
-                <span className="text-[8px] font-bold text-gray-500 uppercase tracking-widest leading-none mb-1">{stat.title}</span>
-                <span className="text-xl font-bold text-gray-800">{stat.value}</span>
+                <span className="text-[12px] font-poppins font-bold text-black leading-none mb-1">{stat.title}</span>
+                <span className="text-xl font-bold text-black">{stat.value}</span>
               </div>
               <div className={`w-10 h-10 ${stat.iconBg} ${stat.iconColor} rounded-lg flex items-center justify-center shadow-inner`}>
                 {React.cloneElement(stat.icon, { size: 18 })}
@@ -136,11 +144,11 @@ const AdminDashboard = () => {
       {/* Main Analytics Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Revenue Chart */}
-        <div className="lg:col-span-2 bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex flex-col gap-4">
+        <div className="lg:col-span-2 bg-white p-4 rounded-2xl border border-gray-100 shadow-sm flex flex-col gap-3">
           <div className="flex items-center justify-between">
             <div>
-              <h3 className="text-sm font-bold text-gray-800">Revenue Analytics</h3>
-              <p className="text-[10px] text-gray-500 font-bold uppercase tracking-wider">
+              <h3 className="text-lg font-sans font-bold text-black tracking-wide">Revenue Analytics</h3>
+              <p className="text-[10px] text-gray-500 font-sans font-medium uppercase tracking-wider">
                 {financeData.dailyRevenue?.length > 0
                   ? `Daily insights for last ${financeData.dailyRevenue.length} days`
                   : 'Platform financial performance overview'}
@@ -151,8 +159,8 @@ const AdminDashboard = () => {
               <span className="text-[9px] font-bold text-gray-600 uppercase">Daily</span>
             </div>
           </div>
-          <div className="h-44 w-full relative">
-            <div className="flex items-end justify-between h-44 w-full gap-2 md:gap-4 pt-4 px-2">
+          <div className="h-40 w-full relative">
+            <div className="flex items-end justify-between h-40 w-full gap-2 md:gap-4 pt-2">
               {(() => {
                 const hasData = financeData.dailyRevenue?.length > 1;
                 const data = hasData
@@ -169,7 +177,7 @@ const AdminDashboard = () => {
                     <div key={i} className="flex-1 flex flex-col items-center group gap-3">
                       <div className="relative w-full flex flex-col items-center justify-end h-32">
                         {/* Tooltip on Hover */}
-                        <div className="absolute -top-8 px-2 py-1 bg-brand-dark text-white text-[8px] font-bold rounded opacity-0 group-hover:opacity-100 transition-opacity z-10 pointer-events-none shadow-xl">
+                        <div className="absolute -top-8 px-2 py-1 bg-admin-dark text-white text-[8px] font-bold rounded opacity-0 group-hover:opacity-100 transition-opacity z-10 pointer-events-none shadow-xl">
                           ₹{d.revenue}
                         </div>
 
@@ -178,10 +186,7 @@ const AdminDashboard = () => {
                           initial={{ height: 0 }}
                           animate={{ height: `${height}%` }}
                           transition={{ duration: 1, delay: i * 0.1, ease: "easeOut" }}
-                          className={`w-full max-w-[40px] rounded-t-lg shadow-sm transition-all duration-300 ${hasData
-                            ? 'bg-blue-500 group-hover:bg-blue-600'
-                            : 'bg-gray-100 group-hover:bg-brand-pink/20'
-                            }`}
+                          className="w-full max-w-[40px] rounded-t-lg shadow-sm transition-all duration-300 bg-blue-500 group-hover:bg-blue-600"
                         />
                       </div>
                       <span className="text-[7px] md:text-[8px] font-black text-gray-400 uppercase tracking-tighter whitespace-nowrap">
@@ -196,8 +201,8 @@ const AdminDashboard = () => {
         </div>
 
         {/* Category Distribution */}
-        <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex flex-col gap-4">
-          <h3 className="text-sm font-bold text-gray-800">Inventory Distribution</h3>
+        <div className="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm flex flex-col gap-3">
+          <h3 className="text-lg font-sans font-bold text-black tracking-wide">Inventory Distribution</h3>
           <div className="flex-1 space-y-4 py-2 overflow-y-auto max-h-[220px]">
             {categories.slice(0, 6).map(cat => {
               const productCount = products.filter(p => p.category === cat.name || p.category?._id === cat._id).length;
@@ -214,7 +219,7 @@ const AdminDashboard = () => {
                       initial={{ width: 0 }}
                       animate={{ width: `${Math.min(100, percentage)}%` }}
                       transition={{ duration: 1.5 }}
-                      className="h-full bg-brand-gold"
+                      className="h-full bg-admin-gold"
                     />
                   </div>
                 </div>
@@ -229,25 +234,25 @@ const AdminDashboard = () => {
         {/* Recent Transactions */}
         <div className="lg:col-span-2 bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden flex flex-col">
           <div className="p-4 border-b border-gray-50 flex items-center justify-between">
-            <h3 className="text-sm font-bold text-gray-800">Recent Transactions</h3>
+            <h3 className="text-lg font-sans font-bold text-black tracking-wide">Recent Transactions</h3>
             <Link to="/admin/finance" className="text-[10px] font-bold text-[#4A90E2] uppercase tracking-wider">See all</Link>
           </div>
           <div className="flex-1 overflow-x-auto">
             <table className="w-full text-left">
               <thead>
                 <tr className="bg-gray-50/50">
-                  <th className="px-5 py-3 text-[9px] font-bold text-gray-500 uppercase tracking-widest">Customer</th>
-                  <th className="px-5 py-3 text-[9px] font-bold text-gray-500 uppercase tracking-widest">Order ID</th>
-                  <th className="px-5 py-3 text-[9px] font-bold text-gray-500 uppercase tracking-widest">Amount</th>
-                  <th className="px-5 py-3 text-[9px] font-bold text-gray-500 uppercase tracking-widest text-right">Status</th>
+                  <th className="px-5 py-3 text-sm font-sans font-medium text-gray-600">Customer</th>
+                  <th className="px-5 py-3 text-sm font-sans font-medium text-gray-600">Order ID</th>
+                  <th className="px-5 py-3 text-sm font-sans font-medium text-gray-600">Amount</th>
+                  <th className="px-5 py-3 text-sm font-sans font-medium text-gray-600 text-right">Status</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-50">
-                {financeData.recentTransactions.length > 0 ? (
+                {financeData.recentTransactions?.length > 0 ? (
                   financeData.recentTransactions.map((row, i) => (
                     <tr key={row._id || i} className="hover:bg-gray-50/30 transition-colors">
                       <td className="px-5 py-3.5 flex items-center gap-2">
-                        <div className="w-7 h-7 bg-brand-pink/10 rounded-full flex items-center justify-center text-[10px] font-bold text-brand-pink">{row.user?.name?.[0] || 'U'}</div>
+                        <div className="w-7 h-7 bg-admin-accent/10 rounded-full flex items-center justify-center text-[10px] font-bold text-admin-accent">{row.user?.name?.[0] || 'U'}</div>
                         <span className="text-xs font-bold text-gray-700">{row.user?.name || 'Unknown'}</span>
                       </td>
                       <td className="px-5 py-3.5 text-xs font-bold text-gray-500 uppercase tracking-tighter">{row.orderId}</td>

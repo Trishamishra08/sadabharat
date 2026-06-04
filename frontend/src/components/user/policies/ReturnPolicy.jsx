@@ -18,9 +18,9 @@ const ReturnPolicy = () => {
       <div className="space-y-6 bg-white/50 backdrop-blur-sm p-6 md:p-8 rounded-2xl border border-brand-pink/10 shadow-xl shadow-brand-pink/[0.02]">
         <section className={sectionStyle}>
           <p className={paragraphStyle}>
-            At Saundarya Shringar Private Limited, we are committed to ensuring your satisfaction with every
+            At Sada Bharat Private Limited, we are committed to ensuring your satisfaction with every
             purchase. This policy explains return, exchange, and refund conditions for orders placed on
-            www.saundaryashringar.com.
+            www.sadabharat.com.
           </p>
           <p className={paragraphStyle}>
             By making a purchase on our website, you agree to the terms outlined in this policy.
@@ -33,7 +33,7 @@ const ReturnPolicy = () => {
             <h2 className={headingStyle}>1. About Us</h2>
           </div>
           <p className={paragraphStyle}>
-            Saundarya Shringar Private Limited is a company incorporated under the laws of India, with its
+            Sada Bharat Private Limited is a company incorporated under the laws of India, with its
             registered office at Lajpat Nagar, Near Radha Swamibhawan, Fatehabad - 125050, Haryana, India.
           </p>
           <p className={paragraphStyle}>
@@ -177,7 +177,7 @@ const ReturnPolicy = () => {
           <h2 className={headingStyle}>14. Contact Us</h2>
           <p className={paragraphStyle}>For returns, refunds, or assistance:</p>
           <ul className={bulletListStyle}>
-            <li>Email: care@saundaryashringar.com</li>
+            <li>Email: care@sadabharat.com</li>
             <li>Phone/WhatsApp: +91-9896472169</li>
             <li>Address: Lajpat Nagar, Near Radha Swamibhawan, Fatehabad, Haryana</li>
           </ul>
@@ -185,7 +185,7 @@ const ReturnPolicy = () => {
 
         <div className="pt-8 border-t border-brand-pink/5 text-center">
           <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest leading-relaxed">
-            © 2026 Saundarya Shringar Pvt Ltd. All Rights Reserved.
+            © 2026 Sada Bharat Pvt Ltd. All Rights Reserved.
           </p>
         </div>
       </div>

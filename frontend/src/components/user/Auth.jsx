@@ -3,8 +3,14 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { FiUser, FiLock, FiEye, FiEyeOff, FiCheckCircle, FiPhone, FiMail } from 'react-icons/fi';
 import { useShop } from '../../context/ShopContext';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import api from '../../utils/api';
-import { requestForToken } from '../../utils/firebase-config';
+
+// MOCK API for Frontend-Only mode
+const api = {
+  get: async () => ({ data: { data: { products: [], categories: [], banners: [], settings: {}, orders: [], users: [], stats: [], recentTransactions: [], dailyRevenue: [], vendors: [], blogs: [], returns: [], testimonials: [], reviews: [], replacements: [], supportTickets: [], locations: [], coupons: [], logs: [] }, status: 'success' } }),
+  post: async () => ({ data: { data: { order: { orderId: 'MOCK-ORDER-123' } }, status: 'success' } }),
+  patch: async () => ({ data: { status: 'success' } }),
+  delete: async () => ({ data: { status: 'success' } })
+};
 
 const Auth = () => {
   const { isAuthenticated, setIsAuthenticated, setUser } = useShop();
@@ -18,15 +24,13 @@ const Auth = () => {
     }
   }, [isAuthenticated, isAdminPath, navigate]);
 
-  const [form, setForm] = useState({
-    mobile: '',
-    otp: '',
-  });
+  const [form, setForm] = useState({ mobile: '', email: '', password: '', otp: '' });
 
   const [errors, setErrors] = useState({});
   const [otpSent, setOtpSent] = useState(false);
   const [timer, setTimer] = useState(0);
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const [notification, setNotification] = useState(null);
 
   useEffect(() => {
@@ -75,11 +79,17 @@ const Auth = () => {
     e.preventDefault();
     
     const newErrors = {};
-    if (!form.mobile || form.mobile.length !== 10) {
-      newErrors.mobile = 'Enter a valid 10-digit mobile number';
-    }
-    if (!form.otp || form.otp.length !== 6) {
-      newErrors.otp = 'Enter a valid 6-digit OTP';
+
+    if (isAdminPath) {
+      if (!form.email) newErrors.email = 'Enter your admin email';
+      if (!form.password) newErrors.password = 'Enter your password';
+    } else {
+      if (!form.mobile || form.mobile.length !== 10) {
+        newErrors.mobile = 'Enter a valid 10-digit mobile number';
+      }
+      if (!form.otp || form.otp.length !== 6) {
+        newErrors.otp = 'Enter a valid 6-digit OTP';
+      }
     }
     
     if (Object.keys(newErrors).length > 0) {
@@ -90,39 +100,38 @@ const Auth = () => {
     setLoading(true);
 
     try {
-      // Mocking OTP verification because the old /admin-login endpoint expects email/password
-      // and will return invalid credentials for mobile/otp.
-      // Uncomment and update the API call when the backend OTP endpoint is ready.
-      
-      /*
-      const response = await api.post('/auth/verify-otp', {
-        mobile: form.mobile,
-        otp: form.otp
-      });
-      const { token, data } = response.data;
-      */
+      let token, data;
 
-      // --- MOCK SUCCESS FOR UI TESTING ---
-      const token = "mock-token-123";
-      const data = { name: 'Test User', phone: form.mobile, role: 'customer' };
-      // -----------------------------------
+      if (isAdminPath) {
+        if (form.email === 'admin@gmail.com' && form.password === '123456') {
+          token = "admin-mock-token-123";
+          data = { name: 'Admin User', email: form.email, role: 'admin' };
+        } else {
+          throw new Error("Invalid admin credentials.");
+        }
+      } else {
+        // --- MOCK SUCCESS FOR UI TESTING ---
+        token = "mock-token-123";
+        data = { name: 'Test User', phone: form.mobile, role: 'customer' };
+        // -----------------------------------
+      }
+
       localStorage.setItem(isAdminPath ? 'admin_token' : 'customer_token', token);
       setUser(data);
       setIsAuthenticated(true);
 
-      const fcmToken = await requestForToken();
-      if (fcmToken) {
-        await api.post('/auth/save-fcm-token', { token: fcmToken, platform: 'web' }, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
-      }
+      // FCM Push Removed
 
       showNotification("Login Successful! Welcome to Sada Bharat.");
       const from = location.state?.from || (isAdminPath ? '/admin' : '/');
       setTimeout(() => navigate(from), 1200);
 
     } catch (err) {
-      showNotification(err.response?.data?.message || "Invalid credentials.", 'error');
+      if (err.message === "Invalid admin credentials.") {
+        showNotification(err.message, 'error');
+      } else {
+        showNotification(err.response?.data?.message || "Invalid credentials.", 'error');
+      }
     } finally {
       setLoading(false);
     }
@@ -228,86 +237,131 @@ const Auth = () => {
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-2 md:space-y-3">
-              
-              {/* Mobile Number */}
-              <div>
-                <div className="relative shadow-sm rounded-xl">
-                  <FiPhone className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 text-lg" />
-                  <input
-                    type="text"
-                    name="mobile"
-                    value={form.mobile}
-                    onChange={handleInputChange}
-                    placeholder="Contact Number *"
-                    maxLength={10}
-                    className={`w-full bg-white border ${errors.mobile ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : 'border-gray-200 focus:border-[#054425] focus:ring-[#054425]'} pl-11 pr-24 py-2 md:py-2.5 rounded-xl text-sm font-medium outline-none transition-all text-gray-800 placeholder:text-gray-400`}
-                  />
-                  <button 
-                    type="button" 
-                    onClick={handleSendOtp}
-                    disabled={otpSent}
-                    className={`absolute right-2 top-1/2 -translate-y-1/2 text-[10px] md:text-xs font-bold px-3 py-1.5 md:py-2 rounded-lg transition-all ${
-                      otpSent 
-                        ? 'bg-gray-200 text-gray-500 cursor-not-allowed' 
-                        : 'bg-[#0F3520] text-white hover:bg-[#0d2a1a]'
-                    }`}
-                  >
-                    {otpSent ? 'Sent' : 'Send OTP'}
-                  </button>
-                </div>
-                {errors.mobile && <p className="text-red-500 text-xs mt-1 ml-1">{errors.mobile}</p>}
-              </div>
-
-              {/* Email field removed as requested */}
-
-              {/* OTP */}
-              <div>
-                <div className="relative shadow-sm rounded-xl">
-                  <FiLock className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 text-lg" />
-                  <input
-                    type="text"
-                    name="otp"
-                    value={form.otp}
-                    onChange={handleInputChange}
-                    placeholder="Enter OTP *"
-                    disabled={!otpSent}
-                    maxLength={6}
-                    className={`w-full bg-white border ${errors.otp ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : 'border-gray-200 focus:border-[#054425] focus:ring-[#054425]'} pl-11 pr-16 py-2 md:py-2.5 rounded-xl text-sm font-medium outline-none transition-all text-gray-800 placeholder:text-gray-400 disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed`}
-                  />
-                </div>
-                {errors.otp && <p className="text-red-500 text-xs mt-1 ml-1">{errors.otp}</p>}
-                
-                {/* Resend OTP Link */}
-                <AnimatePresence>
-                  {otpSent && (
-                    <motion.div 
-                      initial={{ opacity: 0, height: 0 }}
-                      animate={{ opacity: 1, height: 'auto' }}
-                      className="flex justify-end mt-1.5 mr-1"
-                    >
+              {isAdminPath ? (
+                <>
+                  <div>
+                    <div className="relative shadow-sm rounded-xl">
+                      <FiMail className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 text-lg" />
+                      <input
+                        type="email"
+                        name="email"
+                        value={form.email}
+                        onChange={handleInputChange}
+                        placeholder="Admin Email *"
+                        className={`w-full bg-white border ${errors.email ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : 'border-gray-200 focus:border-[#054425] focus:ring-[#054425]'} pl-11 pr-4 py-2 md:py-2.5 rounded-xl text-sm font-medium outline-none transition-all text-gray-800 placeholder:text-gray-400`}
+                      />
+                    </div>
+                    {errors.email && <p className="text-red-500 text-xs mt-1 ml-1">{errors.email}</p>}
+                  </div>
+                  <div>
+                    <div className="relative shadow-sm rounded-xl">
+                      <FiLock className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 text-lg" />
+                      <input
+                        type={showPassword ? "text" : "password"}
+                        name="password"
+                        value={form.password}
+                        onChange={handleInputChange}
+                        placeholder="Password *"
+                        className={`w-full bg-white border ${errors.password ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : 'border-gray-200 focus:border-[#054425] focus:ring-[#054425]'} pl-11 pr-12 py-2 md:py-2.5 rounded-xl text-sm font-medium outline-none transition-all text-gray-800 placeholder:text-gray-400`}
+                      />
                       <button
                         type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 focus:outline-none"
+                      >
+                        {showPassword ? <FiEyeOff /> : <FiEye />}
+                      </button>
+                    </div>
+                    {errors.password && <p className="text-red-500 text-xs mt-1 ml-1">{errors.password}</p>}
+                  </div>
+                  <button
+                    type="submit"
+                    disabled={loading || !form.email || !form.password}
+                    className="w-full bg-[#0F3520] text-white py-3.5 rounded-xl text-sm font-medium tracking-wide hover:bg-[#0d2a1a] transition-all shadow-md active:scale-95 disabled:opacity-50 mt-4"
+                  >
+                    {loading ? 'Processing...' : 'Admin Login'}
+                  </button>
+                </>
+              ) : (
+                <>
+                  {/* Mobile Number */}
+                  <div>
+                    <div className="relative shadow-sm rounded-xl">
+                      <FiPhone className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 text-lg" />
+                      <input
+                        type="text"
+                        name="mobile"
+                        value={form.mobile}
+                        onChange={handleInputChange}
+                        placeholder="Contact Number *"
+                        maxLength={10}
+                        className={`w-full bg-white border ${errors.mobile ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : 'border-gray-200 focus:border-[#054425] focus:ring-[#054425]'} pl-11 pr-24 py-2 md:py-2.5 rounded-xl text-sm font-medium outline-none transition-all text-gray-800 placeholder:text-gray-400`}
+                      />
+                      <button 
+                        type="button" 
                         onClick={handleSendOtp}
-                        disabled={timer > 0}
-                        className={`text-[10px] md:text-xs font-bold transition-all ${
-                          timer > 0 ? 'text-gray-400 cursor-not-allowed' : 'text-[#054425] hover:underline'
+                        disabled={otpSent}
+                        className={`absolute right-2 top-1/2 -translate-y-1/2 text-[10px] md:text-xs font-bold px-3 py-1.5 md:py-2 rounded-lg transition-all ${
+                          otpSent 
+                            ? 'bg-gray-200 text-gray-500 cursor-not-allowed' 
+                            : 'bg-[#0F3520] text-white hover:bg-[#0d2a1a]'
                         }`}
                       >
-                        {timer > 0 ? `Resend OTP in 00:${timer < 10 ? '0' : ''}${timer}` : 'Resend OTP'}
+                        {otpSent ? 'Sent' : 'Send OTP'}
                       </button>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </div>
+                    </div>
+                    {errors.mobile && <p className="text-red-500 text-xs mt-1 ml-1">{errors.mobile}</p>}
+                  </div>
 
+                  {/* OTP */}
+                  <div>
+                    <div className="relative shadow-sm rounded-xl">
+                      <FiLock className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 text-lg" />
+                      <input
+                        type="text"
+                        name="otp"
+                        value={form.otp}
+                        onChange={handleInputChange}
+                        placeholder="Enter OTP *"
+                        disabled={!otpSent}
+                        maxLength={6}
+                        className={`w-full bg-white border ${errors.otp ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : 'border-gray-200 focus:border-[#054425] focus:ring-[#054425]'} pl-11 pr-16 py-2 md:py-2.5 rounded-xl text-sm font-medium outline-none transition-all text-gray-800 placeholder:text-gray-400 disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed`}
+                      />
+                    </div>
+                    {errors.otp && <p className="text-red-500 text-xs mt-1 ml-1">{errors.otp}</p>}
+                    
+                    {/* Resend OTP Link */}
+                    <AnimatePresence>
+                      {otpSent && (
+                        <motion.div 
+                          initial={{ opacity: 0, height: 0 }}
+                          animate={{ opacity: 1, height: 'auto' }}
+                          className="flex justify-end mt-1.5 mr-1"
+                        >
+                          <button
+                            type="button"
+                            onClick={handleSendOtp}
+                            disabled={timer > 0}
+                            className={`text-[10px] md:text-xs font-bold transition-all ${
+                              timer > 0 ? 'text-gray-400 cursor-not-allowed' : 'text-[#054425] hover:underline'
+                            }`}
+                          >
+                            {timer > 0 ? `Resend OTP in 00:${timer < 10 ? '0' : ''}${timer}` : 'Resend OTP'}
+                          </button>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </div>
 
-              <button
-                type="submit"
-                disabled={loading || !otpSent || !form.otp || !form.mobile}
-                className="w-full bg-[#0F3520] text-white py-3.5 rounded-xl text-sm font-medium tracking-wide hover:bg-[#0d2a1a] transition-all shadow-md active:scale-95 disabled:opacity-50 mt-4"
-              >
-                {loading ? 'Processing...' : 'Login'}
-              </button>
+                  <button
+                    type="submit"
+                    disabled={loading || !otpSent || !form.otp || !form.mobile}
+                    className="w-full bg-[#0F3520] text-white py-3.5 rounded-xl text-sm font-medium tracking-wide hover:bg-[#0d2a1a] transition-all shadow-md active:scale-95 disabled:opacity-50 mt-4"
+                  >
+                    {loading ? 'Processing...' : 'Login'}
+                  </button>
+                </>
+              )}
             </form>
 
             {/* Social logins removed */}

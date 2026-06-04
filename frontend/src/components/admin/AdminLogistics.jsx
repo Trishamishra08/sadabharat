@@ -1,7 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { FiPercent, FiTruck, FiSave, FiAlertCircle, FiSettings, FiCheckCircle, FiShield, FiLink, FiMapPin, FiPhone } from 'react-icons/fi';
-import api from '../../utils/api';
+
+// MOCK API for Frontend-Only mode
+const api = {
+  get: async () => ({ data: { data: { products: [], categories: [], banners: [], settings: {}, orders: [], users: [], stats: [], recentTransactions: [], dailyRevenue: [], vendors: [], blogs: [], returns: [], testimonials: [], reviews: [], replacements: [], supportTickets: [], locations: [], coupons: [], logs: [] }, status: 'success' } }),
+  post: async () => ({ data: { data: { order: { orderId: 'MOCK-ORDER-123' } }, status: 'success' } }),
+  patch: async () => ({ data: { status: 'success' } }),
+  delete: async () => ({ data: { status: 'success' } })
+};
+
 
 const AdminLogistics = () => {
   const [settings, setSettings] = useState({
@@ -70,17 +78,17 @@ const AdminLogistics = () => {
   }
 
   return (
-    <div className="max-w-6xl mx-auto space-y-6 pb-20 p-4">
+    <div className="max-w-7xl mx-auto space-y-6 pb-20">
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-serif font-black text-brand-dark uppercase tracking-widest leading-none mb-1">
+          <h1 className="text-3xl font-['Cormorant',_serif] font-bold text-admin-dark leading-none mb-2">
             Logistics & Tax Authority
           </h1>
-          <p className="text-[10px] text-gray-400 font-bold uppercase tracking-[0.3em] opacity-60">Global Sanctuary Configuration</p>
+          <p className="text-gray-500 text-[13px] font-poppins">Global sanctuary configuration</p>
         </div>
-        <div className="flex items-center gap-2 bg-brand-pink/5 px-4 py-2 rounded-full border border-brand-pink/10">
-          <FiShield className="text-brand-pink" size={14} />
-          <span className="text-[11px] font-black text-brand-pink uppercase tracking-widest">Secure Master Controls</span>
+        <div className="flex items-center gap-2 bg-admin-accent/5 px-4 py-2 rounded-full border border-admin-accent/10">
+          <FiShield className="text-admin-accent" size={14} />
+          <span className="text-[11px] font-black text-admin-accent uppercase tracking-widest">Secure Master Controls</span>
         </div>
       </div>
 
@@ -108,23 +116,23 @@ const AdminLogistics = () => {
               <FiPercent size={20} />
             </div>
             <div>
-              <h3 className="text-xs font-black text-brand-dark uppercase tracking-widest leading-none">Taxation Mapping</h3>
-              <p className="text-[8px] text-gray-400 font-bold mt-1 uppercase">GST Authority Calculations</p>
+              <h3 className="text-sm font-sans font-medium text-gray-800 leading-none">Taxation Mapping</h3>
+              <p className="text-xs font-medium text-gray-500 mt-1 capitalize">GST Authority Calculations</p>
             </div>
           </div>
 
           <div className="space-y-4">
             <div className="space-y-2">
-              <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Global GST Rate (%)</label>
+              <label className="text-sm font-sans font-medium text-gray-600 capitalize">Global GST Rate (%)</label>
               <div className="relative">
                 <input
                   type="number"
                   value={settings.taxRate}
                   onChange={(e) => setSettings({ ...settings, taxRate: parseFloat(e.target.value) })}
-                  className="w-full bg-gray-50 border border-transparent p-4 rounded-xl text-xs font-bold outline-none focus:bg-white focus:border-brand-pink/30 transition-all shadow-inner"
+                  className="w-full bg-gray-50 border border-transparent p-4 rounded-xl text-sm font-medium outline-none focus:bg-white focus:border-admin-accent/30 transition-all shadow-inner"
                   required
                 />
-                <span className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-300 font-black text-sm">%</span>
+                <span className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 font-medium text-sm">%</span>
               </div>
             </div>
           </div>
@@ -137,40 +145,40 @@ const AdminLogistics = () => {
           transition={{ delay: 0.1 }}
           className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm space-y-6"
         >
-          <div className="flex items-center gap-4 border-b border-gray-50 pb-4 text-brand-pink">
-            <div className="w-10 h-10 bg-brand-pink/10 rounded-2xl flex items-center justify-center">
+          <div className="flex items-center gap-4 border-b border-gray-50 pb-4 text-admin-accent">
+            <div className="w-10 h-10 bg-admin-accent/10 rounded-2xl flex items-center justify-center">
               <FiTruck size={20} />
             </div>
             <div>
-              <h3 className="text-xs font-black text-brand-dark uppercase tracking-widest leading-none">Shipping Financials</h3>
-              <p className="text-[8px] text-gray-400 font-bold mt-1 uppercase">Standard Carrier Fees</p>
+              <h3 className="text-sm font-sans font-medium text-gray-800 leading-none">Shipping Financials</h3>
+              <p className="text-xs font-medium text-gray-500 mt-1 capitalize">Standard Carrier Fees</p>
             </div>
           </div>
 
           <div className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Base Delivery</label>
+                <label className="text-sm font-sans font-medium text-gray-600 capitalize">Base Delivery</label>
                 <div className="relative">
-                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-300 font-black text-xs">₹</span>
+                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 font-medium text-sm">₹</span>
                   <input
                     type="number"
                     value={settings.deliveryCharge}
                     onChange={(e) => setSettings({ ...settings, deliveryCharge: parseFloat(e.target.value) })}
-                    className="w-full bg-gray-50 border border-transparent p-4 pl-7 rounded-xl text-xs font-bold outline-none focus:bg-white focus:border-brand-pink/30 transition-all shadow-inner"
+                    className="w-full bg-gray-50 border border-transparent p-4 pl-7 rounded-xl text-sm font-medium outline-none focus:bg-white focus:border-admin-accent/30 transition-all shadow-inner"
                     required
                   />
                 </div>
               </div>
               <div className="space-y-2">
-                <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Free Threshold</label>
+                <label className="text-sm font-sans font-medium text-gray-600 capitalize">Free Threshold</label>
                 <div className="relative">
-                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-300 font-black text-xs">₹</span>
+                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 font-medium text-sm">₹</span>
                   <input
                     type="number"
                     value={settings.freeDeliveryThreshold}
                     onChange={(e) => setSettings({ ...settings, freeDeliveryThreshold: parseFloat(e.target.value) })}
-                    className="w-full bg-gray-50 border border-transparent p-4 pl-7 rounded-xl text-xs font-bold outline-none focus:bg-white focus:border-brand-pink/30 transition-all shadow-inner"
+                    className="w-full bg-gray-50 border border-transparent p-4 pl-7 rounded-xl text-sm font-medium outline-none focus:bg-white focus:border-admin-accent/30 transition-all shadow-inner"
                     required
                   />
                 </div>
@@ -191,14 +199,14 @@ const AdminLogistics = () => {
               <FiShield size={20} />
             </div>
             <div>
-              <h3 className="text-xs font-black text-brand-dark uppercase tracking-widest leading-none">Payment Strategy</h3>
-              <p className="text-[8px] text-gray-400 font-bold mt-1 uppercase">COD Management</p>
+              <h3 className="text-sm font-sans font-medium text-gray-800 leading-none">Payment Strategy</h3>
+              <p className="text-xs font-medium text-gray-500 mt-1 capitalize">COD Management</p>
             </div>
           </div>
 
           <div className="space-y-4">
             <div className="flex items-center justify-between bg-gray-50 p-4 rounded-xl">
-              <span className="text-[10px] font-black text-brand-dark uppercase tracking-widest">Enable COD</span>
+              <span className="text-sm font-medium text-gray-800">Enable COD</span>
               <button
                 type="button"
                 onClick={() => setSettings({ ...settings, isCodEnabled: !settings.isCodEnabled })}
@@ -209,14 +217,14 @@ const AdminLogistics = () => {
             </div>
 
             <div className="space-y-2">
-              <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest">COD Fee (Convenience)</label>
+              <label className="text-sm font-medium text-gray-600 capitalize">COD Fee (Convenience)</label>
               <div className="relative">
-                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-300 font-black text-xs">₹</span>
+                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 font-medium text-sm">₹</span>
                 <input
                   type="number"
                   value={settings.codCharge}
                   onChange={(e) => setSettings({ ...settings, codCharge: parseFloat(e.target.value) || 0 })}
-                  className="w-full bg-gray-50 border border-transparent p-4 pl-7 rounded-xl text-xs font-bold outline-none focus:bg-white focus:border-brand-pink/30 transition-all shadow-inner"
+                  className="w-full bg-gray-50 border border-transparent p-4 pl-7 rounded-xl text-sm font-medium outline-none focus:bg-white focus:border-admin-accent/30 transition-all shadow-inner"
                   required
                 />
               </div>
@@ -231,24 +239,24 @@ const AdminLogistics = () => {
           transition={{ delay: 0.2 }}
           className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm space-y-6 lg:row-span-2"
         >
-          <div className="flex items-center gap-4 border-b border-gray-50 pb-4 text-brand-dark">
-            <div className="w-10 h-10 bg-brand-dark/5 rounded-2xl flex items-center justify-center">
+          <div className="flex items-center gap-4 border-b border-gray-50 pb-4 text-admin-dark">
+            <div className="w-10 h-10 bg-admin-dark/5 rounded-2xl flex items-center justify-center">
               <FiSettings size={20} />
             </div>
             <div>
-              <h3 className="text-xs font-black text-brand-dark uppercase tracking-widest leading-none">Carrier Experience</h3>
-              <p className="text-[8px] text-gray-400 font-bold mt-1 uppercase">Customer Facing Timeline</p>
+              <h3 className="text-sm font-sans font-medium text-gray-800 leading-none">Carrier Experience</h3>
+              <p className="text-xs font-medium text-gray-500 mt-1 capitalize">Customer Facing Timeline</p>
             </div>
           </div>
 
           <div className="space-y-5">
             <div className="space-y-2">
-              <label className="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Primary Partner</label>
+              <label className="text-sm font-medium text-gray-600 capitalize">Primary Partner</label>
               <input
                 type="text"
                 value={settings.shippingPartner}
                 onChange={(e) => setSettings({ ...settings, shippingPartner: e.target.value })}
-                className="w-full bg-gray-50 border border-transparent p-4 rounded-xl text-xs font-bold outline-none focus:bg-white focus:border-brand-pink/30 transition-all shadow-inner"
+                className="w-full bg-gray-50 border border-transparent p-4 rounded-xl text-sm font-medium outline-none focus:bg-white focus:border-admin-accent/30 transition-all shadow-inner"
                 placeholder="Delhivery, Shiprocket..."
               />
             </div>
@@ -258,7 +266,7 @@ const AdminLogistics = () => {
                 type="text"
                 value={settings.estDeliveryDays}
                 onChange={(e) => setSettings({ ...settings, estDeliveryDays: e.target.value })}
-                className="w-full bg-gray-50 border border-transparent p-4 rounded-xl text-xs font-bold outline-none focus:bg-white focus:border-brand-pink/30 transition-all shadow-inner"
+                className="w-full bg-gray-50 border border-transparent p-4 rounded-xl text-xs font-bold outline-none focus:bg-white focus:border-admin-accent/30 transition-all shadow-inner"
                 placeholder="3-5 Business Days"
               />
             </div>
@@ -270,7 +278,7 @@ const AdminLogistics = () => {
                   type="text"
                   value={settings.trackingUrl}
                   onChange={(e) => setSettings({ ...settings, trackingUrl: e.target.value })}
-                  className="w-full bg-gray-50 border border-transparent p-4 pl-10 rounded-xl text-xs font-bold outline-none focus:bg-white focus:border-brand-pink/30 transition-all shadow-inner"
+                  className="w-full bg-gray-50 border border-transparent p-4 pl-10 rounded-xl text-xs font-bold outline-none focus:bg-white focus:border-admin-accent/30 transition-all shadow-inner"
                   placeholder="https://shiprocket.co/tracking/"
                 />
               </div>
@@ -283,7 +291,7 @@ const AdminLogistics = () => {
                   type="text"
                   value={settings.supportContact}
                   onChange={(e) => setSettings({ ...settings, supportContact: e.target.value })}
-                  className="w-full bg-gray-50 border border-transparent p-4 pl-10 rounded-xl text-xs font-bold outline-none focus:bg-white focus:border-brand-pink/30 transition-all shadow-inner"
+                  className="w-full bg-gray-50 border border-transparent p-4 pl-10 rounded-xl text-xs font-bold outline-none focus:bg-white focus:border-admin-accent/30 transition-all shadow-inner"
                   placeholder="+91 74071 75567"
                 />
               </div>
@@ -296,14 +304,14 @@ const AdminLogistics = () => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3 }}
-          className="bg-brand-dark p-6 rounded-3xl border border-white/5 shadow-2xl space-y-6 md:col-span-2 lg:col-span-2"
+          className="bg-admin-dark p-6 rounded-3xl border border-white/5 shadow-2xl space-y-6 md:col-span-2 lg:col-span-2"
         >
           <div className="flex items-start gap-4 text-white/80">
-            <div className="p-3 bg-white/5 rounded-xl text-brand-pink">
+            <div className="p-3 bg-white/5 rounded-xl text-admin-accent">
               <FiAlertCircle size={22} />
             </div>
             <div className="space-y-1">
-              <h4 className="text-[10px] font-black uppercase tracking-widest text-[#E8B4B8]">Sacred Integrity Protocol</h4>
+              <h4 className="text-sm font-sans font-medium text-gray-800 capitalize text-[#E8B4B8]">Sacred Integrity Protocol</h4>
               <p className="text-[9px] font-medium text-white/40 leading-relaxed max-w-lg">
                 Changes made here will rewrite your checkout math in real-time. Modifying the **GST Rate** will affect invoice generation, while the **Free Shipping Threshold** will instantly update customer cart behavior.
               </p>
@@ -312,14 +320,14 @@ const AdminLogistics = () => {
 
           <div className="pt-4 flex items-center justify-between border-t border-white/5">
             <div className="flex -space-x-2">
-              <div className="w-8 h-8 rounded-full border-2 border-brand-dark bg-brand-pink/20 flex items-center justify-center text-[8px] font-black text-brand-pink uppercase tracking-widest">Log</div>
+              <div className="w-8 h-8 rounded-full border-2 border-brand-dark bg-admin-accent/20 flex items-center justify-center text-[8px] font-black text-admin-accent uppercase tracking-widest">Log</div>
               <div className="w-8 h-8 rounded-full border-2 border-brand-dark bg-brand-gold/20 flex items-center justify-center text-[8px] font-black text-brand-gold uppercase tracking-widest">Tax</div>
               <div className="w-8 h-8 rounded-full border-2 border-brand-dark bg-white/5 flex items-center justify-center text-[8px] font-black text-white/60 uppercase tracking-widest">Ops</div>
             </div>
             <button
               type="submit"
               disabled={saving}
-              className="bg-[#E8B4B8] text-brand-dark px-12 py-4 rounded-xl text-[10px] font-black uppercase tracking-[0.3em] flex items-center justify-center gap-3 shadow-xl hover:bg-white transition-all disabled:opacity-50"
+              className="bg-[#E8B4B8] text-admin-dark px-12 py-4 rounded-xl text-[10px] font-black uppercase tracking-[0.3em] flex items-center justify-center gap-3 shadow-xl hover:bg-white transition-all disabled:opacity-50"
             >
               {saving ? 'Synchronizing Vault...' : <><FiSave size={16} /> Update Logistics</>}
             </button>

@@ -78,7 +78,7 @@ const AuthModal = () => {
 
             <img src={logoPink} alt="Logo" className="h-12 mx-auto mb-4" />
             <h2 className="text-xl font-serif font-black text-[#5C2E3E] uppercase tracking-widest leading-none">
-              Welcome to the <br/> World of Saundarya
+              Welcome to the <br/> World of Sada Bharat
             </h2>
           </div>
 

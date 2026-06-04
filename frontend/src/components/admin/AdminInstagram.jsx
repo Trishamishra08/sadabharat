@@ -1,8 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { FiPlus, FiEdit2, FiTrash2, FiTrendingUp, FiInstagram, FiEye, FiEyeOff, FiUpload } from 'react-icons/fi';
-import api from '../../utils/api';
-import { uploadToCloudinary } from '../../utils/cloudinary';
+
+// MOCK API for Frontend-Only mode
+const api = {
+  get: async () => ({ data: { data: { products: [], categories: [], banners: [], settings: {}, orders: [], users: [], stats: [], recentTransactions: [], dailyRevenue: [], vendors: [], blogs: [], returns: [], testimonials: [], reviews: [], replacements: [], supportTickets: [], locations: [], coupons: [], logs: [] }, status: 'success' } }),
+  post: async () => ({ data: { data: { order: { orderId: 'MOCK-ORDER-123' } }, status: 'success' } }),
+  patch: async () => ({ data: { status: 'success' } }),
+  delete: async () => ({ data: { status: 'success' } })
+};
+
+
 
 const AdminInstagram = () => {
     const [posts, setPosts] = useState([]);
@@ -14,7 +22,7 @@ const AdminInstagram = () => {
     const initialFormState = {
         caption: '',
         image: '',
-        link: 'https://instagram.com/saundaryashringarpvtltd/',
+        link: 'https://instagram.com/sadabharatpvtltd/',
         status: 'Show'
     };
 
@@ -26,7 +34,7 @@ const AdminInstagram = () => {
 
         try {
             setUploading(true);
-            const url = await uploadToCloudinary(file);
+            const url = URL.createObjectURL(file);
             setFormData(prev => ({ ...prev, image: url }));
         } catch (err) {
             console.error('Upload failed:', err);
@@ -83,14 +91,16 @@ const AdminInstagram = () => {
         <div className="p-4 md:p-8 space-y-8 max-w-7xl mx-auto font-sans">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-gray-100 pb-8">
                 <div>
-                    <h1 className="text-2xl font-black text-brand-dark uppercase tracking-[0.2em] flex items-center gap-4">
-                        <FiInstagram className="text-brand-pink" /> Visual Network
-                    </h1>
-                    <p className="text-[10px] text-gray-400 font-bold uppercase tracking-[0.3em] mt-2">Community Aesthetic Synchronizer</p>
+                    <h1 className="text-3xl font-['Cormorant',_serif] font-bold text-admin-dark leading-none mb-2">
+          <Fiinstagram Classname="Text-Admin-Accent" /> Visual Network
+        </h1>
+        <p className="text-gray-500 text-[13px] font-poppins">
+          Community aesthetic synchronizer
+        </p>
                 </div>
                 <button
                     onClick={() => { setEditingId(null); setFormData(initialFormState); setIsModalOpen(true); }}
-                    className="bg-brand-dark text-white px-10 py-4 text-[11px] font-black uppercase tracking-[0.2em] flex items-center justify-center gap-3 hover:bg-black transition-all shadow-2xl"
+                    className="bg-admin-dark text-white px-10 py-4 text-[11px] font-black uppercase tracking-[0.2em] flex items-center justify-center gap-3 hover:bg-black transition-all shadow-2xl"
                 >
                     <FiPlus /> Integrate New Moment
                 </button>
@@ -106,10 +116,10 @@ const AdminInstagram = () => {
                     {posts.map(post => (
                         <div key={post._id} className="bg-white group relative aspect-square overflow-hidden border border-gray-100 shadow-sm hover:shadow-2xl transition-all duration-700">
                             <img src={post.image} alt={post.caption} className="w-full h-full object-cover transition-transform duration-[2s] group-hover:scale-125 group-hover:rotate-2" />
-                            <div className="absolute inset-0 bg-brand-dark/80 opacity-0 group-hover:opacity-100 transition-all duration-500 flex flex-col items-center justify-center p-4 text-center">
+                            <div className="absolute inset-0 bg-admin-dark/80 opacity-0 group-hover:opacity-100 transition-all duration-500 flex flex-col items-center justify-center p-4 text-center">
                                 <p className="text-[9px] text-white font-bold uppercase tracking-tight mb-4 line-clamp-3">"{post.caption}"</p>
                                 <div className="flex items-center gap-3">
-                                    <button onClick={() => { setEditingId(post._id); setFormData(post); setIsModalOpen(true); }} className="p-3 bg-white/10 hover:bg-brand-pink text-white transition-all shadow-inner"><FiEdit2 size={16} /></button>
+                                    <button onClick={() => { setEditingId(post._id); setFormData(post); setIsModalOpen(true); }} className="p-3 bg-white/10 hover:bg-admin-accent text-white transition-all shadow-inner"><FiEdit2 size={16} /></button>
                                     <button onClick={() => handleDelete(post._id)} className="p-3 bg-white/10 hover:bg-red-500 text-white transition-all shadow-inner"><FiTrash2 size={16} /></button>
                                 </div>
                                 <div className="absolute bottom-4 left-0 w-full flex justify-center">
@@ -127,14 +137,14 @@ const AdminInstagram = () => {
                 <div data-lenis-prevent className="fixed inset-0 bg-black/70 backdrop-blur-md z-[99999] flex items-center justify-center p-4">
                     <div className="bg-white w-full max-w-lg rounded-none shadow-2xl relative">
                         <div className="px-8 py-5 border-b border-gray-50 flex justify-between items-center bg-white z-10">
-                            <h2 className="text-lg font-black text-brand-dark uppercase tracking-widest leading-none">Moment Synchronizer</h2>
-                            <button onClick={() => setIsModalOpen(false)} className="text-gray-300 hover:text-brand-dark transition-colors">✕</button>
+                            <h2 className="text-lg font-black text-admin-dark uppercase tracking-widest leading-none">Moment Synchronizer</h2>
+                            <button onClick={() => setIsModalOpen(false)} className="text-gray-300 hover:text-admin-dark transition-colors">✕</button>
                         </div>
                         <form onSubmit={handleSubmit} className="p-8 space-y-5 max-h-[85vh] overflow-y-auto custom-scrollbar italic-placeholder">
                             <div className="space-y-4">
                                 <div className="space-y-1.5">
                                     <label className="text-[8px] font-bold text-gray-400 uppercase tracking-[0.2em] pl-1">Aesthetic Narrative (Caption)</label>
-                                    <input name="caption" value={formData.caption || ''} onChange={handleChange} required className="w-full bg-gray-50 border border-transparent p-4 text-[11px] font-bold outline-none focus:bg-white focus:border-brand-pink-lite transition-all shadow-inner" placeholder="The glow that never fades..." />
+                                    <input name="caption" value={formData.caption || ''} onChange={handleChange} required className="w-full bg-gray-50 border border-transparent p-4 text-[11px] font-bold outline-none focus:bg-white focus:border-admin-accent-lite transition-all shadow-inner" placeholder="The glow that never fades..." />
                                 </div>
                                 <div className="space-y-1.5">
                                     <label className="text-[8px] font-bold text-gray-400 uppercase tracking-[0.2em] pl-1">Visual Asset</label>
@@ -144,10 +154,10 @@ const AdminInstagram = () => {
                                             value={formData.image || ''}
                                             onChange={handleChange}
                                             required
-                                            className="flex-1 bg-gray-50 border border-transparent p-4 text-[11px] font-bold outline-none focus:bg-white focus:border-brand-pink-lite transition-all shadow-inner"
+                                            className="flex-1 bg-gray-50 border border-transparent p-4 text-[11px] font-bold outline-none focus:bg-white focus:border-admin-accent-lite transition-all shadow-inner"
                                             placeholder="Upload or link image..."
                                         />
-                                        <label className="bg-brand-dark text-white px-5 py-4 cursor-pointer hover:bg-black transition-colors flex items-center gap-2 text-[9px] font-black uppercase tracking-widest">
+                                        <label className="bg-admin-dark text-white px-5 py-4 cursor-pointer hover:bg-black transition-colors flex items-center gap-2 text-xs font-sans font-bold uppercase tracking-widest">
                                             {uploading ? <div className="animate-spin w-3 h-3 border-2 border-white/20 border-t-white rounded-full"></div> : <FiUpload size={14} />}
                                             <span>Upload</span>
                                             <input type="file" onChange={handleImageUpload} className="hidden" accept="image/*" />
@@ -156,19 +166,19 @@ const AdminInstagram = () => {
                                 </div>
                                 <div className="space-y-1.5">
                                     <label className="text-[8px] font-bold text-gray-400 uppercase tracking-[0.2em] pl-1">Redirect Network Path (Insta Link)</label>
-                                    <input name="link" value={formData.link || ''} onChange={handleChange} required className="w-full bg-gray-50 border border-transparent p-4 text-[11px] font-bold outline-none focus:bg-white focus:border-brand-pink-lite transition-all shadow-inner" placeholder="https://instagram.com/p/..." />
+                                    <input name="link" value={formData.link || ''} onChange={handleChange} required className="w-full bg-gray-50 border border-transparent p-4 text-[11px] font-bold outline-none focus:bg-white focus:border-admin-accent-lite transition-all shadow-inner" placeholder="https://instagram.com/p/..." />
                                 </div>
                                 <div className="space-y-1.5">
                                     <label className="text-[8px] font-bold text-gray-400 uppercase tracking-[0.2em] pl-1">Network Visibility Status</label>
-                                    <select name="status" value={formData.status || 'Show'} onChange={handleChange} className="w-full bg-gray-50 border border-transparent p-4 text-[11px] font-bold outline-none focus:bg-white focus:border-brand-pink-lite transition-all shadow-inner">
+                                    <select name="status" value={formData.status || 'Show'} onChange={handleChange} className="w-full bg-gray-50 border border-transparent p-4 text-[11px] font-bold outline-none focus:bg-white focus:border-admin-accent-lite transition-all shadow-inner">
                                         <option value="Show">Public Synchronize</option>
                                         <option value="Hide">Private Archive</option>
                                     </select>
                                 </div>
                             </div>
                             <div className="pt-6 flex justify-end gap-5 items-center">
-                                <button type="button" onClick={() => setIsModalOpen(false)} className="text-[9px] font-black uppercase text-gray-300 hover:text-brand-dark tracking-widest transition-colors leading-none">Discard</button>
-                                <button type="submit" disabled={uploading} className={`bg-brand-dark text-white px-10 py-5 text-[9px] font-black uppercase tracking-[0.2em] shadow-xl hover:bg-black transition-all flex items-center gap-3 ${uploading ? 'opacity-50 cursor-not-allowed' : ''}`}>
+                                <button type="button" onClick={() => setIsModalOpen(false)} className="text-[9px] font-black uppercase text-gray-300 hover:text-admin-dark tracking-widest transition-colors leading-none">Discard</button>
+                                <button type="submit" disabled={uploading} className={`bg-admin-dark text-white px-10 py-5 text-[9px] font-black uppercase tracking-[0.2em] shadow-xl hover:bg-black transition-all flex items-center gap-3 ${uploading ? 'opacity-50 cursor-not-allowed' : ''}`}>
                                     {uploading ? 'Processing...' : <><FiTrendingUp /> Commit To Feed</>}
                                 </button>
                             </div>

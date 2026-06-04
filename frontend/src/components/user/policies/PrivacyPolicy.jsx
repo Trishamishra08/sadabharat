@@ -18,9 +18,9 @@ const PrivacyPolicy = () => {
       <div className="space-y-6 bg-white/50 backdrop-blur-sm p-6 md:p-8 rounded-2xl border border-brand-pink/10 shadow-xl shadow-brand-pink/[0.02]">
         <section className={sectionStyle}>
           <p className={paragraphStyle}>
-            At Saundarya Shringar Private Limited, your privacy is not just a priority, it is a commitment.
+            At Sada Bharat Private Limited, your privacy is not just a priority, it is a commitment.
             This policy explains how we collect, use, store, and protect your information when you use our
-            website: www.saundaryashringar.com.
+            website: www.sadabharat.com.
           </p>
           <p className={paragraphStyle}>
             By using our website, you agree to the practices described in this policy. If you do not agree,
@@ -34,7 +34,7 @@ const PrivacyPolicy = () => {
             <h2 className={headingStyle}>1. About Us</h2>
           </div>
           <p className={paragraphStyle}>
-            Saundarya Shringar Private Limited is a company incorporated under the Companies Act of India,
+            Sada Bharat Private Limited is a company incorporated under the Companies Act of India,
             with its registered office at Lajpat Nagar, Near Radha Swamibhawan, Fatehabad - 125050,
             Haryana, India.
           </p>
@@ -181,7 +181,7 @@ const PrivacyPolicy = () => {
           <h2 className={headingStyle}>13. Contact Us</h2>
           <p className={paragraphStyle}>If you have any privacy-related questions, concerns, or requests:</p>
           <ul className={bulletListStyle}>
-            <li>Email: care@saundaryashringar.com</li>
+            <li>Email: care@sadabharat.com</li>
             <li>Phone/WhatsApp: +91-9896472169</li>
             <li>Address: Lajpat Nagar, Near Radha Swamibhawan, Fatehabad, Haryana</li>
           </ul>
@@ -189,7 +189,7 @@ const PrivacyPolicy = () => {
 
         <div className="pt-8 border-t border-brand-pink/5 text-center">
           <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">
-            © 2026 Saundarya Shringar Pvt Ltd. All Rights Reserved.
+            © 2026 Sada Bharat Pvt Ltd. All Rights Reserved.
           </p>
         </div>
       </div>

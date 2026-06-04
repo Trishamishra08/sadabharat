@@ -14,7 +14,15 @@ import {
 } from 'react-icons/fi';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useShop } from '../../context/ShopContext';
-import api from '../../utils/api';
+
+// MOCK API for Frontend-Only mode
+const api = {
+  get: async () => ({ data: { data: { products: [], categories: [], banners: [], settings: {}, orders: [], users: [], stats: [], recentTransactions: [], dailyRevenue: [], vendors: [], blogs: [], returns: [], testimonials: [], reviews: [], replacements: [], supportTickets: [], locations: [], coupons: [], logs: [] }, status: 'success' } }),
+  post: async () => ({ data: { data: { order: { orderId: 'MOCK-ORDER-123' } }, status: 'success' } }),
+  patch: async () => ({ data: { status: 'success' } }),
+  delete: async () => ({ data: { status: 'success' } })
+};
+
 import { Link } from 'react-router-dom';
 
 const AdminOffers = () => {
@@ -90,33 +98,33 @@ const AdminOffers = () => {
 
             {/* Stats Summary */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex items-center gap-4">
-                    <div className="w-12 h-12 bg-orange-50 rounded-xl flex items-center justify-center text-orange-500">
-                        <FiZap size={24} />
+                <div className="bg-orange-50 p-3.5 rounded-xl border border-orange-100 shadow-sm flex items-center gap-4">
+                    <div className="w-10 h-10 bg-orange-50 rounded-lg flex items-center justify-center text-orange-500">
+                        <FiZap size={20} />
                     </div>
                     <div>
-                        <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Active Offers</p>
-                        <p className="text-2xl font-serif font-black text-brand-dark">{offerProducts.length}</p>
+                        <p className="text-sm font-sans font-medium text-gray-500 capitalize leading-none mb-1">Active Offers</p>
+                        <p className="text-xl font-bold text-gray-800 leading-none">{offerProducts.length}</p>
                     </div>
                 </div>
 
-                <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex items-center gap-4">
-                    <div className="w-12 h-12 bg-blue-50 rounded-xl flex items-center justify-center text-blue-500">
-                        <FiTarget size={24} />
+                <div className="bg-blue-50 p-3.5 rounded-xl border border-blue-100 shadow-sm flex items-center gap-4">
+                    <div className="w-10 h-10 bg-blue-50 rounded-lg flex items-center justify-center text-blue-500">
+                        <FiTarget size={20} />
                     </div>
                     <div>
-                        <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Target Reach</p>
-                        <p className="text-2xl font-serif font-black text-brand-dark">High</p>
+                        <p className="text-sm font-sans font-medium text-gray-500 capitalize leading-none mb-1">Target Reach</p>
+                        <p className="text-xl font-bold text-gray-800 leading-none">High</p>
                     </div>
                 </div>
 
-                <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex items-center gap-4">
-                    <div className="w-12 h-12 bg-purple-50 rounded-xl flex items-center justify-center text-purple-500">
-                        <FiStar size={24} />
+                <div className="bg-purple-50 p-3.5 rounded-xl border border-purple-100 shadow-sm flex items-center gap-4">
+                    <div className="w-10 h-10 bg-purple-50 rounded-lg flex items-center justify-center text-purple-500">
+                        <FiStar size={20} />
                     </div>
                     <div>
-                        <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Current Strategy</p>
-                        <p className="text-2xl font-serif font-black text-brand-dark italic">Divine Savings</p>
+                        <p className="text-sm font-sans font-medium text-gray-500 capitalize leading-none mb-1">Current Strategy</p>
+                        <p className="text-xl font-bold text-gray-800 leading-none italic">Divine Savings</p>
                     </div>
                 </div>
             </div>
@@ -189,39 +197,39 @@ const AdminOffers = () => {
                             <table className="w-full text-left border-collapse">
                                 <thead>
                                     <tr className="bg-gray-50/50 border-b border-gray-100">
-                                        <th className="px-6 py-4 text-[9px] font-black text-gray-400 uppercase tracking-widest">PRODUCT</th>
-                                        <th className="px-6 py-4 text-[9px] font-black text-gray-400 uppercase tracking-widest">CATEGORY</th>
-                                        <th className="px-6 py-4 text-[9px] font-black text-gray-400 uppercase tracking-widest">PRICE</th>
-                                        <th className="px-6 py-4 text-[9px] font-black text-gray-400 uppercase tracking-widest text-center">ACTION</th>
+                                        <th className="px-4 py-3 text-xs font-sans font-bold uppercase tracking-widest text-gray-500">PRODUCT</th>
+                                        <th className="px-4 py-3 text-xs font-sans font-bold uppercase tracking-widest text-gray-500">CATEGORY</th>
+                                        <th className="px-4 py-3 text-xs font-sans font-bold uppercase tracking-widest text-gray-500">PRICE</th>
+                                        <th className="px-4 py-3 text-xs font-sans font-bold uppercase tracking-widest text-gray-500 text-center">ACTION</th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-gray-50">
                                     {filteredProducts.map(p => (
                                         <tr key={p._id} className={`hover:bg-gray-50/50 transition-colors ${p.flashSale ? 'bg-orange-50/10' : ''}`}>
-                                            <td className="px-6 py-4">
+                                            <td className="px-4 py-3">
                                                 <div className="flex items-center gap-3">
-                                                    <img src={p.image} className="w-8 h-8 rounded p-0.5 bg-gray-50 object-contain" alt="" />
-                                                    <span className="text-[11px] font-bold text-gray-800 line-clamp-1">{p.name}</span>
+                                                    <img src={p.image} className="w-10 h-10 rounded p-0.5 bg-gray-50 object-contain" alt="" />
+                                                    <span className="text-sm font-medium text-gray-800 line-clamp-1">{p.name}</span>
                                                 </div>
                                             </td>
-                                            <td className="px-6 py-4">
-                                                <span className="text-[10px] font-bold text-gray-400 uppercase">{p.category}</span>
+                                            <td className="px-4 py-3">
+                                                <span className="text-sm font-medium text-gray-500 capitalize">{p.category}</span>
                                             </td>
-                                            <td className="px-6 py-4">
+                                            <td className="px-4 py-3">
                                                 <div className="flex flex-col">
-                                                    <span className="font-bold text-xs text-brand-dark">₹{p.price}</span>
-                                                    {p.oldPrice && <span className="text-[9px] text-gray-400 line-through">₹{p.oldPrice}</span>}
+                                                    <span className="font-medium text-sm text-admin-dark">₹{p.price}</span>
+                                                    {p.oldPrice && <span className="text-xs text-gray-400 line-through">₹{p.oldPrice}</span>}
                                                 </div>
                                             </td>
-                                            <td className="px-6 py-4 text-center">
+                                            <td className="px-4 py-3 text-center">
                                                 <div className="flex justify-center items-center gap-3">
                                                     <button onClick={() => handleEditClick(p)} className="p-2 bg-gray-100 hover:bg-brand-dark hover:text-white rounded-lg transition-all"><FiEdit2 size={14} /></button>
                                                     <button
                                                         onClick={() => toggleOffer(p)}
                                                         disabled={isUpdating === p._id}
-                                                        className={`inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-[10px] font-black uppercase transition-all ${p.flashSale
-                                                            ? 'bg-orange-500 text-white shadow-md'
-                                                            : 'bg-gray-100 text-gray-400 hover:bg-gray-200'
+                                                        className={`inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-bold uppercase transition-all ${p.flashSale
+                                                            ? 'bg-orange-50 text-orange-600 shadow-sm'
+                                                            : 'bg-gray-50 text-gray-500 hover:bg-gray-100'
                                                             }`}
                                                     >
                                                         {isUpdating === p._id ? (

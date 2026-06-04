@@ -18,7 +18,7 @@ const TermsAndConditions = () => {
       <div className="space-y-6 bg-white/50 backdrop-blur-sm p-6 md:p-8 rounded-2xl border border-brand-pink/10 shadow-xl shadow-brand-pink/[0.02]">
         <section className={sectionStyle}>
           <p className={paragraphStyle}>
-            Welcome to Saundarya Shringar Private Limited, where elegance meets authenticity. These Terms & Conditions outline the rules and regulations governing your access to and use of our website: www.saundaryashringar.com.
+            Welcome to Sada Bharat Private Limited, where elegance meets authenticity. These Terms & Conditions outline the rules and regulations governing your access to and use of our website: www.sadabharat.com.
           </p>
           <p className={paragraphStyle}>
             By accessing, browsing, or purchasing from our website, you acknowledge that you have read, understood, and agreed to be bound by these Terms, along with our Privacy Policy. If you do not agree, we respectfully request that you discontinue use of the platform.
@@ -31,7 +31,7 @@ const TermsAndConditions = () => {
             <h2 className={headingStyle}>1. About Us</h2>
           </div>
           <p className={paragraphStyle}>
-            Saundarya Shringar Private Limited is dedicated to delivering quality and trust through a seamless digital experience.
+            Sada Bharat Private Limited is dedicated to delivering quality and trust through a seamless digital experience.
           </p>
           <p className={paragraphStyle}>
             Registered Office: Lajpat Nagar, Near Radha Swamibhawan Fatehabad - 125050, Haryana, India
@@ -170,7 +170,7 @@ const TermsAndConditions = () => {
             <h2 className={headingStyle}>11. Intellectual Property Rights</h2>
           </div>
           <p className={paragraphStyle}>
-            All content on this website including text, visuals, logos, and design is the intellectual property of Saundarya Shringar Private Limited or its licensors.
+            All content on this website including text, visuals, logos, and design is the intellectual property of Sada Bharat Private Limited or its licensors.
           </p>
           <p className={paragraphStyle}>You may:</p>
           <ul className={bulletListStyle}>
@@ -205,7 +205,7 @@ const TermsAndConditions = () => {
         <section className={sectionStyle}>
           <h2 className={headingStyle}>15. Get in Touch</h2>
           <ul className={bulletListStyle}>
-            <li>Email: care@saundaryashringar.com</li>
+            <li>Email: care@sadabharat.com</li>
             <li>Phone/WhatsApp: +91-9896472169</li>
             <li>Address: Lajpat Nagar, Near Radha Swamibhawan, Fatehabad, Haryana</li>
           </ul>
@@ -213,7 +213,7 @@ const TermsAndConditions = () => {
 
         <div className="pt-8 border-t border-brand-pink/5 text-center">
           <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest leading-relaxed">
-            © 2026 Saundarya Shringar Pvt Ltd. All Rights Reserved.
+            © 2026 Sada Bharat Pvt Ltd. All Rights Reserved.
           </p>
         </div>
       </div>

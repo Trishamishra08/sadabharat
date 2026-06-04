@@ -75,36 +75,38 @@ const AdminCustomers = () => {
       <div className="max-w-7xl mx-auto space-y-6">
         <div className="flex justify-between items-end">
           <div>
-            <h1 className="text-xl font-serif font-black text-brand-dark uppercase tracking-widest leading-none mb-1">
-              Customer Orders
-            </h1>
-            <p className="text-[8px] text-gray-400 font-black uppercase tracking-[0.2em]">Real-time Booking & Delivery Tracking</p>
+            <h1 className="text-3xl font-['Cormorant',_serif] font-bold text-admin-dark leading-none mb-2">
+          Customer Orders
+        </h1>
+        <p className="text-gray-500 text-[13px] font-poppins">
+          Real-time booking & delivery tracking
+        </p>
           </div>
-          <div className="flex items-center gap-3 bg-white px-4 py-2 rounded-xl border border-brand-pink/10 w-80 shadow-sm">
+          <div className="flex items-center gap-3 bg-white px-4 py-2 rounded-xl border border-admin-accent/10 w-80 shadow-sm">
              <FiSearch className="text-gray-300" size={14} />
              <input type="text" placeholder="Search customers..." className="bg-transparent border-none outline-none text-[10px] font-bold uppercase w-full" />
           </div>
         </div>
 
-        <div className="bg-white rounded-2xl border border-brand-pink/10 shadow-xl overflow-hidden">
+        <div className="bg-white rounded-2xl border border-admin-accent/10 shadow-xl overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full text-left">
               <thead>
-                <tr className="bg-brand-light/20">
-                  <th className="px-6 py-4 text-[8px] font-black uppercase tracking-widest text-brand-dark opacity-60">Customer</th>
-                  <th className="px-6 py-4 text-[8px] font-black uppercase tracking-widest text-brand-dark opacity-60">Last Booking (What's Booked)</th>
-                  <th className="px-6 py-4 text-[8px] font-black uppercase tracking-widest text-brand-dark opacity-60">Value</th>
-                  <th className="px-6 py-4 text-[8px] font-black uppercase tracking-widest text-brand-dark opacity-60">Date</th>
-                  <th className="px-6 py-4 text-[8px] font-black uppercase tracking-widest text-brand-dark opacity-60">Delivery Status</th>
-                  <th className="px-6 py-4 text-[8px] font-black uppercase tracking-widest text-brand-dark opacity-60 text-right">Actions</th>
+                <tr className="bg-admin-light/20">
+                  <th className="px-6 py-4 text-[8px] font-black uppercase tracking-widest text-admin-dark opacity-60">Customer</th>
+                  <th className="px-6 py-4 text-[8px] font-black uppercase tracking-widest text-admin-dark opacity-60">Last Booking (What's Booked)</th>
+                  <th className="px-6 py-4 text-[8px] font-black uppercase tracking-widest text-admin-dark opacity-60">Value</th>
+                  <th className="px-6 py-4 text-[8px] font-black uppercase tracking-widest text-admin-dark opacity-60">Date</th>
+                  <th className="px-6 py-4 text-[8px] font-black uppercase tracking-widest text-admin-dark opacity-60">Delivery Status</th>
+                  <th className="px-6 py-4 text-[8px] font-black uppercase tracking-widest text-admin-dark opacity-60 text-right">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-brand-pink/5">
+              <tbody className="divide-y divide-admin-accent/5">
                 {dummyCustomers.map((c) => (
-                  <tr key={c.id} className="hover:bg-brand-pink/[0.01] transition-colors group">
+                  <tr key={c.id} className="hover:bg-admin-accent/[0.01] transition-colors group">
                     <td className="px-6 py-4">
                       <div>
-                        <p className="text-[10px] font-black text-brand-dark uppercase truncate">{c.name}</p>
+                        <p className="text-sm font-sans font-medium text-gray-800 line-clamp-1">{c.name}</p>
                         <p className="text-[8px] text-gray-400 font-bold tracking-tighter">{c.email}</p>
                       </div>
                     </td>
@@ -112,7 +114,7 @@ const AdminCustomers = () => {
                       <p className="text-[9px] font-bold text-gray-600 truncate max-w-[200px]">{c.lastOrder}</p>
                     </td>
                     <td className="px-6 py-4">
-                      <p className="text-[10px] font-black text-brand-dark">{c.totalSpent}</p>
+                      <p className="text-[10px] font-black text-admin-dark">{c.totalSpent}</p>
                     </td>
                     <td className="px-6 py-4 text-[9px] font-bold text-gray-400">
                       {c.date}
@@ -125,7 +127,7 @@ const AdminCustomers = () => {
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex items-center justify-end">
-                        <button className="text-brand-pink p-2 hover:bg-brand-pink/5 rounded-lg transition-all flex items-center gap-1.5 text-[8px] font-black uppercase">
+                        <button className="text-admin-accent p-2 hover:bg-admin-accent/5 rounded-lg transition-all flex items-center gap-1.5 text-[8px] font-black uppercase">
                           Details <FiExternalLink size={10} />
                         </button>
                       </div>

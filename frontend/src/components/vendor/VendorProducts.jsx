@@ -56,11 +56,11 @@ const VendorProducts = () => {
             </thead>
             <tbody className="text-[12px] text-gray-800">
               {[
-                { name: 'NEEM TULSI Face Wash', sku: 'SB-NTFW-100', cat: 'Skin Care', price: '₹299', stock: 45, status: 'Active' },
-                { name: 'BHRINGRAJ Hair Oil', sku: 'SB-BHO-200', cat: 'Hair Care', price: '₹349', stock: 12, status: 'Low Stock' },
-                { name: 'AMLA Powder', sku: 'SB-AP-100', cat: 'Wellness', price: '₹199', stock: 0, status: 'Out of Stock' },
-                { name: 'ASHWAGANDHA Capsules', sku: 'SB-AC-60', cat: 'Wellness', price: '₹349', stock: 120, status: 'Active' },
-                { name: 'ALOE VERA Gel', sku: 'SB-AVG-150', cat: 'Skin Care', price: '₹249', stock: 85, status: 'Active' },
+                { name: 'NEEM TULSI Face Wash', sku: 'SB-NTFW-100', cat: 'Skin Care', price: '₹299', stock: 45, status: 'Approved' },
+                { name: 'BHRINGRAJ Hair Oil', sku: 'SB-BHO-200', cat: 'Hair Care', price: '₹349', stock: 12, status: 'Pending' },
+                { name: 'AMLA Powder', sku: 'SB-AP-100', cat: 'Wellness', price: '₹199', stock: 0, status: 'Rejected' },
+                { name: 'ASHWAGANDHA Capsules', sku: 'SB-AC-60', cat: 'Wellness', price: '₹349', stock: 120, status: 'Approved' },
+                { name: 'ALOE VERA Gel', sku: 'SB-AVG-150', cat: 'Skin Care', price: '₹249', stock: 85, status: 'Approved' },
               ].map((product, i) => (
                 <tr key={i} className="border-b border-gray-50 hover:bg-gray-50/50 transition-colors">
                   <td className="px-4 py-2.5">
@@ -81,8 +81,8 @@ const VendorProducts = () => {
                   </td>
                   <td className="px-4 py-2.5">
                     <span className={`px-2 py-0.5 rounded text-[9px] font-bold ${
-                      product.status === 'Active' ? 'bg-[#E8F5E9] text-[#2E7D32] border border-[#C8E6C9]' : 
-                      product.status === 'Low Stock' ? 'bg-[#FFF8E1] text-[#F9A825] border border-[#FFECB3]' : 
+                      product.status === 'Approved' ? 'bg-[#E8F5E9] text-[#2E7D32] border border-[#C8E6C9]' : 
+                      product.status === 'Pending' ? 'bg-[#FFF8E1] text-[#F9A825] border border-[#FFECB3]' : 
                       'bg-[#FFEBEE] text-[#C62828] border border-[#FFCDD2]'
                     }`}>
                       {product.status}
@@ -104,11 +104,11 @@ const VendorProducts = () => {
         {/* Mobile View: Product Cards List */}
         <div className="block sm:hidden divide-y divide-gray-100">
           {[
-            { name: 'NEEM TULSI Face Wash', sku: 'SB-NTFW-100', cat: 'Skin Care', price: '₹299', stock: 45, status: 'Active' },
-            { name: 'BHRINGRAJ Hair Oil', sku: 'SB-BHO-200', cat: 'Hair Care', price: '₹349', stock: 12, status: 'Low Stock' },
-            { name: 'AMLA Powder', sku: 'SB-AP-100', cat: 'Wellness', price: '₹199', stock: 0, status: 'Out of Stock' },
-            { name: 'ASHWAGANDHA Capsules', sku: 'SB-AC-60', cat: 'Wellness', price: '₹349', stock: 120, status: 'Active' },
-            { name: 'ALOE VERA Gel', sku: 'SB-AVG-150', cat: 'Skin Care', price: '₹249', stock: 85, status: 'Active' },
+            { name: 'NEEM TULSI Face Wash', sku: 'SB-NTFW-100', cat: 'Skin Care', price: '₹299', stock: 45, status: 'Approved' },
+            { name: 'BHRINGRAJ Hair Oil', sku: 'SB-BHO-200', cat: 'Hair Care', price: '₹349', stock: 12, status: 'Pending' },
+            { name: 'AMLA Powder', sku: 'SB-AP-100', cat: 'Wellness', price: '₹199', stock: 0, status: 'Rejected' },
+            { name: 'ASHWAGANDHA Capsules', sku: 'SB-AC-60', cat: 'Wellness', price: '₹349', stock: 120, status: 'Approved' },
+            { name: 'ALOE VERA Gel', sku: 'SB-AVG-150', cat: 'Skin Care', price: '₹249', stock: 85, status: 'Approved' },
           ].map((product, i) => (
             <div key={i} className="p-4 flex gap-3 items-start bg-white">
               <div className="w-12 h-12 bg-white rounded-lg border border-gray-100 p-1 flex items-center justify-center shrink-0">
@@ -128,8 +128,8 @@ const VendorProducts = () => {
                     </span>
                   </div>
                   <span className={`px-1.5 py-0.5 rounded text-[8px] font-bold ${
-                    product.status === 'Active' ? 'bg-[#E8F5E9] text-[#2E7D32] border border-[#C8E6C9]' : 
-                    product.status === 'Low Stock' ? 'bg-[#FFF8E1] text-[#F9A825] border border-[#FFECB3]' : 
+                    product.status === 'Approved' ? 'bg-[#E8F5E9] text-[#2E7D32] border border-[#C8E6C9]' : 
+                    product.status === 'Pending' ? 'bg-[#FFF8E1] text-[#F9A825] border border-[#FFECB3]' : 
                     'bg-[#FFEBEE] text-[#C62828] border border-[#FFCDD2]'
                   }`}>
                     {product.status}

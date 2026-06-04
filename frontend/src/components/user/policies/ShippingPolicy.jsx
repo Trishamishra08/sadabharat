@@ -18,7 +18,7 @@ const ShippingPolicy = () => {
       <div className="space-y-6 bg-white/50 backdrop-blur-sm p-6 md:p-8 rounded-2xl border border-brand-pink/10 shadow-xl shadow-brand-pink/[0.02]">
         <section className={sectionStyle}>
           <p className={paragraphStyle}>
-            At Saundarya Shringar Private Limited, we are committed to delivering your orders with care,
+            At Sada Bharat Private Limited, we are committed to delivering your orders with care,
             efficiency, and reliability. This Shipping Policy outlines how we process, dispatch, and deliver
             your purchases.
           </p>
@@ -96,7 +96,7 @@ const ShippingPolicy = () => {
             For delays, tracking issues, or missing shipments, please contact us promptly:
           </p>
           <ul className={bulletListStyle}>
-            <li>Email: care@saundaryashringar.com</li>
+            <li>Email: care@sadabharat.com</li>
             <li>Phone/WhatsApp: +91-9896472169</li>
           </ul>
         </section>
@@ -113,17 +113,17 @@ const ShippingPolicy = () => {
           <h2 className={headingStyle}>6. Contact Information</h2>
           <p className={paragraphStyle}>For any shipping-related assistance:</p>
           <ul className={bulletListStyle}>
-            <li>Saundarya Shringar Private Limited</li>
+            <li>Sada Bharat Private Limited</li>
             <li>Lajpat Nagar, Near Radha Swamibhawan</li>
             <li>Fatehabad - 125050, Haryana</li>
-            <li>Email: care@saundaryashringar.com</li>
+            <li>Email: care@sadabharat.com</li>
             <li>Phone: +91-9896472169</li>
           </ul>
         </section>
 
         <div className="pt-8 border-t border-brand-pink/5 text-center">
           <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest leading-relaxed">
-            © 2026 Saundarya Shringar Pvt Ltd. All Rights Reserved.
+            © 2026 Sada Bharat Pvt Ltd. All Rights Reserved.
           </p>
         </div>
       </div>

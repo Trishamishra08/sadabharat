@@ -1,12 +1,21 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FiMessageSquare, FiClock, FiCheckCircle, FiAlertCircle, FiSearch, FiUser, FiHash, FiMoreVertical, FiEdit3, FiSave, FiX } from 'react-icons/fi';
-import api from '../../utils/api';
+
+// MOCK API for Frontend-Only mode
+const api = {
+  get: async () => ({ data: { data: { products: [], categories: [], banners: [], settings: {}, orders: [], users: [], stats: [], recentTransactions: [], dailyRevenue: [], vendors: [], blogs: [], returns: [], testimonials: [], reviews: [], replacements: [], supportTickets: [], locations: [], coupons: [], logs: [] }, status: 'success' } }),
+  post: async () => ({ data: { data: { order: { orderId: 'MOCK-ORDER-123' } }, status: 'success' } }),
+  patch: async () => ({ data: { status: 'success' } }),
+  delete: async () => ({ data: { status: 'success' } })
+};
+
 
 const AdminSupport = () => {
   const [tickets, setTickets] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const [categoryFilter, setCategoryFilter] = useState('All');
   const [editingTicket, setEditingTicket] = useState(null);
   const [updateLoading, setUpdateLoading] = useState(false);
 
@@ -14,7 +23,7 @@ const AdminSupport = () => {
     try {
       setLoading(true);
       const res = await api.get('/tickets');
-      setTickets(res.data.data.tickets);
+      setTickets(res.data?.data?.tickets || res.data?.data?.supportTickets || []);
     } catch (err) {
       console.error(err);
     } finally {
@@ -42,29 +51,53 @@ const AdminSupport = () => {
     }
   };
 
-  const filteredTickets = tickets.filter(t => 
-    t.subject.toLowerCase().includes(searchTerm.toLowerCase()) || 
-    t.user?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    t.orderId?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredTickets = tickets.filter(t => {
+    const matchesSearch = t.subject.toLowerCase().includes(searchTerm.toLowerCase()) || 
+      t.user?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      t.orderId?.toLowerCase().includes(searchTerm.toLowerCase());
+      
+    const ticketCategory = t.category || 'Complaint';
+    const matchesCategory = categoryFilter === 'All' || ticketCategory === categoryFilter;
+
+    return matchesSearch && matchesCategory;
+  });
 
   return (
     <div className="space-y-6">
       {/* Top Controls */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-        <div className="relative w-full md:w-96 group">
-          <FiSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-brand-pink transition-colors" size={16} />
-          <input
-            type="text"
-            placeholder="SEARCH BY SUBJECT, USER OR RITUAL ID..."
-            className="w-full h-11 bg-white border border-brand-pink/10 pl-11 pr-4 text-[10px] font-bold outline-none focus:border-brand-pink focus:bg-white transition-all uppercase tracking-widest text-[#5C2E3E]"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
+      <div className="flex flex-col space-y-4">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+          <div className="relative w-full md:w-96 group">
+            <FiSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-admin-accent transition-colors" size={16} />
+            <input
+              type="text"
+              placeholder="SEARCH BY SUBJECT, USER OR RITUAL ID..."
+              className="w-full h-11 bg-white border border-admin-accent/10 pl-11 pr-4 text-[10px] font-bold outline-none focus:border-admin-accent focus:bg-white transition-all uppercase tracking-widest text-[#5C2E3E]"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Active Archives:</span>
+            <span className="text-[10px] font-black text-[#5C2E3E] bg-admin-accent/10 px-3 py-1 uppercase">{filteredTickets.length}</span>
+          </div>
         </div>
-        <div className="flex items-center gap-2">
-          <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Active Archives:</span>
-          <span className="text-[10px] font-black text-[#5C2E3E] bg-brand-pink/10 px-3 py-1 uppercase">{filteredTickets.length}</span>
+
+        {/* Category Filters */}
+        <div className="flex flex-wrap gap-2">
+          {['All', 'Complaint', 'Vendor Dispute', 'Refund Issue'].map(cat => (
+            <button
+              key={cat}
+              onClick={() => setCategoryFilter(cat)}
+              className={`px-4 py-2 text-[10px] font-bold uppercase tracking-widest transition-all border ${
+                categoryFilter === cat 
+                  ? 'bg-[#5C2E3E] text-white border-[#5C2E3E]' 
+                  : 'bg-white text-gray-500 border-gray-200 hover:border-[#5C2E3E]/50 hover:text-[#5C2E3E]'
+              }`}
+            >
+              {cat}
+            </button>
+          ))}
         </div>
       </div>
 
@@ -83,20 +116,20 @@ const AdminSupport = () => {
                 initial={{ opacity: 0, scale: 0.98 }}
                 animate={{ opacity: 1, scale: 1 }}
                 className={`bg-white border rounded-none p-5 relative group transition-all ${
-                  editingTicket?._id === ticket._id ? 'border-brand-pink/40 shadow-xl' : 'border-brand-pink/5 hover:border-brand-pink/20 shadow-sm'
+                  editingTicket?._id === ticket._id ? 'border-admin-accent/40 shadow-xl' : 'border-admin-accent/5 hover:border-admin-accent/20 shadow-sm'
                 }`}
               >
                 {/* Status Badge Group */}
                 <div className="flex justify-between items-start mb-4">
                   <div className="flex gap-2">
-                    <span className={`px-2 py-0.5 text-[8px] font-black uppercase tracking-[0.2em] shadow-sm ${
+                    <span className={`px-2 py-0.5 text-xs font-sans font-bold uppercase tracking-widest shadow-sm ${
                       ticket.priority === 'High' ? 'bg-red-500 text-white' :
                       ticket.priority === 'Medium' ? 'bg-orange-500 text-white' :
                       'bg-blue-500 text-white'
                     }`}>
                       {ticket.priority}
                     </span>
-                    <span className={`px-2 py-0.5 text-[8px] font-black uppercase tracking-[0.2em] shadow-sm ${
+                    <span className={`px-2 py-0.5 text-xs font-sans font-bold uppercase tracking-widest shadow-sm ${
                       ticket.status === 'Open' ? 'bg-green-500 text-white' :
                       ticket.status === 'Resolved' ? 'bg-[#3D2522] text-white' :
                       'bg-gray-400 text-white'
@@ -118,9 +151,9 @@ const AdminSupport = () => {
                   </div>
 
                   {/* User & Order Meta */}
-                  <div className="grid grid-cols-2 gap-4 border-t border-brand-pink/5 pt-4">
+                  <div className="grid grid-cols-2 gap-4 border-t border-admin-accent/5 pt-4">
                     <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 bg-brand-light rounded-none flex items-center justify-center text-brand-dark">
+                      <div className="w-8 h-8 bg-admin-light rounded-none flex items-center justify-center text-admin-dark">
                         <FiUser size={14} />
                       </div>
                       <div className="min-w-0">
@@ -130,7 +163,7 @@ const AdminSupport = () => {
                     </div>
                     {ticket.orderId && (
                       <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 bg-brand-light rounded-none flex items-center justify-center text-brand-gold">
+                        <div className="w-8 h-8 bg-admin-light rounded-none flex items-center justify-center text-admin-gold">
                           <FiHash size={14} />
                         </div>
                         <div className="min-w-0">
@@ -149,7 +182,7 @@ const AdminSupport = () => {
                           <div>
                             <label className="text-[7px] font-black uppercase tracking-widest text-[#5C2E3E]/60 mb-1 block">New Status</label>
                             <select 
-                              className="w-full bg-white border border-brand-pink/10 h-9 px-2 text-[9px] font-bold outline-none uppercase"
+                              className="w-full bg-white border border-admin-accent/10 h-9 px-2 text-[9px] font-bold outline-none uppercase"
                               value={editingTicket.status}
                               onChange={(e) => setEditingTicket({...editingTicket, status: e.target.value})}
                             >
@@ -163,7 +196,7 @@ const AdminSupport = () => {
                         <div>
                           <label className="text-[7px] font-black uppercase tracking-widest text-[#5C2E3E]/60 mb-1 block">Ritual Master Note</label>
                           <textarea 
-                            className="w-full bg-white border border-brand-pink/10 p-2 text-[10px] font-medium outline-none h-20 resize-none italic"
+                            className="w-full bg-white border border-admin-accent/10 p-2 text-[10px] font-medium outline-none h-20 resize-none italic"
                             placeholder="Add resolution notes for the patron..."
                             value={editingTicket.adminNote}
                             onChange={(e) => setEditingTicket({...editingTicket, adminNote: e.target.value})}
@@ -188,12 +221,12 @@ const AdminSupport = () => {
                     ) : (
                       <div className="flex justify-between items-center">
                         <div className="min-w-0 flex-1 pr-4">
-                          <p className="text-[7px] font-black text-brand-gold uppercase tracking-widest mb-1">Current Master Note:</p>
+                          <p className="text-[7px] font-black text-admin-gold uppercase tracking-widest mb-1">Current Master Note:</p>
                           <p className="text-[10px] text-gray-500 font-medium italic truncate">{ticket.adminNote || 'No notes currently archived.'}</p>
                         </div>
                         <button 
                           onClick={() => setEditingTicket({...ticket, adminNote: ticket.adminNote || ''})}
-                          className="w-10 h-10 bg-white border border-brand-pink/5 text-brand-dark flex items-center justify-center hover:bg-brand-pink hover:text-white transition-all shadow-sm"
+                          className="w-10 h-10 bg-white border border-admin-accent/5 text-admin-dark flex items-center justify-center hover:bg-admin-accent hover:text-white transition-all shadow-sm"
                         >
                           <FiEdit3 size={14} />
                         </button>

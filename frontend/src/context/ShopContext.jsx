@@ -3,6 +3,7 @@ import api from '../utils/api';
 import { motion, AnimatePresence } from 'framer-motion';
 
 import { initialProducts } from '../data/products';
+import realApi from '../utils/api';
 
 const ShopContext = createContext();
 
@@ -45,17 +46,6 @@ const FlyItem = ({ item, onComplete }) => {
   );
 };
 
-const fallbackCategories = [
-  { _id: 'cat-1', name: 'Hair Care' },
-  { _id: 'cat-2', name: 'Skin Care' },
-  { _id: 'cat-3', name: 'Health Care' },
-  { _id: 'cat-4', name: 'Herbal Tea' },
-  { _id: 'cat-5', name: 'Supplements' },
-  { _id: 'cat-6', name: 'Body Care' },
-  { _id: 'cat-7', name: 'Aromatherapy' },
-  { _id: 'cat-8', name: 'Baby Care' }
-];
-
 const fallbackBanners = [
   {
     _id: 'ayur-slide-1',
@@ -69,7 +59,7 @@ const fallbackBanners = [
 
 export const ShopProvider = ({ children }) => {
   const [products, setProducts] = useState(initialProducts);
-  const [categories, setCategories] = useState(fallbackCategories);
+  const [categories, setCategories] = useState([]);
   const [banners, setBanners] = useState(fallbackBanners);
   const [cart, setCart] = useState([]);
   const [wishlist, setWishlist] = useState([]);
@@ -130,10 +120,10 @@ export const ShopProvider = ({ children }) => {
     try {
       setLoading(true);
       const [prodRes, catRes, banRes, setRes] = await Promise.all([
-        api.get('/products'),
-        api.get('/categories'),
-        api.get('/banners'),
-        api.get('/settings')
+        api.get('/products').catch(() => ({ data: { data: { products: [] } } })),
+        realApi.get('/categories').catch(() => ({ data: { data: [] } })),
+        api.get('/banners').catch(() => ({ data: { data: { banners: [] } } })),
+        api.get('/settings').catch(() => ({ data: { data: { settings: {} } } }))
       ]);
 
       // Load custom products from localStorage
@@ -164,11 +154,16 @@ export const ShopProvider = ({ children }) => {
 
       setProducts(mergedProducts);
 
-      const apiCategories = catRes.data.data.categories;
-      if (apiCategories && apiCategories.length > 0) {
-        setCategories(apiCategories);
+      const apiCategories = catRes.data.data;
+      if (apiCategories && Array.isArray(apiCategories) && apiCategories.length > 0) {
+        const mappedCategories = apiCategories.map(c => ({
+          _id: c._id,
+          name: c.title || c.name,
+          image: c.url || c.image
+        }));
+        setCategories(mappedCategories);
       } else {
-        setCategories(fallbackCategories);
+        setCategories([]);
       }
 
       const apiBanners = banRes.data.data.banners;
@@ -200,7 +195,7 @@ export const ShopProvider = ({ children }) => {
         }
       });
       setProducts(mergedProducts);
-      setCategories(fallbackCategories);
+      setCategories([]);
       setBanners(fallbackBanners);
     } finally {
       setLoading(false);

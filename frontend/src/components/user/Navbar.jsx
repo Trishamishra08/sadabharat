@@ -1,7 +1,15 @@
 // Sada Bharat Ayurvedic Store Header Component
 import React, { useState } from 'react';
 import { FiHeart, FiShoppingCart, FiUser, FiMenu, FiX, FiHome, FiPercent, FiGrid, FiBell, FiClock, FiSearch, FiChevronDown } from 'react-icons/fi';
-import api from '../../utils/api';
+
+// MOCK API for Frontend-Only mode
+const api = {
+  get: async () => ({ data: { data: { products: [], categories: [], banners: [], settings: {}, orders: [], users: [], stats: [], recentTransactions: [], dailyRevenue: [], vendors: [], blogs: [], returns: [], testimonials: [], reviews: [], replacements: [], supportTickets: [], locations: [], coupons: [], logs: [] }, status: 'success' } }),
+  post: async () => ({ data: { data: { order: { orderId: 'MOCK-ORDER-123' } }, status: 'success' } }),
+  patch: async () => ({ data: { status: 'success' } }),
+  delete: async () => ({ data: { status: 'success' } })
+};
+
 import { motion, AnimatePresence } from 'framer-motion';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useShop } from '../../context/ShopContext';

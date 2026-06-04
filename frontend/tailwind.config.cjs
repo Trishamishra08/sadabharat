@@ -16,6 +16,12 @@ module.exports = {
           light: '#FFFFFF', // Clean white background for main page
           sage: '#E8F5E9',  // Sage accent green
           accent: '#0D5C34', // Deep green accent
+        },
+        admin: {
+          dark: '#0A3A20', // Green theme, slightly different from vendor
+          light: '#F5F9F6', // Light greenish background
+          accent: '#125A35', // Green accent
+          gold: '#D4AF37'
         }
       },
       fontFamily: {

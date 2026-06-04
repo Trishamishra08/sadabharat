@@ -2,7 +2,15 @@ import React, { useState, useEffect, useCallback } from 'react';
 import AdminLayout from './AdminLayout';
 import { FiStar, FiTrash2, FiCheckCircle, FiXCircle, FiMessageSquare, FiRefreshCw, FiArrowLeft, FiUser } from 'react-icons/fi';
 import { motion, AnimatePresence } from 'framer-motion';
-import api from '../../utils/api';
+
+// MOCK API for Frontend-Only mode
+const api = {
+  get: async () => ({ data: { data: { products: [], categories: [], banners: [], settings: {}, orders: [], users: [], stats: [], recentTransactions: [], dailyRevenue: [], vendors: [], blogs: [], returns: [], testimonials: [], reviews: [], replacements: [], supportTickets: [], locations: [], coupons: [], logs: [] }, status: 'success' } }),
+  post: async () => ({ data: { data: { order: { orderId: 'MOCK-ORDER-123' } }, status: 'success' } }),
+  patch: async () => ({ data: { status: 'success' } }),
+  delete: async () => ({ data: { status: 'success' } })
+};
+
 
 const AdminReviews = () => {
     const [reviews, setReviews] = useState([]);
@@ -45,13 +53,17 @@ const AdminReviews = () => {
     };
 
     return (
-        <div className="max-w-7xl mx-auto space-y-4 font-serif min-h-screen">
+        <div className="max-w-7xl mx-auto space-y-4 font-['Cormorant',_serif] min-h-screen">
             <div className="flex justify-between items-end">
                 <div>
-                    <h1 className="text-xl font-black text-brand-dark uppercase tracking-widest leading-none mb-1">Feedback Ledger</h1>
-                    <p className="text-[8px] text-gray-400 font-bold uppercase tracking-[0.2em] opacity-60">Verified Product Ratings & Commentary</p>
+                    <h1 className="text-3xl font-['Cormorant',_serif] font-bold text-admin-dark leading-none mb-2">
+          Feedback Ledger
+        </h1>
+        <p className="text-gray-500 text-[13px] font-poppins">
+          Verified product ratings & commentary
+        </p>
                 </div>
-                <button onClick={fetchReviews} className="flex items-center gap-1.5 bg-brand-light/20 px-3 py-1.5 border border-brand-pink/10 text-[8px] font-black uppercase tracking-widest text-brand-dark shadow-sm hover:bg-white transition-colors">
+                <button onClick={fetchReviews} className="flex items-center gap-1.5 bg-admin-light/20 px-3 py-1.5 border border-admin-accent/10 text-[8px] font-black uppercase tracking-widest text-admin-dark shadow-sm hover:bg-white transition-colors">
                     <FiRefreshCw size={10} className={loading ? 'animate-spin' : ''} /> Sync Reviews
                 </button>
             </div>
@@ -61,11 +73,11 @@ const AdminReviews = () => {
                     <table className="w-full text-left font-sans">
                         <thead>
                             <tr className="border-b border-gray-50">
-                                <th className="px-6 py-4 text-[7px] font-black uppercase tracking-widest text-brand-dark/40">Product Info</th>
-                                <th className="px-6 py-4 text-[7px] font-black uppercase tracking-widest text-brand-dark/40">Customer</th>
-                                <th className="px-6 py-4 text-[7px] font-black uppercase tracking-widest text-brand-dark/40">Rating / Commentary</th>
-                                <th className="px-6 py-4 text-[7px] font-black uppercase tracking-widest text-brand-dark/40">Status</th>
-                                <th className="px-6 py-4 text-[7px] font-black uppercase tracking-widest text-brand-dark/40 text-right">Actions</th>
+                                <th className="px-6 py-4 text-[7px] font-black uppercase tracking-widest text-admin-dark/40">Product Info</th>
+                                <th className="px-6 py-4 text-[7px] font-black uppercase tracking-widest text-admin-dark/40">Customer</th>
+                                <th className="px-6 py-4 text-[7px] font-black uppercase tracking-widest text-admin-dark/40">Rating / Commentary</th>
+                                <th className="px-6 py-4 text-[7px] font-black uppercase tracking-widest text-admin-dark/40">Status</th>
+                                <th className="px-6 py-4 text-[7px] font-black uppercase tracking-widest text-admin-dark/40 text-right">Actions</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-50">
@@ -73,13 +85,13 @@ const AdminReviews = () => {
                                 <tr><td colSpan="5" className="px-6 py-10 text-center text-gray-400 text-[10px] font-bold uppercase tracking-widest animate-pulse">Syncing Global Feedback...</td></tr>
                             ) : reviews.length > 0 ? (
                                 reviews.map((r) => (
-                                    <tr key={r._id} className="hover:bg-brand-pink/[0.01] transition-colors group">
+                                    <tr key={r._id} className="hover:bg-admin-accent/[0.01] transition-colors group">
                                         <td className="px-6 py-4">
                                             <div className="flex items-center gap-3">
-                                                <div className="w-10 h-10 bg-gray-50 rounded-lg p-1 border border-brand-pink/10">
+                                                <div className="w-10 h-10 bg-gray-50 rounded-lg p-1 border border-admin-accent/10">
                                                     <img src={r.product?.image} alt="" className="w-full h-full object-contain mix-blend-multiply" />
                                                 </div>
-                                                <span className="text-[10px] font-black text-brand-dark uppercase tracking-tighter truncate max-w-[120px]">
+                                                <span className="text-[10px] font-black text-admin-dark uppercase tracking-tighter truncate max-w-[120px]">
                                                     {r.product?.name}
                                                 </span>
                                             </div>
@@ -91,11 +103,11 @@ const AdminReviews = () => {
                                             </div>
                                         </td>
                                         <td className="px-6 py-4 max-w-xs">
-                                            <div className="flex items-center gap-0.5 text-brand-gold mb-1">
+                                            <div className="flex items-center gap-0.5 text-admin-gold mb-1">
                                                 {[...Array(5)].map((_, i) => (
-                                                    <FiStar key={i} size={8} className={i < r.rating ? 'fill-brand-gold' : 'text-gray-200'} />
+                                                    <FiStar key={i} size={8} className={i < r.rating ? 'fill-admin-gold' : 'text-gray-200'} />
                                                 ))}
-                                                <span className="text-[8px] font-black text-brand-gold ml-1">{r.rating}.0</span>
+                                                <span className="text-[8px] font-black text-admin-gold ml-1">{r.rating}.0</span>
                                             </div>
                                             <p className="text-[10px] text-gray-600 line-clamp-2 italic">"{r.review}"</p>
                                         </td>

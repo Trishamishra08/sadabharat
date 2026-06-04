@@ -1,6 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { useShop } from '../../context/ShopContext';
-import api from '../../utils/api';
+
+// MOCK API for Frontend-Only mode
+const api = {
+  get: async () => ({ data: { data: { products: [], categories: [], banners: [], settings: {}, orders: [], users: [], stats: [], recentTransactions: [], dailyRevenue: [], vendors: [], blogs: [], returns: [], testimonials: [], reviews: [], replacements: [], supportTickets: [], locations: [], coupons: [], logs: [] }, status: 'success' } }),
+  post: async () => ({ data: { data: { order: { orderId: 'MOCK-ORDER-123' } }, status: 'success' } }),
+  patch: async () => ({ data: { status: 'success' } }),
+  delete: async () => ({ data: { status: 'success' } })
+};
+
 import {
   FiPackage,
   FiAlertTriangle,
@@ -97,7 +105,7 @@ const AdminInventory = () => {
   const stats = [
     { title: 'Total SKUs', value: inventoryItems.length, icon: <FiPackage />, color: 'text-blue-600', bg: 'bg-blue-50' },
     { title: 'Critical Stock', value: inventoryItems.filter(i => i.stock < 10 && i.stock > 0).length, icon: <FiAlertTriangle />, color: 'text-red-500', bg: 'bg-red-50' },
-    { title: 'Out of Stock', value: inventoryItems.filter(i => i.stock === 0).length, icon: <FiActivity />, color: 'text-brand-pink', bg: 'bg-brand-light' },
+    { title: 'Out of Stock', value: inventoryItems.filter(i => i.stock === 0).length, icon: <FiActivity />, color: 'text-admin-accent', bg: 'bg-brand-light' },
     { title: 'Vault Valuation', value: `₹${(totalValuation / 100000).toFixed(2)}L`, icon: <FiDatabase />, color: 'text-green-600', bg: 'bg-green-50' }
   ];
 
@@ -105,13 +113,13 @@ const AdminInventory = () => {
     <div className="max-w-7xl mx-auto space-y-4">
       <div className="flex justify-between items-end">
         <div>
-          <h1 className="text-xl font-serif font-black text-brand-dark uppercase tracking-widest leading-none mb-1">
+          <h1 className="text-3xl font-['Cormorant',_serif] font-bold text-admin-dark leading-none mb-1">
             Inventory Vault
           </h1>
-          <p className="text-[8px] text-gray-400 font-black uppercase tracking-[0.2em]">Real-time Stock Audits & Warehousing</p>
+          <p className="text-gray-500 text-[13px] font-poppins">Real-time Stock Audits & Warehousing</p>
         </div>
         <div className="flex items-center gap-2">
-          <button onClick={() => fetchData()} className="flex items-center gap-2 bg-white px-3 py-1.5 rounded-none border border-brand-pink/5 text-[8px] font-black uppercase tracking-widest shadow-sm hover:bg-brand-pink/[0.02] transition-colors active:scale-95">
+          <button onClick={() => fetchData()} className="flex items-center gap-2 bg-white px-3 py-1.5 rounded-none border border-admin-accent/5 text-xs font-sans font-bold uppercase tracking-widest shadow-sm hover:bg-admin-accent/[0.02] transition-colors active:scale-95">
             <FiRefreshCw /> REFRESH LIVE DATA
           </button>
         </div>
@@ -129,7 +137,7 @@ const AdminInventory = () => {
             className="bg-white p-3.5 rounded-xl border border-gray-100 shadow-sm flex items-center justify-between group cursor-default"
           >
             <div className="flex flex-col">
-              <span className="text-[8px] font-bold text-gray-400 uppercase tracking-widest leading-none mb-1">{stat.title}</span>
+              <span className="text-sm font-sans font-medium text-gray-500 capitalize tracking-normal leading-none mb-1">{stat.title}</span>
               <span className="text-xl font-bold text-gray-800">{stat.value}</span>
             </div>
             <div className={`w-10 h-10 ${stat.bg} ${stat.color} rounded-lg flex items-center justify-center shadow-inner group-hover:scale-105 transition-transform`}>
@@ -140,14 +148,14 @@ const AdminInventory = () => {
       </div>
 
       {/* Inventory Controls */}
-      <div className="flex flex-col md:flex-row gap-4 items-center justify-between bg-white p-3 border border-brand-pink/5 shadow-sm">
+      <div className="flex flex-col md:flex-row gap-4 items-center justify-between bg-white p-3 border border-admin-accent/5 shadow-sm">
         <div className="flex items-center gap-2 w-full md:w-96">
-          <div className="flex-1 bg-brand-light/20 border border-brand-pink/5 p-2 flex items-center gap-2 group focus-within:border-brand-pink/20 transition-all">
+          <div className="flex-1 bg-brand-light/20 border border-admin-accent/5 p-2 flex items-center gap-2 group focus-within:border-admin-accent/20 transition-all">
             <FiSearch size={14} className="text-gray-300" />
             <input
               type="text"
               placeholder="Filter by SKU or Product Name..."
-              className="bg-transparent border-none outline-none text-[9px] font-bold uppercase tracking-widest w-full"
+              className="bg-transparent border-none outline-none text-sm font-sans font-medium capitalize w-full"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
@@ -158,7 +166,7 @@ const AdminInventory = () => {
             <button
               key={f}
               onClick={() => setFilter(f)}
-              className={`px-4 py-1.5 text-[8px] font-black uppercase tracking-widest border transition-all ${filter === f ? 'bg-brand-dark text-white border-brand-dark' : 'bg-transparent text-gray-400 border-gray-100 hover:border-brand-pink/20'}`}
+              className={`px-4 py-1.5 text-xs font-sans font-bold uppercase tracking-widest border transition-all ${filter === f ? 'bg-admin-dark text-white border-brand-dark' : 'bg-transparent text-gray-400 border-gray-100 hover:border-admin-accent/20'}`}
             >
               {f}
             </button>
@@ -167,15 +175,15 @@ const AdminInventory = () => {
       </div>
 
       {/* Stock Table */}
-      <div className="bg-white rounded-none border border-brand-pink/10 shadow-xl overflow-hidden">
+      <div className="bg-white rounded-none border border-admin-accent/10 shadow-xl overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left">
             <thead>
-              <tr className="bg-brand-dark text-white">
-                <th className="px-6 py-4 text-[8px] font-black uppercase tracking-[0.2em]">Asset info</th>
-                <th className="px-6 py-4 text-[8px] font-black uppercase tracking-[0.2em]">Warehouse</th>
-                <th className="px-6 py-4 text-[8px] font-black uppercase tracking-[0.2em]">Stock Level</th>
-                <th className="px-6 py-4 text-[8px] font-black uppercase tracking-[0.2em] text-right">Unit Price</th>
+              <tr className="bg-admin-dark text-white">
+                <th className="px-6 py-4 text-xs font-sans font-bold uppercase tracking-widest">Asset info</th>
+                <th className="px-6 py-4 text-xs font-sans font-bold uppercase tracking-widest">Warehouse</th>
+                <th className="px-6 py-4 text-xs font-sans font-bold uppercase tracking-widest">Stock Level</th>
+                <th className="px-6 py-4 text-xs font-sans font-bold uppercase tracking-widest text-right">Unit Price</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-brand-pink/5">
@@ -183,23 +191,23 @@ const AdminInventory = () => {
                 <tr key={item.id} className="hover:bg-brand-light/10 transition-colors group">
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-4">
-                      <div className="w-10 h-10 bg-brand-light/20 p-1 border border-brand-pink/5 shrink-0 relative">
+                      <div className="w-10 h-10 bg-brand-light/20 p-1 border border-admin-accent/5 shrink-0 relative">
                         <img src={item.image} alt="" className="w-full h-full object-contain mix-blend-multiply opacity-80" />
                         {item.stock < 10 && (
                           <div className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 border-2 border-white rounded-full animate-ping" />
                         )}
                       </div>
                       <div>
-                        <h4 className="text-[10px] font-black text-brand-dark uppercase truncate max-w-[180px] leading-tight mb-1">{item.name}</h4>
+                        <h4 className="text-sm font-sans font-medium text-gray-800 line-clamp-1 max-w-[180px] leading-tight mb-1">{item.name}</h4>
                         <div className="flex items-center gap-2">
-                          <span className="text-[7px] font-black text-brand-pink uppercase">ID: {item.id.slice(-6).toUpperCase()}</span>
+                          <span className="text-[11px] font-medium text-admin-accent uppercase">ID: {item.id.slice(-6).toUpperCase()}</span>
                           <span className="w-1 h-1 bg-gray-200 rounded-full" />
-                          <span className="text-[7px] font-medium text-gray-400">CAT: {item.category}</span>
+                          <span className="text-xs font-medium text-gray-400">CAT: {item.category}</span>
                         </div>
                       </div>
                     </div>
                   </td>
-                  <td className="px-6 py-4 text-[9px] font-bold text-gray-500 uppercase tracking-widest">{item.warehouse}</td>
+                  <td className="px-6 py-4 text-sm font-sans font-medium text-gray-600">{item.warehouse}</td>
                   <td className="px-6 py-4">
                     <div className="space-y-1.5 min-w-[140px]">
                       {editingId === item.id ? (
@@ -209,7 +217,7 @@ const AdminInventory = () => {
                             autoFocus
                             value={editStockValue}
                             onChange={(e) => setEditStockValue(e.target.value)}
-                            className="w-16 bg-white border border-brand-pink/20 rounded px-2 py-1 text-xs font-bold outline-none ring-1 ring-brand-pink/10"
+                            className="w-16 bg-white border border-admin-accent/20 rounded px-2 py-1 text-xs font-bold outline-none ring-1 ring-brand-pink/10"
                             disabled={isUpdating}
                           />
                           <button onClick={() => handleUpdateStock(item.id)} disabled={isUpdating} className="text-green-500 hover:text-green-600 disabled:opacity-50">
@@ -220,9 +228,9 @@ const AdminInventory = () => {
                           </button>
                         </div>
                       ) : (
-                        <div className="flex justify-between items-center text-[8px] font-black uppercase group/edit cursor-pointer" onClick={() => { setEditingId(item.id); setEditStockValue(String(item.stock)); }}>
+                        <div className="flex justify-between items-center text-xs font-medium capitalize group/edit cursor-pointer" onClick={() => { setEditingId(item.id); setEditStockValue(String(item.stock)); }}>
                           <span className={`${item.stock < 10 ? 'text-red-500 font-black animate-pulse' : 'text-gray-500'} flex items-center gap-1`}>
-                            {item.stock} Units <FiEdit3 size={10} className="text-brand-pink/50" />
+                            {item.stock} Units <FiEdit3 size={10} className="text-admin-accent/50" />
                           </span>
                           <span className={`${item.stock < 10 ? 'text-red-400' : 'text-gray-300'}`}>{item.stock === 0 ? 'Depleted' : 'In Stock'}</span>
                         </div>
@@ -232,20 +240,20 @@ const AdminInventory = () => {
                         <motion.div
                           initial={{ width: 0 }}
                           animate={{ width: `${Math.min(100, (item.stock / 50) * 100)}%` }}
-                          className={`h-full ${item.stock < 10 ? 'bg-red-500' : item.stock < 25 ? 'bg-amber-400' : 'bg-brand-pink'}`}
+                          className={`h-full ${item.stock < 10 ? 'bg-red-500' : item.stock < 25 ? 'bg-amber-400' : 'bg-admin-accent'}`}
                         />
                       </div>
                       <div className="flex justify-between items-center pt-1">
-                        <span className={`text-[6px] font-black uppercase tracking-tighter ${item.stock > 40 ? 'text-green-500' : 'text-gray-400'}`}>
+                        <span className={`text-xs font-medium capitalize tracking-normal ${item.stock > 40 ? 'text-green-500' : 'text-gray-400'}`}>
                           {item.stock > 40 ? 'High Demand' : item.stock > 15 ? 'Stable' : 'Risk Factor'}
                         </span>
-                        <span className="text-[6px] text-gray-300 font-bold uppercase truncate max-w-[60px]">Update: {item.lastUpdated}</span>
+                        <span className="text-xs text-gray-400 font-medium capitalize truncate max-w-[80px]">Update: {item.lastUpdated}</span>
                       </div>
                     </div>
                   </td>
                   <td className="px-6 py-4 text-right">
-                    <p className="text-[11px] font-black text-brand-dark leading-none">₹{item.price}</p>
-                    <p className="text-[7px] text-gray-400 uppercase tracking-tighter mt-1">Total: ₹{item.price * item.stock}</p>
+                    <p className="text-sm font-sans font-medium text-gray-800 leading-none">₹{item.price}</p>
+                    <p className="text-xs text-gray-400 font-medium tracking-normal mt-1">Total: ₹{item.price * item.stock}</p>
                   </td>
                 </tr>
               ))}
@@ -255,7 +263,7 @@ const AdminInventory = () => {
         {filteredItems.length === 0 && (
           <div className="p-20 text-center">
             <div className="text-gray-200 mb-4 flex justify-center"><FiShoppingBag size={48} /></div>
-            <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.3em]">No Assets Found In Current Audit</p>
+            <p className="text-sm font-sans font-medium text-gray-500 tracking-wider capitalize">No Assets Found In Current Audit</p>
           </div>
         )}
       </div>

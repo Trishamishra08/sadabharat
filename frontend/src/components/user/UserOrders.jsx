@@ -3,8 +3,16 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { FiPackage, FiTruck, FiCheckCircle, FiClock, FiBox, FiX, FiUploadCloud, FiImage, FiPlusCircle, FiCreditCard, FiDownload } from 'react-icons/fi';
 import { Link } from 'react-router-dom';
 import { useShop } from '../../context/ShopContext';
-import api from '../../utils/api';
-import { uploadToCloudinary } from '../../utils/cloudinary';
+
+// MOCK API for Frontend-Only mode
+const api = {
+  get: async () => ({ data: { data: { products: [], categories: [], banners: [], settings: {}, orders: [], users: [], stats: [], recentTransactions: [], dailyRevenue: [], vendors: [], blogs: [], returns: [], testimonials: [], reviews: [], replacements: [], supportTickets: [], locations: [], coupons: [], logs: [] }, status: 'success' } }),
+  post: async () => ({ data: { data: { order: { orderId: 'MOCK-ORDER-123' } }, status: 'success' } }),
+  patch: async () => ({ data: { status: 'success' } }),
+  delete: async () => ({ data: { status: 'success' } })
+};
+
+
 import ProfileSidebar from './ProfileSidebar';
 
 const RMAModal = ({ order, onClose, isBankOnly = false }) => {

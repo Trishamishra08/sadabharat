@@ -48,12 +48,6 @@ const Categories = () => {
     );
   }
 
-  const displayCategories = [...categories, 
-    { _id: 'dummy1', name: 'Wellness' }, 
-    { _id: 'dummy2', name: 'Immunity' }, 
-    { _id: 'dummy3', name: 'Digestive Care' }
-  ];
-
   return (
     <section className="pt-3 md:pt-5 pb-4 bg-[#F2F6E8] overflow-hidden">
       <div className="w-full px-4 md:px-8">
@@ -93,7 +87,7 @@ const Categories = () => {
                 className="flex justify-start w-full gap-6 md:gap-10 lg:gap-16 overflow-x-auto snap-x snap-mandatory pb-4 pt-2"
                 style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
               >
-                {displayCategories.map((cat, index) => {
+                {categories.map((cat, index) => {
                   const isSelected = selectedCategory === cat.name;
                   return (
                     <div
@@ -112,7 +106,9 @@ const Categories = () => {
                             isSelected ? 'scale-105 ring-2 ring-[#054425] ring-offset-2' : 'group-hover:scale-105 group-hover:shadow-md'
                           }`}
                         >
-                          {getCategoryIcon(cat.name)}
+                          {cat.image ? (
+                            <img src={cat.image} alt={cat.name} className="w-14 h-14 md:w-16 md:h-16 lg:w-[72px] lg:h-[72px] object-cover rounded-full bg-white shadow-sm" />
+                          ) : getCategoryIcon(cat.name)}
                         </div>
                         <h3 
                           className={`text-sm md:text-base font-bold transition-colors text-center tracking-tight max-w-[100px] ${

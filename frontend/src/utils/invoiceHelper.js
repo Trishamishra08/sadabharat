@@ -15,7 +15,7 @@ export const generateInvoice = async (order) => {
       <div style="display: flex; align-items: center; gap: 20px;">
         <img src="/logo_invoice.jpg" style="width: 80px; height: 80px; object-fit: cover; border-radius: 10px;" />
         <div>
-          <h1 style="color: #5C2E3E; margin: 0; font-size: 28px; text-transform: uppercase; font-weight: 900;">Saundarya Shringar</h1>
+          <h1 style="color: #5C2E3E; margin: 0; font-size: 28px; text-transform: uppercase; font-weight: 900;">Sada Bharat</h1>
           <p style="margin: 5px 0; font-size: 10px; color: #666; font-weight: bold; text-transform: uppercase; letter-spacing: 1px;">Sacred Organic Beauty Rituals</p>
         </div>
       </div>
@@ -100,8 +100,8 @@ export const generateInvoice = async (order) => {
     </div>
 
     <div style="margin-top: 50px; text-align: center; border-top: 1px dashed #ddd; padding-top: 20px;">
-      <p style="font-size: 10px; color: #999; font-style: italic;">"This is a digitally generated sacred invoice for your ritual treasures at Saundarya Shringar."</p>
-      <p style="font-size: 8px; color: #bbb; margin-top: 10px;">Return Policy: 2 Days from delivery date. Visit saundaryashringar.com for details.</p>
+      <p style="font-size: 10px; color: #999; font-style: italic;">"This is a digitally generated sacred invoice for your ritual treasures at Sada Bharat."</p>
+      <p style="font-size: 8px; color: #bbb; margin-top: 10px;">Return Policy: 2 Days from delivery date. Visit sadabharat.com for details.</p>
     </div>
   `;
 

@@ -7,7 +7,15 @@ import {
   FiActivity, FiTarget, FiFeather, FiDroplet, FiMinus, FiPlus
 } from 'react-icons/fi';
 import { useShop } from '../../context/ShopContext';
-import api from '../../utils/api';
+
+// MOCK API for Frontend-Only mode
+const api = {
+  get: async () => ({ data: { data: { products: [], categories: [], banners: [], settings: {}, orders: [], users: [], stats: [], recentTransactions: [], dailyRevenue: [], vendors: [], blogs: [], returns: [], testimonials: [], reviews: [], replacements: [], supportTickets: [], locations: [], coupons: [], logs: [] }, status: 'success' } }),
+  post: async () => ({ data: { data: { order: { orderId: 'MOCK-ORDER-123' } }, status: 'success' } }),
+  patch: async () => ({ data: { status: 'success' } }),
+  delete: async () => ({ data: { status: 'success' } })
+};
+
 import ConsultationCTA from './ConsultationCTA';
 import ProductCard from './ProductCard';
 

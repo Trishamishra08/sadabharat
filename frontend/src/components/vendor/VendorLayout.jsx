@@ -5,7 +5,7 @@ import {
   LayoutDashboard, Package, PlusCircle, Archive, 
   ShoppingCart, RotateCcw, IndianRupee, CreditCard, 
   Tag, Star, Bell, TrendingUp, HelpCircle, Settings,
-  Search, MessageSquare, Menu, X, LogOut
+  Search, MessageSquare, Menu, X, LogOut, Truck
 } from 'lucide-react';
 import vendorLogo from '../../assets/images/WhatsApp Image 2026-05-26 at 1.34.49 PM.jpeg';
 
@@ -80,6 +80,7 @@ const VendorLayout = () => {
     { name: 'Inventory', path: '/vendor/inventory', icon: Archive },
     { name: 'Orders', path: '/vendor/orders', icon: ShoppingCart },
     { name: 'Returns', path: '/vendor/returns', icon: RotateCcw },
+    { name: 'Logistics', path: '/vendor/logistics', icon: Truck },
     { name: 'Earnings', path: '/vendor/earnings', icon: IndianRupee },
     { name: 'Payouts', path: '/vendor/payouts', icon: CreditCard },
     { name: 'Coupons', path: '/vendor/coupons', icon: Tag },
@@ -95,9 +96,7 @@ const VendorLayout = () => {
       {/* Fixed Sidebar */}
       <aside 
         ref={sidebarRef}
-        className={`fixed inset-y-0 left-0 z-50 bg-[#054425] text-white flex flex-col transition-all duration-300 ${
-          sidebarOpen ? 'translate-x-0 w-64' : '-translate-x-full w-64 lg:translate-x-0 lg:w-[72px]'
-        } lg:relative`}
+        className={`fixed inset-y-0 left-0 z-50 bg-[#054425] text-white flex flex-col transition-all duration-300 ${ sidebarOpen ? 'w-64' : 'w-[72px]' } overflow-hidden`}
       >
         <div className={`h-14 flex items-center border-b border-white/10 shrink-0 ${
           sidebarOpen ? 'justify-between px-4' : 'justify-center px-0'
@@ -193,7 +192,7 @@ const VendorLayout = () => {
 
       {/* Main Content */}
       <main 
-        className="flex-1 overflow-y-auto overflow-x-hidden h-screen bg-[#FDFBF7] overscroll-contain touch-pan-y"
+        className={`flex-1 overflow-y-auto overflow-x-hidden h-screen bg-[#FDFBF7] overscroll-contain touch-pan-y transition-all duration-300 ${sidebarOpen ? 'ml-64' : 'ml-[72px]'}`}
         onWheel={(e) => e.stopPropagation()}
         style={{ backgroundColor: '#FDFBF7', WebkitOverflowScrolling: 'touch' }} 
       >

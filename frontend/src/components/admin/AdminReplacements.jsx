@@ -1,7 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FiRefreshCw, FiSearch, FiCheck, FiX, FiMessageSquare } from 'react-icons/fi';
-import api from '../../utils/api';
+
+// MOCK API for Frontend-Only mode
+const api = {
+  get: async () => ({ data: { data: { products: [], categories: [], banners: [], settings: {}, orders: [], users: [], stats: [], recentTransactions: [], dailyRevenue: [], vendors: [], blogs: [], returns: [], testimonials: [], reviews: [], replacements: [], supportTickets: [], locations: [], coupons: [], logs: [] }, status: 'success' } }),
+  post: async () => ({ data: { data: { order: { orderId: 'MOCK-ORDER-123' } }, status: 'success' } }),
+  patch: async () => ({ data: { status: 'success' } }),
+  delete: async () => ({ data: { status: 'success' } })
+};
+
 
 const AdminReplacements = () => {
     const [orders, setOrders] = useState([]);
@@ -49,8 +57,8 @@ const AdminReplacements = () => {
             {/* Header */}
             <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
                 <div>
-                    <h1 className="text-3xl lg:text-4xl font-serif text-[#5C2E3E] font-black uppercase tracking-tighter flex items-center gap-3">
-                        <FiRefreshCw className="text-brand-pink" /> Product <span className="text-brand-gold italic">Replacements</span>
+                    <h1 className="text-3xl lg:text-4xl font-['Cormorant',_serif] text-[#5C2E3E] font-black uppercase tracking-tighter flex items-center gap-3">
+                        <FiRefreshCw className="text-admin-accent" /> Product <span className="text-admin-gold italic">Replacements</span>
                     </h1>
                     <p className="text-[10px] font-black uppercase tracking-widest text-[#5C2E3E]/40 mt-2">
                         Manage Product Exchange and Replacement Tickets
@@ -65,10 +73,10 @@ const AdminReplacements = () => {
                             placeholder="SEARCH TICKET OR REASON..."
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
-                            className="w-full bg-white border border-gray-100 pl-10 pr-4 py-2.5 text-[10px] font-bold uppercase tracking-widest outline-none focus:border-brand-pink transition-colors h-10 shadow-sm"
+                            className="w-full bg-white border border-gray-100 pl-10 pr-4 py-2.5 text-[10px] font-bold uppercase tracking-widest outline-none focus:border-admin-accent transition-colors h-10 shadow-sm"
                         />
                     </div>
-                    <button onClick={fetchReplacements} className="h-10 px-4 bg-[#5C2E3E] text-white flex items-center justify-center hover:bg-brand-pink transition-colors shadow-md">
+                    <button onClick={fetchReplacements} className="h-10 px-4 bg-[#5C2E3E] text-white flex items-center justify-center hover:bg-admin-accent transition-colors shadow-md">
                         <FiRefreshCw size={14} />
                     </button>
                 </div>
@@ -76,7 +84,7 @@ const AdminReplacements = () => {
 
             {loading ? (
                 <div className="h-64 flex items-center justify-center bg-white border border-gray-100 shadow-sm">
-                    <div className="w-8 h-8 rounded-full border-2 border-brand-pink border-t-transparent animate-spin"></div>
+                    <div className="w-8 h-8 rounded-full border-2 border-admin-accent border-t-transparent animate-spin"></div>
                 </div>
             ) : orders.length === 0 ? (
                 <div className="h-64 flex flex-col items-center justify-center bg-white border border-gray-100 shadow-sm">
@@ -89,11 +97,11 @@ const AdminReplacements = () => {
                         <table className="w-full text-left border-collapse">
                             <thead>
                                 <tr className="bg-[#FDFCFB] border-b border-gray-100">
-                                    <th className="px-6 py-4 text-[9px] font-black uppercase tracking-widest text-gray-400">Order ID</th>
-                                    <th className="px-6 py-4 text-[9px] font-black uppercase tracking-widest text-gray-400">Customer</th>
-                                    <th className="px-6 py-4 text-[9px] font-black uppercase tracking-widest text-gray-400">Issue Details (Replacements)</th>
-                                    <th className="px-6 py-4 text-[9px] font-black uppercase tracking-widest text-gray-400 text-center">Status</th>
-                                    <th className="px-6 py-4 text-[9px] font-black uppercase tracking-widest text-gray-400 text-right">Approval Actions</th>
+                                    <th className="px-6 py-4 text-xs font-sans font-bold uppercase tracking-widest text-gray-400">Order ID</th>
+                                    <th className="px-6 py-4 text-xs font-sans font-bold uppercase tracking-widest text-gray-400">Customer</th>
+                                    <th className="px-6 py-4 text-xs font-sans font-bold uppercase tracking-widest text-gray-400">Issue Details (Replacements)</th>
+                                    <th className="px-6 py-4 text-xs font-sans font-bold uppercase tracking-widest text-gray-400 text-center">Status</th>
+                                    <th className="px-6 py-4 text-xs font-sans font-bold uppercase tracking-widest text-gray-400 text-right">Approval Actions</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-gray-50">
@@ -104,7 +112,7 @@ const AdminReplacements = () => {
                                             initial={{ opacity: 0 }}
                                             animate={{ opacity: 1 }}
                                             exit={{ opacity: 0 }}
-                                            className={`group hover:bg-brand-pink/5 transition-colors ${order.returnStatus === 'Replacement Requested' ? 'bg-[#5C2E3E]/5' : ''}`}
+                                            className={`group hover:bg-admin-accent/5 transition-colors ${order.returnStatus === 'Replacement Requested' ? 'bg-[#5C2E3E]/5' : ''}`}
                                         >
                                             <td className="px-6 py-4">
                                                 <span className="text-[10px] font-black text-[#5C2E3E] tracking-widest uppercase">{order.orderId}</span>
@@ -128,7 +136,7 @@ const AdminReplacements = () => {
                                                     {order.returnReason && (
                                                         <div className="mt-1 flex gap-2 items-start bg-orange-50 p-2 rounded-sm border border-orange-100/50">
                                                             <FiMessageSquare className="text-orange-400 mt-0.5 shrink-0" size={10} />
-                                                            <p className="text-[10px] font-serif italic text-orange-900 leading-snug break-words">"{order.returnReason}"</p>
+                                                            <p className="text-[10px] font-['Cormorant',_serif] italic text-orange-900 leading-snug break-words">"{order.returnReason}"</p>
                                                         </div>
                                                     )}
                                                 </div>
@@ -165,7 +173,7 @@ const AdminReplacements = () => {
                                                 {order.returnStatus === 'Replacement Approved' && (
                                                     <button
                                                         onClick={() => updateReturnStatus(order._id, 'Replaced')}
-                                                        className="px-3 py-1.5 bg-brand-dark text-white text-[8px] font-black uppercase tracking-widest rounded-md hover:bg-green-600 shadow-md transition-colors"
+                                                        className="px-3 py-1.5 bg-admin-dark text-white text-[8px] font-black uppercase tracking-widest rounded-md hover:bg-green-600 shadow-md transition-colors"
                                                     >
                                                         Dispatch Exchange
                                                     </button>

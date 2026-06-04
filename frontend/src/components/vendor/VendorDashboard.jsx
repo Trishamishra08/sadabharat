@@ -271,7 +271,7 @@ const VendorDashboard = () => {
                 
                 {/* Dynamically building the SVG path based on currentData.graphPts */}
                 {(() => {
-                  const pts = currentData.graphPts || [90, 112, 56, 101, 71, 90, 45, 105, 15, 78, 41];
+                  const pts = (currentData.graphPts && currentData.graphPts.length > 0) ? currentData.graphPts : [90, 112, 56, 101, 71, 90, 45, 105, 15, 78, 41];
                   // x goes from 0 to 500 in steps of 50
                   const dPath = `M0,${pts[0]} ` + pts.slice(1).map((y, i) => {
                     const x = (i + 1) * 50;

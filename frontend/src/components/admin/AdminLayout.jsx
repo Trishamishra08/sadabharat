@@ -28,7 +28,7 @@ import {
   FiZap
 } from 'react-icons/fi';
 import { motion, AnimatePresence } from 'framer-motion';
-import { onMessageListener } from '../../utils/firebase-config';
+
 
 const AdminLayout = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(window.innerWidth > 1024);
@@ -44,17 +44,11 @@ const AdminLayout = () => {
   }, [location]);
 
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [notifications, setNotifications] = useState([]);
 
   React.useEffect(() => {
-    const unsubscribe = onMessageListener((payload) => {
-      setNotifications(prev => [{
-        id: Date.now(),
-        text: payload.notification?.body || 'New Notification',
-        time: 'Just now'
-      }, ...prev]);
-    });
-    return () => unsubscribe();
+    // Firebase Push Notifications Removed
   }, []);
 
   // Route protection
@@ -88,25 +82,25 @@ const AdminLayout = () => {
     { title: 'Categories', path: '/admin/categories', icon: <FiLayers /> },
     { title: 'Products', path: '/admin/products', icon: <FiShoppingBag /> },
     { title: 'Inventory', path: '/admin/inventory', icon: <FiBox /> },
+    { title: 'Vendors', path: '/admin/vendors', icon: <FiUsers /> },
+    { title: 'Customers', path: '/admin/customers', icon: <FiUsers /> },
     { title: 'Orders', path: '/admin/orders', icon: <FiShoppingBag /> },
     { title: 'Logistics & Taxes', path: '/admin/logistics', icon: <FiTruck /> },
     { title: 'Service Locations', path: '/admin/locations', icon: <FiMapPin /> },
     { title: 'Finance', path: '/admin/finance', icon: <FiDollarSign /> },
-    { title: 'Customers', path: '/admin/customers', icon: <FiUsers /> },
     { title: 'Returns & Replace', path: '/admin/returns', icon: <FiRotateCcw /> },
     { title: 'Coupons', path: '/admin/coupons', icon: <FiTag /> },
     { title: 'Divine Offers', path: '/admin/offers', icon: <FiZap /> },
     { title: 'Banners', path: '/admin/banners', icon: <FiImage /> },
     { title: 'Blogs', path: '/admin/blogs', icon: <FiLayers /> },
     { title: 'Testimonials', path: '/admin/testimonials', icon: <FiUsers /> },
-    { title: 'Instagram Feed', path: '/admin/instagram', icon: <FiTrendingUp /> },
     { title: 'Feedback Ledger', path: '/admin/reviews', icon: <FiMessageSquare /> },
     { title: 'Support Archive', path: '/admin/support', icon: <FiHelpCircle /> },
     { title: 'Settings', path: '/admin/settings', icon: <FiSettings /> },
   ];
 
   return (
-    <div className="flex min-h-screen bg-brand-light font-['Inter',_sans-serif] overflow-x-hidden">
+    <div className="flex min-h-screen bg-[#FDFBF7] font-poppins overflow-x-hidden">
       {/* Mobile Overlay */}
       <AnimatePresence>
         {isSidebarOpen && (
@@ -123,27 +117,22 @@ const AdminLayout = () => {
       {/* Sidebar - Persistent Mini Mode or Full Mode */}
       <motion.aside
         initial={false}
-        animate={{
-          width: isSidebarOpen ? (window.innerWidth < 1024 ? 280 : 256) : (window.innerWidth < 1024 ? 0 : 64),
-          x: window.innerWidth < 1024 && !isSidebarOpen ? -280 : 0
-        }}
+        animate={{ width: isSidebarOpen ? 256 : 64 }}
         transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-        className="bg-brand-dark text-white flex flex-col fixed h-screen z-50 shadow-2xl overflow-hidden border-r border-white/5"
+        className="bg-admin-dark text-white flex flex-col fixed h-screen z-50 shadow-2xl overflow-hidden border-r border-white/5"
       >
-        <div className={`p-3 pt-6 mb-2 flex items-center gap-3 ${!isSidebarOpen ? 'justify-center' : 'pl-4'} transition-all`}>
-          <div className="w-11 h-11 rounded-xl bg-white/5 flex items-center justify-center shrink-0 border border-white/10 shadow-xl overflow-hidden group">
-            <img src="/logo_uploaded.jpg" alt="Saundarya Shringar Logo" className="w-full h-full object-cover" />
-          </div>
-          {isSidebarOpen && (
-            <div className="flex flex-col leading-none">
-              <span className="text-[11px] font-black tracking-[0.1em] text-white uppercase" style={{ fontFamily: "'Cinzel Decorative', serif" }}>
-                Saundarya
-              </span>
-              <span className="text-[7px] text-white/40 tracking-[0.3em] uppercase font-bold mt-0.5" style={{ fontFamily: "'Cinzel', serif" }}>
-                Shringar
-              </span>
+        <div className={`h-14 flex items-center border-b border-white/10 shrink-0 mt-2 ${
+          !isSidebarOpen ? 'justify-center px-0' : 'justify-between px-4'
+        }`}>
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center p-1 shrink-0">
+              <img src="/logo.png" alt="Sada Bharat Logo" className="w-full h-full object-contain rounded-full" />
             </div>
-          )}
+            <div className={`transition-all duration-300 overflow-hidden whitespace-nowrap ${isSidebarOpen ? 'opacity-100 max-w-[200px]' : 'opacity-0 max-w-0 hidden'}`}>
+              <h1 className="font-normal text-lg tracking-wide leading-tight" style={{ fontFamily: "'Cormorant Garamond', serif" }}>SADA BHARAT</h1>
+              <p className="text-[9px] uppercase tracking-[0.2em] text-white/70">Ayurvedic</p>
+            </div>
+          </div>
         </div>
 
         <nav
@@ -155,32 +144,27 @@ const AdminLayout = () => {
               key={item.title}
               to={item.path}
               title={!isSidebarOpen ? item.title : ''}
-              className={`flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-300 group relative ${location.pathname === item.path
-                ? 'bg-white/10 text-white'
-                : 'text-white/40 hover:text-white hover:bg-white/5'
-                }`}
+              className={`flex items-center px-4 py-2.5 rounded-lg transition-all duration-200 ${location.pathname === item.path
+                ? 'bg-white/10 text-white font-medium shadow-[0_4px_12px_rgba(0,0,0,0.1)] backdrop-blur-sm'
+                : 'text-white/70 hover:bg-white/5 hover:text-white'
+                } ${!isSidebarOpen ? 'justify-center px-0' : 'justify-between'}`}
             >
-              <div className={`shrink-0 transition-all duration-300 ${location.pathname === item.path ? 'scale-110 text-white' : 'group-hover:scale-110'}`}>
-                {React.cloneElement(item.icon, { size: 20 })}
-              </div>
+              <div className="flex items-center gap-3">
+                <div className={`shrink-0 transition-all duration-300 ${location.pathname === item.path ? 'text-white' : ''}`}>
+                  {React.cloneElement(item.icon, { size: 18 })}
+                </div>
 
-              <AnimatePresence>
-                {isSidebarOpen && (
-                  <motion.span
-                    initial={{ opacity: 0, x: -10 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: -10 }}
-                    className="text-[11px] font-bold tracking-wide whitespace-nowrap overflow-hidden"
-                  >
-                    {item.title}
-                  </motion.span>
-                )}
-              </AnimatePresence>
+                <span className={`text-[13px] font-medium font-poppins transition-all duration-300 whitespace-nowrap overflow-hidden ${
+                  isSidebarOpen ? 'opacity-100 max-w-full block' : 'opacity-0 max-w-0 hidden'
+                }`}>
+                  {item.title}
+                </span>
+              </div>
 
               {location.pathname === item.path && (
                 <motion.div
                   layoutId="active-pill"
-                  className="absolute left-0 w-1 bg-brand-gold h-4 top-1/2 -translate-y-1/2 rounded-r-full"
+                  className="absolute left-0 w-1 bg-admin-gold h-4 top-1/2 -translate-y-1/2 rounded-r-full"
                 />
               )}
             </Link>
@@ -191,46 +175,59 @@ const AdminLayout = () => {
         <div className="p-4 border-t border-white/5 flex-shrink-0">
           <button
             onClick={handleLogout}
-            className={`w-full flex items-center ${isSidebarOpen ? 'gap-4 px-4' : 'justify-center'} py-2 text-white/40 hover:text-white transition-all group`}
+            className={`w-full flex items-center px-4 py-2.5 mt-2 rounded-lg transition-all duration-200 text-white/70 hover:bg-white/5 hover:text-white ${
+              !isSidebarOpen ? 'justify-center px-0' : 'justify-between'
+            }`}
+            title={!isSidebarOpen ? "Logout" : ""}
           >
-            <FiLogOut className={`text-xl ${isSidebarOpen ? 'rotate-180' : ''}`} />
-            {isSidebarOpen && (
-              <span className="text-[12px] font-bold tracking-widest uppercase">Logout</span>
-            )}
+            <div className="flex items-center gap-3">
+              <FiLogOut size={18} className={`shrink-0 text-red-400 ${isSidebarOpen ? 'rotate-180' : ''}`} />
+              <span className={`text-[13px] font-medium font-poppins transition-all duration-300 whitespace-nowrap overflow-hidden ${
+                isSidebarOpen ? 'opacity-100 max-w-full block' : 'opacity-0 max-w-0 hidden'
+              }`}>
+                Logout
+              </span>
+            </div>
           </button>
         </div>
       </motion.aside>
 
       {/* Main Content Area */}
-      <div className={`flex-1 flex flex-col min-w-0 transition-all duration-500 ${isSidebarOpen ? 'lg:ml-64' : 'lg:ml-16'}`}>
+      <div className={`flex-1 flex flex-col min-w-0 transition-all duration-500 ${isSidebarOpen ? 'ml-64' : 'ml-16'}`}>
         {/* Header - Premium Navigation */}
-        <header className="h-12 bg-brand-light/80 backdrop-blur-xl border-b border-brand-pink/5 flex items-center justify-between px-4 sticky top-0 z-40 transition-all">
-          <div className="flex items-center gap-4">
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                setIsSidebarOpen(!isSidebarOpen);
-              }}
-              className="p-2 text-brand-dark hover:bg-brand-light rounded-none transition-all border border-brand-pink/5"
-            >
-              <FiMenu size={18} />
+        <header className="sticky top-0 h-14 bg-white border-b border-gray-100 flex items-center justify-between px-6 z-40 shadow-sm shrink-0">
+          <div className="flex items-center gap-4 flex-1">
+            <button className="text-gray-500 hover:text-gray-900 shrink-0" onClick={() => setIsSidebarOpen(!isSidebarOpen)}>
+              <FiMenu size={24} />
             </button>
-            <div className="flex items-center gap-4">
-              <h1 className="text-[11px] font-black text-gray-800 tracking-[0.2em] uppercase px-4 border-l-2 border-brand-pink/10 ml-2 leading-none">
-                {menuItems.find(item => item.path === location.pathname)?.title || 'Overview'}
-              </h1>
+            <h2 className="block text-[13px] sm:text-[15px] font-['Cormorant',_serif] font-black text-black shrink-0 tracking-widest uppercase">ADMIN PANEL</h2>
+            <div className="hidden md:flex items-center justify-center flex-1">
+              <div className="relative w-full max-w-md">
+                <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={14} />
+                <input 
+                  type="text" 
+                  placeholder="Search products, orders..." 
+                  className="w-full pl-8 pr-4 py-1.5 bg-white border border-gray-200 rounded-full text-[12px] focus:outline-none focus:ring-1 focus:ring-admin-dark/50 focus:border-admin-dark transition-all font-sans font-medium text-gray-800 shadow-sm"
+                />
+              </div>
             </div>
           </div>
+          
+          <div className="flex items-center gap-3 sm:gap-4 shrink-0">
+            {/* Mobile Search */}
+            <button className="block md:hidden text-gray-500 hover:text-admin-dark transition-colors">
+              <FiSearch size={20} />
+            </button>
 
-          <div className="flex items-center gap-4">
+            {/* Notifications */}
             <div className="relative">
-              <button
-                onClick={() => setIsNotificationsOpen(!isNotificationsOpen)}
-                className={`relative p-1.5 transition-all ${isNotificationsOpen ? 'text-brand-pink' : 'text-gray-400 hover:text-brand-pink'}`}
+              <button 
+                onClick={() => setIsNotificationsOpen(!isNotificationsOpen)} 
+                className="relative text-gray-500 hover:text-admin-dark transition-colors"
               >
-                <FiBell size={14} />
+                <FiBell size={20} />
                 {notifications.length > 0 && (
-                  <span className="absolute top-1 right-1 w-1.5 h-1.5 bg-brand-pink rounded-none border border-white"></span>
+                  <span className="absolute -top-1 -right-1 w-3.5 h-3.5 bg-red-500 border-2 border-white rounded-full text-[7px] font-bold text-white flex items-center justify-center">{notifications.length}</span>
                 )}
               </button>
 
@@ -240,32 +237,23 @@ const AdminLayout = () => {
                     initial={{ opacity: 0, y: 10, scale: 0.95 }}
                     animate={{ opacity: 1, y: 0, scale: 1 }}
                     exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                    className="absolute right-0 mt-2 w-64 bg-white border border-brand-pink/10 shadow-2xl z-50 rounded-none overflow-hidden"
+                    className="absolute right-0 mt-3 w-72 bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden z-50"
                   >
-                    <div className="p-3 bg-brand-light/30 border-b border-brand-pink/5 flex items-center justify-between">
-                      <span className="text-[8px] font-black uppercase tracking-widest text-brand-dark">Security Alerts</span>
-                      <span className="text-[6px] bg-brand-pink text-white px-1.5 py-0.5 rounded-none uppercase">{notifications.length} NEW</span>
+                    <div className="p-3 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
+                      <h3 className="text-[12px] font-bold text-gray-900">Notifications</h3>
                     </div>
-                    <div className="max-h-60 overflow-y-auto no-scrollbar">
+                    <div className="max-h-[300px] overflow-y-auto">
                       {notifications.length > 0 ? (
                         notifications.map((n) => (
-                          <div key={n.id} className="p-3 border-b border-brand-pink/[0.02] hover:bg-brand-light/10 transition-colors group">
-                            <p className="text-[9px] text-brand-dark font-medium leading-tight mb-1">{n.text}</p>
-                            <div className="flex items-center justify-between">
-                              <span className="text-[7px] text-gray-400 uppercase tracking-tighter">{n.time}</span>
-                              <button
-                                onClick={() => removeNotification(n.id)}
-                                className="text-[7px] font-black text-brand-pink uppercase tracking-widest hover:underline"
-                              >
-                                Mark Read
-                              </button>
-                            </div>
+                          <div key={n.id} className="p-3 border-b border-gray-50 hover:bg-gray-50/50 cursor-pointer transition-colors last:border-0">
+                            <p className="text-[11px] font-bold text-gray-800">{n.text}</p>
+                            <p className="text-[9px] text-gray-400 mt-1 font-medium">{n.time}</p>
                           </div>
                         ))
                       ) : (
-                        <div className="p-10 text-center">
-                          <p className="text-[8px] text-gray-400 uppercase tracking-[0.2em]">Secure Archive Clear</p>
-                        </div>
+                         <div className="p-5 text-center">
+                           <p className="text-[11px] text-gray-500">No new notifications</p>
+                         </div>
                       )}
                     </div>
                   </motion.div>
@@ -273,21 +261,67 @@ const AdminLayout = () => {
               </AnimatePresence>
             </div>
 
-            <div className="w-[1px] h-6 bg-brand-pink/10 hidden sm:block"></div>
-            <Link to="/admin/settings" className="flex items-center gap-3 hover:bg-gray-50 p-1 rounded-lg transition-all group">
-              <div className="text-right hidden sm:block">
-                <p className="text-[11px] font-bold text-gray-800 leading-tight group-hover:text-brand-pink transition-colors">Admin User</p>
-                <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest">SUPER ADMIN</p>
-              </div>
-              <div className="w-9 h-9 bg-[#3D2522] rounded-lg flex items-center justify-center text-white font-bold text-sm shadow-md group-hover:bg-brand-pink transition-all">
-                A
-              </div>
-            </Link>
+            {/* Messages */}
+            <div className="relative hidden sm:block">
+              <button className="relative text-gray-500 hover:text-admin-dark transition-colors">
+                <FiMessageSquare size={20} />
+                <span className="absolute -top-1 -right-1 w-3.5 h-3.5 bg-red-500 border-2 border-white rounded-full text-[7px] font-bold text-white flex items-center justify-center">2</span>
+              </button>
+            </div>
+
+            <div className="h-6 w-px bg-gray-200 hidden sm:block"></div>
+            
+            <div className="relative">
+              <button 
+                onClick={() => setIsProfileOpen(!isProfileOpen)}
+                className="flex items-center gap-2 cursor-pointer outline-none"
+              >
+                <div className="text-right hidden sm:block">
+                  <p className="text-[12px] font-bold text-gray-900 font-sans leading-tight">{user?.name || 'Admin User'}</p>
+                  <p className="text-[10px] font-medium text-gray-500 font-poppins">{user?.role || 'Super Admin'}</p>
+                </div>
+                <img src={`https://ui-avatars.com/api/?name=${user?.name || 'Admin+User'}&background=054425&color=fff`} alt="Admin" className="w-8 h-8 rounded-full border border-gray-100 shadow-sm" />
+                <FiChevronDown size={14} className={`text-gray-500 transition-transform ${isProfileOpen ? 'rotate-180' : ''}`} />
+              </button>
+
+              <AnimatePresence>
+                {isProfileOpen && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                    className="absolute right-0 mt-3 w-56 bg-white rounded-xl shadow-[0_8px_30px_rgb(0,0,0,0.12)] border border-gray-100 overflow-hidden z-50 py-2"
+                  >
+                    <div className="px-4 py-3 border-b border-gray-50 mb-2">
+                      <p className="text-sm font-bold text-gray-900 leading-tight truncate">{user?.name || 'Admin User'}</p>
+                      <p className="text-[11px] text-gray-500 font-medium truncate">{user?.email || 'admin@sada-bharat.com'}</p>
+                    </div>
+                    
+                    <Link 
+                      to="/admin/settings" 
+                      onClick={() => setIsProfileOpen(false)}
+                      className="flex items-center gap-3 px-4 py-2 text-[13px] font-medium text-gray-700 hover:bg-gray-50 hover:text-admin-dark transition-colors"
+                    >
+                      <FiSettings size={16} className="text-gray-400" />
+                      Portal Settings
+                    </Link>
+                    
+                    <button 
+                      onClick={() => { setIsProfileOpen(false); handleLogout(); }}
+                      className="w-full flex items-center gap-3 px-4 py-2 mt-1 text-[13px] font-medium text-red-600 hover:bg-red-50 transition-colors"
+                    >
+                      <FiLogOut size={16} className="text-red-500" />
+                      Sign Out
+                    </button>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
           </div>
         </header>
 
         {/* Content Container */}
-        <main className="p-4 md:p-6 lg:p-8 pt-12 md:pt-14 bg-[#F2EDED] relative min-h-[calc(100vh-48px)]">
+        <main className="px-4 md:px-6 lg:px-8 pb-4 md:pb-6 lg:pb-8 pt-2 md:pt-4 bg-[#FDFBF7] relative min-h-[calc(100vh-56px)]">
           <Outlet />
         </main>
       </div>

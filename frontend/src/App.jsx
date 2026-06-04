@@ -58,6 +58,7 @@ import AdminComingSoon from './components/admin/AdminComingSoon';
 import AdminInventory from './components/admin/AdminInventory';
 import AdminCoupons from './components/admin/AdminCoupons';
 import AdminOffers from './components/admin/AdminOffers';
+import AdminVendors from './components/admin/AdminVendors';
 import AdminReturns from './components/admin/AdminReturns';
 import AdminBlogs from './components/admin/AdminBlogs';
 import AdminTestimonials from './components/admin/AdminTestimonials';
@@ -67,6 +68,7 @@ import AdminReviews from './components/admin/AdminReviews';
 import AdminSupport from './components/admin/AdminSupport';
 import AdminLogistics from './components/admin/AdminLogistics';
 import AdminLocations from './components/admin/AdminLocations';
+import AdminLogin from './components/admin/AdminLogin';
 import { FiBox, FiRotateCcw, FiRefreshCw, FiTag, FiShoppingBag, FiUsers } from 'react-icons/fi';
 
 // Vendor Module Imports
@@ -85,6 +87,7 @@ import VendorNotifications from './components/vendor/VendorNotifications';
 import VendorAnalytics from './components/vendor/VendorAnalytics';
 import VendorSupport from './components/vendor/VendorSupport';
 import VendorSettings from './components/vendor/VendorSettings';
+import VendorLogistics from './components/vendor/VendorLogistics';
 import VendorLogin from './components/vendor/VendorLogin';
 import VendorRegister from './components/vendor/VendorRegister';
 import VendorAuthGuard from './components/vendor/VendorAuthGuard';
@@ -183,7 +186,7 @@ const UserRoutes = () => {
 const AdminRoutes = () => (
   <Routes>
     {/* Standalone Route for Admin Login */}
-    <Route path="/login" element={<Auth />} />
+    <Route path="/login" element={<AdminLogin />} />
 
     {/* Nested Routes inside AdminLayout */}
     <Route element={<AdminLayout />}>
@@ -196,13 +199,13 @@ const AdminRoutes = () => (
       <Route path="/banners" element={<AdminBanners />} />
       <Route path="/settings" element={<AdminSettings />} />
       <Route path="/inventory" element={<AdminInventory />} />
+      <Route path="/vendors" element={<AdminVendors />} />
       <Route path="/returns" element={<AdminReturns />} />
       <Route path="/coupons" element={<AdminCoupons />} />
       <Route path="/offers" element={<AdminOffers />} />
       <Route path="/customers" element={<AdminUsers />} />
       <Route path="/blogs" element={<AdminBlogs />} />
       <Route path="/testimonials" element={<AdminTestimonials />} />
-      <Route path="/instagram" element={<AdminInstagram />} />
       <Route path="/reviews" element={<AdminReviews />} />
       <Route path="/support" element={<AdminSupport />} />
       <Route path="/logistics" element={<AdminLogistics />} />
@@ -226,6 +229,7 @@ const VendorRoutes = () => (
         <Route path="/inventory" element={<VendorInventory />} />
         <Route path="/orders" element={<VendorOrders />} />
         <Route path="/returns" element={<VendorReturns />} />
+        <Route path="/logistics" element={<VendorLogistics />} />
         <Route path="/earnings" element={<VendorEarnings />} />
         <Route path="/payouts" element={<VendorPayouts />} />
         <Route path="/coupons" element={<VendorCoupons />} />
@@ -239,56 +243,21 @@ const VendorRoutes = () => (
   </Routes>
 );
 
-import { onMessageListener, requestForToken } from './utils/firebase-config';
-import api from './utils/api';
+
+
+// MOCK API for Frontend-Only mode
+const api = {
+  get: async () => ({ data: { data: { products: [], categories: [], banners: [], settings: {}, orders: [], users: [], stats: [], recentTransactions: [], dailyRevenue: [], vendors: [], blogs: [], returns: [], testimonials: [], reviews: [], replacements: [], supportTickets: [], locations: [], coupons: [], logs: [] }, status: 'success' } }),
+  post: async () => ({ data: { data: { order: { orderId: 'MOCK-ORDER-123' } }, status: 'success' } }),
+  patch: async () => ({ data: { status: 'success' } }),
+  delete: async () => ({ data: { status: 'success' } })
+};
+
 import { AnimatePresence, motion } from 'framer-motion';
 import { FiX, FiBell } from 'react-icons/fi';
 
 const NotificationListener = () => {
-  const { user, isAuthenticated } = useShop();
-
-  React.useEffect(() => {
-    // 1. Sync Token
-    const syncToken = async () => {
-      if (isAuthenticated) {
-        const token = await requestForToken();
-        if (token) {
-          try {
-            await api.post('/auth/save-fcm-token', { token, platform: 'web' });
-          } catch (e) {
-            console.warn("Backend offline: FCM Token sync skipped.");
-          }
-        }
-      }
-    };
-    syncToken();
-
-    // 2. Listen for Foreground Messages (Fire Native Browser Notification only)
-    const unsubscribe = onMessageListener((payload) => {
-      console.log('Received foreground message:', payload);
-
-      const displayData = payload.notification || {
-        title: payload.data?.title || "Saundarya Shringar",
-        body: payload.data?.body || "New update received."
-      };
-
-      // Trigger Native System Notification like Chrome card
-      if (Notification.permission === 'granted') {
-        navigator.serviceWorker.ready.then(registration => {
-          registration.showNotification(displayData.title, {
-            body: displayData.body,
-            icon: '/favicon.ico',
-            badge: '/favicon.ico',
-            data: payload.data
-          });
-        });
-      }
-    });
-
-    return () => unsubscribe && unsubscribe();
-  }, [isAuthenticated]);
-
-  return null; // No In-App UI, only Browser alerts
+  return null;
 };
 
 function App() {
