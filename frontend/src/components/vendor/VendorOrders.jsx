@@ -1,7 +1,66 @@
-import React from 'react';
-import { Search, Filter, Eye, MoreHorizontal, PackageOpen, Truck, CheckCircle2 } from 'lucide-react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { Search, Filter, Eye, MoreHorizontal, PackageOpen, Truck, CheckCircle2, RefreshCw } from 'lucide-react';
+import api from '../../utils/api';
 
 const VendorOrders = () => {
+  const [orders, setOrders] = useState([]);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [filter, setFilter] = useState('All Statuses');
+  const [isUpdating, setIsUpdating] = useState(false);
+
+  const fetchOrders = useCallback(async () => {
+    try {
+      const res = await api.get('/orders/vendor');
+      if (res.data.success) {
+        setOrders(res.data.data);
+      }
+    } catch (err) {
+      console.error('Failed to fetch orders:', err);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchOrders();
+  }, [fetchOrders]);
+
+  const handleUpdateStatus = async (orderId, itemId, status, trackingNumber) => {
+    setIsUpdating(true);
+    try {
+      await api.put(`/orders/${orderId}/item/${itemId}/status`, { status, trackingNumber });
+      fetchOrders();
+    } catch (error) {
+      alert("Failed to update status: " + (error.response?.data?.message || error.message));
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
+  // Flatten orders into items since status is tracked per-item
+  const orderItemsList = orders.flatMap(order => 
+    order.orderItems.map(item => ({
+      orderId: order._id,
+      itemId: item._id,
+      displayOrderId: `#${order._id.slice(-6).toUpperCase()}`,
+      customer: order.user ? order.user.name : 'Unknown Customer',
+      productName: item.name,
+      qty: item.qty,
+      price: item.price,
+      totalAmount: `₹${(item.price * item.qty).toLocaleString()}`,
+      date: new Date(order.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+      status: item.status,
+      trackingNumber: item.trackingNumber || ''
+    }))
+  );
+
+  const filteredItems = orderItemsList.filter(item => {
+    const matchesSearch = item.displayOrderId.toLowerCase().includes(searchQuery.toLowerCase()) || 
+                          item.customer.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                          item.productName.toLowerCase().includes(searchQuery.toLowerCase());
+    
+    if (filter !== 'All Statuses') return matchesSearch && item.status === filter;
+    return matchesSearch;
+  });
+
   return (
     <div className="space-y-4 pb-6 max-w-[1400px] mx-auto -mt-2">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
@@ -9,6 +68,9 @@ const VendorOrders = () => {
           <h1 className="text-2xl font-serif font-bold text-gray-900 leading-tight">Order Management</h1>
           <p className="text-[12px] text-gray-500 mt-0.5 font-sans">Track and process your customer orders.</p>
         </div>
+        <button onClick={fetchOrders} className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-lg text-[13px] font-medium text-gray-700 hover:bg-gray-50 shadow-sm transition-colors">
+          <RefreshCw size={14} /> Refresh Data
+        </button>
       </div>
 
       <div className="bg-white rounded-xl shadow-[0_2px_10px_rgba(0,0,0,0.02)] border border-gray-100 overflow-hidden">
@@ -17,19 +79,25 @@ const VendorOrders = () => {
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={14} />
             <input 
               type="text" 
-              placeholder="Search Order ID, Customer..." 
+              placeholder="Search Order ID, Customer, Product..." 
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full pl-8 pr-3 py-1.5 bg-gray-50 border border-gray-200 rounded-lg text-[12px] focus:outline-none focus:border-[#054425] focus:ring-1 focus:ring-[#054425] font-sans font-medium"
             />
           </div>
           <div className="flex gap-2 w-full sm:w-auto">
-            <select className="flex-1 sm:flex-none bg-white border border-gray-200 rounded-lg px-3 py-1.5 text-[12px] font-medium text-gray-700 outline-none hover:bg-gray-50 cursor-pointer">
+            <select 
+              value={filter}
+              onChange={(e) => setFilter(e.target.value)}
+              className="flex-1 sm:flex-none bg-white border border-gray-200 rounded-lg px-3 py-1.5 text-[12px] font-medium text-gray-700 outline-none hover:bg-gray-50 cursor-pointer"
+            >
               <option>All Statuses</option>
               <option>Processing</option>
               <option>Packed</option>
               <option>Shipped</option>
               <option>Delivered</option>
+              <option>Cancelled</option>
             </select>
-            <input type="date" className="flex-1 sm:flex-none bg-white border border-gray-200 rounded-lg px-3 py-1.5 text-[12px] font-medium text-gray-700 outline-none hover:bg-gray-50" />
           </div>
         </div>
 
@@ -40,32 +108,32 @@ const VendorOrders = () => {
                 <th className="px-4 py-3 font-semibold">Order ID</th>
                 <th className="px-4 py-3 font-semibold">Customer</th>
                 <th className="px-4 py-3 font-semibold">Product</th>
-                <th className="px-4 py-3 font-semibold">Amount</th>
+                <th className="px-4 py-3 font-semibold">Total Amount</th>
                 <th className="px-4 py-3 font-semibold">Date</th>
-                <th className="px-4 py-3 font-semibold">Status Update</th>
+                <th className="px-4 py-3 font-semibold min-w-[250px]">Status Update</th>
               </tr>
             </thead>
             <tbody className="text-[12px] text-gray-800">
-              {[
-                { id: '#SB12345678', customer: 'Rohit Sharma', product: 'NEEM TULSI Face Wash', amount: '₹1,250', date: 'May 31, 2024', status: 'Delivered' },
-                { id: '#SB12345679', customer: 'Neha Verma', product: 'BHRINGRAJ Hair Oil (x2)', amount: '₹890', date: 'May 31, 2024', status: 'Processing' },
-                { id: '#SB12345680', customer: 'Amit Patel', product: 'ASHWAGANDHA Capsules', amount: '₹2,450', date: 'May 30, 2024', status: 'Packed' },
-                { id: '#SB12345681', customer: 'Pooja Singh', product: 'AMLA Powder', amount: '₹1,150', date: 'May 30, 2024', status: 'Shipped' },
-              ].map((order, i) => (
-                <tr key={i} className="border-b border-gray-50 hover:bg-gray-50/50 transition-colors">
-                  <td className="px-4 py-2.5 font-medium text-gray-800">{order.id}</td>
-                  <td className="px-4 py-2.5 font-medium">{order.customer}</td>
-                  <td className="px-4 py-2.5 text-gray-600 font-medium">{order.product}</td>
-                  <td className="px-4 py-2.5 font-medium text-gray-800">{order.amount}</td>
-                  <td className="px-4 py-2.5 text-gray-500 font-medium">{order.date}</td>
+              {filteredItems.map((item, i) => (
+                <tr key={`${item.orderId}-${item.itemId}`} className="border-b border-gray-50 hover:bg-gray-50/50 transition-colors">
+                  <td className="px-4 py-2.5 font-medium text-gray-800">{item.displayOrderId}</td>
+                  <td className="px-4 py-2.5 font-medium">{item.customer}</td>
+                  <td className="px-4 py-2.5 text-gray-600 font-medium">
+                    {item.productName} <span className="text-gray-400 font-normal ml-1">(x{item.qty})</span>
+                  </td>
+                  <td className="px-4 py-2.5 font-medium text-gray-800">{item.totalAmount}</td>
+                  <td className="px-4 py-2.5 text-gray-500 font-medium">{item.date}</td>
                   <td className="px-4 py-2.5">
                     <div className="flex items-center gap-2">
                       <select 
-                        defaultValue={order.status}
-                        className={`text-[10px] font-bold px-2 py-1 rounded border outline-none cursor-pointer ${
-                          order.status === 'Delivered' ? 'bg-[#E8F5E9] text-[#2E7D32] border-[#C8E6C9]' :
-                          order.status === 'Shipped' ? 'bg-blue-50 border-blue-200 text-blue-700' :
-                          order.status === 'Packed' ? 'bg-purple-50 border-purple-200 text-purple-700' :
+                        value={item.status}
+                        onChange={(e) => handleUpdateStatus(item.orderId, item.itemId, e.target.value, item.trackingNumber)}
+                        disabled={isUpdating}
+                        className={`text-[10px] font-bold px-2 py-1 rounded border outline-none cursor-pointer disabled:opacity-50 ${
+                          item.status === 'Delivered' ? 'bg-[#E8F5E9] text-[#2E7D32] border-[#C8E6C9]' :
+                          item.status === 'Shipped' ? 'bg-blue-50 border-blue-200 text-blue-700' :
+                          item.status === 'Packed' ? 'bg-purple-50 border-purple-200 text-purple-700' :
+                          item.status === 'Cancelled' ? 'bg-red-50 border-red-200 text-red-700' :
                           'bg-[#FFF8E1] text-[#F9A825] border-[#FFECB3]'
                         }`}
                       >
@@ -73,14 +141,36 @@ const VendorOrders = () => {
                         <option value="Packed">Packed</option>
                         <option value="Shipped">Shipped</option>
                         <option value="Delivered">Delivered</option>
+                        <option value="Cancelled">Cancelled</option>
                       </select>
-                      {['Packed', 'Shipped'].includes(order.status) && (
-                        <input type="text" placeholder="Tracking #" className="w-20 px-2 py-1 border border-gray-200 rounded text-[11px] outline-none focus:border-[#054425]" />
+                      
+                      {['Packed', 'Shipped', 'Delivered'].includes(item.status) && (
+                        <div className="flex items-center gap-1">
+                          <input 
+                            type="text" 
+                            placeholder="Tracking #" 
+                            defaultValue={item.trackingNumber}
+                            onBlur={(e) => {
+                              if (e.target.value !== item.trackingNumber) {
+                                handleUpdateStatus(item.orderId, item.itemId, item.status, e.target.value);
+                              }
+                            }}
+                            disabled={isUpdating}
+                            className="w-24 px-2 py-1 border border-gray-200 rounded text-[11px] outline-none focus:border-[#054425]" 
+                          />
+                        </div>
                       )}
                     </div>
                   </td>
                 </tr>
               ))}
+              {filteredItems.length === 0 && (
+                <tr>
+                  <td colSpan="6" className="py-12 text-center text-gray-400 text-sm">
+                    No orders found.
+                  </td>
+                </tr>
+              )}
             </tbody>
           </table>
         </div>

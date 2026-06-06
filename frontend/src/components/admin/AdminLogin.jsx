@@ -3,6 +3,8 @@ import { useNavigate, Navigate } from 'react-router-dom';
 import { useShop } from '../../context/ShopContext';
 import { FiLock, FiMail, FiArrowRight } from 'react-icons/fi';
 
+import realApi from '../../utils/api';
+
 // MOCK API for Frontend-Only mode
 const api = {
   get: async () => ({ data: { data: { products: [], categories: [], banners: [], settings: {}, orders: [], users: [], stats: [], recentTransactions: [], dailyRevenue: [], vendors: [], blogs: [], returns: [], testimonials: [], reviews: [], replacements: [], supportTickets: [], locations: [], coupons: [], logs: [] }, status: 'success' } }),
@@ -45,22 +47,25 @@ const AdminLogin = () => {
     setLoading(true);
 
     try {
-      if (form.email === 'admin@gmail.com' && form.password === '123456') {
-        const token = "admin-mock-token-123";
-        const data = { name: 'Admin User', email: form.email, role: 'admin' };
+      const res = await realApi.post('/users/login', {
+        email: form.email,
+        password: form.password
+      });
+
+      if (res.data.success && res.data.data.role === 'admin') {
+        const token = res.data.data.token;
+        const data = { name: res.data.data.name, email: res.data.data.email, role: 'admin' };
         
         localStorage.setItem('admin_token', token);
         setUser(data);
         setIsAuthenticated(true);
-
-        // FCM Push Removed
 
         navigate('/admin');
       } else {
         throw new Error("Invalid admin credentials");
       }
     } catch (error) {
-      setErrors({ submit: error.message || "Failed to authenticate" });
+      setErrors({ submit: error.response?.data?.message || error.message || "Failed to authenticate" });
     } finally {
       setLoading(false);
     }

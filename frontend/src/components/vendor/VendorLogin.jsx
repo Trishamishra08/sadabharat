@@ -2,29 +2,38 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Mail, Lock, ArrowRight, Eye, EyeOff } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import api from '../../utils/api';
 
 const VendorLogin = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const navigate = useNavigate();
 
-  const handleLogin = (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault();
     setError('');
     
     if (!email) return setError('Email Required');
     if (!password) return setError('Password Required');
 
-    if (email === 's@gmail.com' && password === '123456') {
-      localStorage.setItem('vendor_auth', 'true');
-      if (window.showVendorToast) {
-        window.showVendorToast('Logged in successfully!', 'success');
+    setIsSubmitting(true);
+    try {
+      const res = await api.post('/vendors/login', { email, password });
+      if (res.data.success) {
+        localStorage.setItem('vendor_token', res.data.data.token);
+        localStorage.setItem('vendor_auth', 'true');
+        if (window.showVendorToast) {
+          window.showVendorToast('Logged in successfully!', 'success');
+        }
+        navigate('/vendor');
       }
-      navigate('/vendor');
-    } else {
-      setError('Invalid Credentials');
+    } catch (err) {
+      setError(err.response?.data?.message || err.parsedMessage || 'Invalid Credentials');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -184,9 +193,10 @@ const VendorLogin = () => {
               {/* Sign In Button */}
               <button
                 type="submit"
-                className="w-full bg-[#0F3520] text-white py-3.5 rounded-xl text-xs sm:text-sm font-semibold tracking-wide hover:bg-[#0d2a1a] transition-all shadow-md active:scale-95 flex items-center justify-center gap-2 mt-4"
+                disabled={isSubmitting}
+                className={`w-full text-white py-3.5 rounded-xl text-xs sm:text-sm font-semibold tracking-wide transition-all shadow-md active:scale-95 flex items-center justify-center gap-2 mt-4 ${isSubmitting ? 'bg-gray-500 cursor-not-allowed' : 'bg-[#0F3520] hover:bg-[#0d2a1a]'}`}
               >
-                Sign In <ArrowRight size={16} />
+                {isSubmitting ? 'Signing In...' : 'Sign In'} {!isSubmitting && <ArrowRight size={16} />}
               </button>
 
               {/* OR Divider */}

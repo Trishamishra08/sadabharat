@@ -1,27 +1,43 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Upload, X, CheckCircle, ArrowLeft } from 'lucide-react';
-import { Link, useNavigate } from 'react-router-dom';
-import { useShop } from '../../context/ShopContext';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
+import api from '../../utils/api';
 
 const VendorAddProduct = () => {
-  const { addProduct } = useShop();
   const navigate = useNavigate();
+  const location = useLocation();
+  const editProduct = location.state?.product || null;
 
-  const [images, setImages] = useState([]);
-  const [name, setName] = useState('');
-  const [description, setDescription] = useState('');
-  const [ingredients, setIngredients] = useState('');
-  const [benefits, setBenefits] = useState('');
-  
+  const [images, setImages] = useState(editProduct ? [editProduct.image].filter(Boolean) : []);
+  const [name, setName] = useState(editProduct?.name || '');
+  const [description, setDescription] = useState(editProduct?.description || '');
+  const [ingredients, setIngredients] = useState(editProduct?.ingredients || '');
+  const [benefits, setBenefits] = useState(editProduct?.benefits || '');
+
   // Standard pricing and stock (when no variants are used)
-  const [price, setPrice] = useState('');
-  const [oldPrice, setOldPrice] = useState('');
-  const [stock, setStock] = useState('');
-  const [sku, setSku] = useState('');
+  const [price, setPrice] = useState(editProduct?.price || '');
+  const [oldPrice, setOldPrice] = useState(editProduct?.oldPrice || '');
+  const [stock, setStock] = useState(editProduct?.stock || '');
+  const [sku, setSku] = useState(editProduct?.sku || '');
+
+  const [category, setCategory] = useState(editProduct?.category || 'Select Category');
+  const [tags, setTags] = useState(editProduct?.tags || '');
   
-  const [category, setCategory] = useState('Select Category');
-  const [subCategory, setSubCategory] = useState('Select Sub Category');
-  const [tags, setTags] = useState('');
+  const [categories, setCategories] = useState([]);
+
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const res = await api.get('/categories');
+        if (res.data.success) {
+          setCategories(res.data.data);
+        }
+      } catch (error) {
+        console.error('Failed to fetch categories:', error);
+      }
+    };
+    fetchCategories();
+  }, []);
 
   // Regulatory & Logistics fields
   const [prescriptionRequired, setPrescriptionRequired] = useState(false);
@@ -59,7 +75,7 @@ const VendorAddProduct = () => {
     setVariants(prev => prev.map((v, i) => i === index ? { ...v, [field]: value } : v));
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!name.trim()) {
       alert("Product Name is required!");
       return;
@@ -85,35 +101,40 @@ const VendorAddProduct = () => {
     }
 
     const newProduct = {
-      _id: newId,
       name,
       price: finalPrice,
       oldPrice: finalOldPrice,
-      rating: 4.8,
+      rating: 0,
       reviews: 0,
       image: images.length > 0 ? images[0] : 'https://images.unsplash.com/photo-1608571423902-eed4a5ad8108?w=500&auto=format&fit=crop&q=60',
-      gallery: images.length > 0 ? images : ['https://images.unsplash.com/photo-1608571423902-eed4a5ad8108?w=500&auto=format&fit=crop&q=60'],
       category: category !== 'Select Category' ? category : 'Wellness',
-      subCategory: subCategory !== 'Select Sub Category' ? subCategory : '',
       description,
-      ingredients,
-      benefits,
-      dosage,
-      disclaimer,
-      prescriptionRequired,
-      noRefund,
-      codAvailable,
-      variants: hasVariants ? processedVariants : null,
-      stock: hasVariants ? null : (parseInt(stock, 10) || 100),
-      sku: hasVariants ? null : sku,
-      tags: tags.split(',').map(t => t.trim()).filter(Boolean),
+      packSize: hasVariants ? processedVariants[0].size : 'Standard',
       bestseller: false,
-      recommended: true
+      recommended: false
     };
 
-    addProduct(newProduct);
-    window.showVendorToast?.('Product submitted successfully!', 'success');
-    navigate(`/product/${newId}`);
+    try {
+      if (editProduct) {
+        console.log("Updating product:", newProduct);
+        const res = await api.put(`/products/${editProduct._id}`, newProduct);
+        if (res.data.success) {
+          window.showVendorToast?.('Product updated successfully!', 'success');
+          navigate(`/vendor/products`);
+        }
+      } else {
+        console.log("Submitting new product:", newProduct);
+        const res = await api.post('/products', newProduct);
+        if (res.data.success) {
+          window.showVendorToast?.('Product submitted successfully! It is now pending admin approval.', 'success');
+          navigate(`/vendor/products`);
+        }
+      }
+    } catch (error) {
+      console.error("Product submission failed:", error);
+      console.error("Response data:", error.response?.data);
+      alert(error.response?.data?.message || 'Failed to submit product');
+    }
   };
 
   const handleSaveDraft = () => {
@@ -126,8 +147,12 @@ const VendorAddProduct = () => {
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <div>
-            <h1 className="text-2xl font-serif font-bold text-gray-900 leading-tight">Add New Product</h1>
-            <p className="text-[12px] text-gray-500 mt-0.5 font-sans">Fill in the details to list your product.</p>
+            <h1 className="text-2xl font-serif font-bold text-gray-900 leading-tight">
+              {editProduct ? 'Edit Product' : 'Add New Product'}
+            </h1>
+            <p className="text-[12px] text-gray-500 mt-0.5 font-sans">
+              {editProduct ? 'Update the details for your product.' : 'Fill in the details to list your product.'}
+            </p>
           </div>
         </div>
         <div className="flex gap-2">
@@ -135,7 +160,7 @@ const VendorAddProduct = () => {
             Save Draft
           </button>
           <button onClick={handleSubmit} className="px-4 py-2 bg-[#054425] text-white font-medium rounded-lg text-[12px] shadow-sm hover:bg-[#04331c] transition-colors">
-            Submit Product
+            {editProduct ? 'Update Product' : 'Submit Product'}
           </button>
         </div>
       </div>
@@ -148,42 +173,42 @@ const VendorAddProduct = () => {
             <div className="space-y-3">
               <div>
                 <label className="block text-[10px] font-bold text-gray-700 mb-1 uppercase tracking-wide">Product Name</label>
-                <input 
-                  type="text" 
+                <input
+                  type="text"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  placeholder="e.g. Organic Neem Tulsi Face Wash" 
-                  className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-[12px] focus:outline-none focus:border-[#054425] focus:ring-1 focus:ring-[#054425] font-sans font-medium text-gray-800" 
+                  placeholder="e.g. Organic Neem Tulsi Face Wash"
+                  className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-[12px] focus:outline-none focus:border-[#054425] focus:ring-1 focus:ring-[#054425] font-sans font-medium text-gray-800"
                 />
               </div>
               <div>
                 <label className="block text-[10px] font-bold text-gray-700 mb-1 uppercase tracking-wide">Description</label>
-                <textarea 
-                  rows="3" 
+                <textarea
+                  rows="3"
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
-                  placeholder="Write a detailed product description..." 
+                  placeholder="Write a detailed product description..."
                   className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-[12px] focus:outline-none focus:border-[#054425] focus:ring-1 focus:ring-[#054425] font-sans font-medium text-gray-800 resize-none"
                 ></textarea>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label className="block text-[10px] font-bold text-gray-700 mb-1 uppercase tracking-wide">Key Ingredients (comma separated)</label>
-                  <textarea 
-                    rows="2" 
+                  <textarea
+                    rows="2"
                     value={ingredients}
                     onChange={(e) => setIngredients(e.target.value)}
-                    placeholder="e.g. Bhringraj, Amla, Coconut Oil, Brahmi" 
+                    placeholder="e.g. Bhringraj, Amla, Coconut Oil, Brahmi"
                     className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-[12px] focus:outline-none focus:border-[#054425] focus:ring-1 focus:ring-[#054425] font-sans font-medium text-gray-800 resize-none"
                   ></textarea>
                 </div>
                 <div>
                   <label className="block text-[10px] font-bold text-gray-700 mb-1 uppercase tracking-wide">Benefits</label>
-                  <textarea 
-                    rows="2" 
+                  <textarea
+                    rows="2"
                     value={benefits}
                     onChange={(e) => setBenefits(e.target.value)}
-                    placeholder="e.g. Clears acne, Purifies skin..." 
+                    placeholder="e.g. Clears acne, Purifies skin..."
                     className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-[12px] focus:outline-none focus:border-[#054425] focus:ring-1 focus:ring-[#054425] font-sans font-medium text-gray-800 resize-none"
                   ></textarea>
                 </div>
@@ -193,21 +218,21 @@ const VendorAddProduct = () => {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
                 <div>
                   <label className="block text-[10px] font-bold text-gray-700 mb-1 uppercase tracking-wide">Dosage & Usage Guidelines</label>
-                  <textarea 
-                    rows="2" 
+                  <textarea
+                    rows="2"
                     value={dosage}
                     onChange={(e) => setDosage(e.target.value)}
-                    placeholder="e.g. Take 1 capsule twice daily with warm milk/water after meals or as directed by the physician." 
+                    placeholder="e.g. Take 1 capsule twice daily with warm milk/water after meals or as directed by the physician."
                     className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-[12px] focus:outline-none focus:border-[#054425] focus:ring-1 focus:ring-[#054425] font-sans font-medium text-gray-800 resize-none"
                   ></textarea>
                 </div>
                 <div>
                   <label className="block text-[10px] font-bold text-gray-700 mb-1 uppercase tracking-wide">Disclaimer Guidelines</label>
-                  <textarea 
-                    rows="2" 
+                  <textarea
+                    rows="2"
                     value={disclaimer}
                     onChange={(e) => setDisclaimer(e.target.value)}
-                    placeholder="e.g. Keep out of reach of children. Store in a cool dry place. Consult a doctor before use if pregnant." 
+                    placeholder="e.g. Keep out of reach of children. Store in a cool dry place. Consult a doctor before use if pregnant."
                     className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-[12px] focus:outline-none focus:border-[#054425] focus:ring-1 focus:ring-[#054425] font-sans font-medium text-gray-800 resize-none"
                   ></textarea>
                 </div>
@@ -325,14 +350,14 @@ const VendorAddProduct = () => {
 
           <div className="bg-white p-4 rounded-xl shadow-[0_2px_10px_rgba(0,0,0,0.02)] border border-gray-100">
             <h3 className="font-bold text-gray-900 mb-3 text-[13px]">Product Media</h3>
-            
+
             <div className="border-2 border-dashed border-gray-300 rounded-xl p-6 text-center bg-gray-50 hover:bg-gray-100 transition-colors cursor-pointer relative">
-               <input type="file" className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" onChange={handleFileChange} multiple accept="image/*" />
-               <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center mx-auto mb-3 shadow-sm text-[#054425]">
-                 <Upload size={20} />
-               </div>
-               <p className="text-[12px] font-bold text-gray-900 mb-0.5">Click to upload or drag & drop</p>
-               <p className="text-[10px] text-gray-500 font-sans">SVG, PNG, JPG or GIF (max. 800x400px)</p>
+              <input type="file" className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" onChange={handleFileChange} multiple accept="image/*" />
+              <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center mx-auto mb-3 shadow-sm text-[#054425]">
+                <Upload size={20} />
+              </div>
+              <p className="text-[12px] font-bold text-gray-900 mb-0.5">Click to upload or drag & drop</p>
+              <p className="text-[10px] text-gray-500 font-sans">SVG, PNG, JPG or GIF (max. 800x400px)</p>
             </div>
 
             {images.length > 0 && (
@@ -361,42 +386,42 @@ const VendorAddProduct = () => {
               <div className="space-y-3">
                 <div>
                   <label className="block text-[10px] font-bold text-gray-700 mb-1 uppercase tracking-wide">Selling Price (₹)</label>
-                  <input 
-                    type="number" 
+                  <input
+                    type="number"
                     value={price}
                     onChange={(e) => setPrice(e.target.value)}
-                    placeholder="299" 
-                    className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-[12px] focus:outline-none focus:border-[#054425] focus:ring-1 focus:ring-[#054425] font-sans font-medium text-gray-800" 
+                    placeholder="299"
+                    className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-[12px] focus:outline-none focus:border-[#054425] focus:ring-1 focus:ring-[#054425] font-sans font-medium text-gray-800"
                   />
                 </div>
                 <div>
                   <label className="block text-[10px] font-bold text-gray-700 mb-1 uppercase tracking-wide">MRP (₹)</label>
-                  <input 
-                    type="number" 
+                  <input
+                    type="number"
                     value={oldPrice}
                     onChange={(e) => setOldPrice(e.target.value)}
-                    placeholder="399" 
-                    className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-[12px] focus:outline-none focus:border-[#054425] focus:ring-1 focus:ring-[#054425] font-sans font-medium text-gray-800" 
+                    placeholder="399"
+                    className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-[12px] focus:outline-none focus:border-[#054425] focus:ring-1 focus:ring-[#054425] font-sans font-medium text-gray-800"
                   />
                 </div>
                 <div>
                   <label className="block text-[10px] font-bold text-gray-700 mb-1 uppercase tracking-wide">Stock Quantity</label>
-                  <input 
-                    type="number" 
+                  <input
+                    type="number"
                     value={stock}
                     onChange={(e) => setStock(e.target.value)}
-                    placeholder="100" 
-                    className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-[12px] focus:outline-none focus:border-[#054425] focus:ring-1 focus:ring-[#054425] font-sans font-medium text-gray-800" 
+                    placeholder="100"
+                    className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-[12px] focus:outline-none focus:border-[#054425] focus:ring-1 focus:ring-[#054425] font-sans font-medium text-gray-800"
                   />
                 </div>
                 <div>
                   <label className="block text-[10px] font-bold text-gray-700 mb-1 uppercase tracking-wide">SKU</label>
-                  <input 
-                    type="text" 
+                  <input
+                    type="text"
                     value={sku}
                     onChange={(e) => setSku(e.target.value)}
-                    placeholder="SB-NTFW-100" 
-                    className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-[12px] focus:outline-none focus:border-[#054425] focus:ring-1 focus:ring-[#054425] font-sans font-medium text-gray-800 uppercase" 
+                    placeholder="SB-NTFW-100"
+                    className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-[12px] focus:outline-none focus:border-[#054425] focus:ring-1 focus:ring-[#054425] font-sans font-medium text-gray-800 uppercase"
                   />
                 </div>
               </div>
@@ -453,50 +478,36 @@ const VendorAddProduct = () => {
             <div className="space-y-3">
               <div>
                 <label className="block text-[10px] font-bold text-gray-700 mb-1 uppercase tracking-wide">Category</label>
-                <select 
+                <select
                   value={category}
                   onChange={(e) => setCategory(e.target.value)}
                   className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-[12px] focus:outline-none focus:border-[#054425] focus:ring-1 focus:ring-[#054425] font-sans font-medium text-gray-700 cursor-pointer"
                 >
                   <option>Select Category</option>
-                  <option>Skin Care</option>
-                  <option>Hair Care</option>
-                  <option>Wellness</option>
-                  <option>Soaps</option>
-                </select>
-              </div>
-              <div>
-                <label className="block text-[10px] font-bold text-gray-700 mb-1 uppercase tracking-wide">Sub Category</label>
-                <select 
-                  value={subCategory}
-                  onChange={(e) => setSubCategory(e.target.value)}
-                  className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-[12px] focus:outline-none focus:border-[#054425] focus:ring-1 focus:ring-[#054425] font-sans font-medium text-gray-700 cursor-pointer"
-                >
-                  <option>Select Sub Category</option>
-                  <option>Face Wash</option>
-                  <option>Toner</option>
-                  <option>Serum</option>
+                  {categories.map((c) => (
+                    <option key={c._id} value={c.name}>{c.name}</option>
+                  ))}
                 </select>
               </div>
               <div>
                 <label className="block text-[10px] font-bold text-gray-700 mb-1 uppercase tracking-wide">Tags</label>
-                <input 
-                  type="text" 
+                <input
+                  type="text"
                   value={tags}
                   onChange={(e) => setTags(e.target.value)}
-                  placeholder="e.g. acne, organic, vegan" 
-                  className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-[12px] focus:outline-none focus:border-[#054425] focus:ring-1 focus:ring-[#054425] font-sans font-medium text-gray-800" 
+                  placeholder="e.g. acne, organic, vegan"
+                  className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-[12px] focus:outline-none focus:border-[#054425] focus:ring-1 focus:ring-[#054425] font-sans font-medium text-gray-800"
                 />
               </div>
             </div>
           </div>
-          
+
           <div className="bg-[#F0F7F2] border border-[#C8E6C9] rounded-xl p-3 flex items-start gap-2">
-             <div className="mt-0.5 text-[#388E3C]"><CheckCircle size={14} /></div>
-             <div>
-                <h4 className="text-[11px] font-bold text-[#1B5E20] mb-0.5">Approval Process</h4>
-                <p className="text-[10px] text-[#2E7D32] font-sans font-medium leading-relaxed">After submission, your product will be reviewed by our admin team within 24 hours before going live.</p>
-             </div>
+            <div className="mt-0.5 text-[#388E3C]"><CheckCircle size={14} /></div>
+            <div>
+              <h4 className="text-[11px] font-bold text-[#1B5E20] mb-0.5">Approval Process</h4>
+              <p className="text-[10px] text-[#2E7D32] font-sans font-medium leading-relaxed">After submission, your product will be reviewed by our admin team within 24 hours before going live.</p>
+            </div>
           </div>
         </div>
       </div>

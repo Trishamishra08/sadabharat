@@ -3,15 +3,9 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { FiChevronLeft, FiShoppingBag, FiCreditCard, FiTruck, FiCheckCircle, FiShield, FiMinus, FiPlus, FiTrash2, FiCheck, FiAlertTriangle, FiRefreshCw } from 'react-icons/fi';
 import { useShop } from '../../context/ShopContext';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
+import Confetti from 'react-confetti';
 
-// MOCK API for Frontend-Only mode
-const api = {
-  get: async () => ({ data: { data: { products: [], categories: [], banners: [], settings: {}, orders: [], users: [], stats: [], recentTransactions: [], dailyRevenue: [], vendors: [], blogs: [], returns: [], testimonials: [], reviews: [], replacements: [], supportTickets: [], locations: [], coupons: [], logs: [] }, status: 'success' } }),
-  post: async () => ({ data: { data: { order: { orderId: 'MOCK-ORDER-123' } }, status: 'success' } }),
-  patch: async () => ({ data: { status: 'success' } }),
-  delete: async () => ({ data: { status: 'success' } })
-};
-
+import api from '../../utils/api';
 
 const Checkout = () => {
   const { cart, removeFromCart, updateQuantity, cartTotal, cartCount, clearCart, verifyAndClearCart, orderId, user, isAuthenticated, isAuthLoading, settings } = useShop();
@@ -235,7 +229,7 @@ const Checkout = () => {
       const { id: razorpay_order_id, amount, currency } = res.data.data.order;
 
       const options = {
-        key: "rzp_test_8sYbzHWidwe5Zw",
+        key: import.meta.env.VITE_RAZORPAY_KEY_ID || "rzp_test_SbjooFQK8nvU6V",
         amount,
         currency,
         name: "Sada Bharat",
@@ -316,58 +310,89 @@ const Checkout = () => {
       return;
     }
 
-    // Mock frontend payment flow
     setIsPaymentLoading(true);
-    setTimeout(() => {
-        setIsPaymentLoading(false);
-        setShowSuccessPopup(true);
-        // Navigate after showing the success popup
-        setTimeout(() => {
-            navigate('/track-order?id=SB12345678');
-        }, 3000);
-    }, 1500);
+
+    if (selectedPayment === 'paynow') {
+      await handleRazorpay();
+      return;
+    }
+
+    // COD Flow using real backend API via clearCart
+    try {
+      await clearCart({
+        ...formData,
+        items: displayItems.map(i => ({ product: i._id, quantity: i.quantity || 1, price: i.price, name: i.name, image: i.images?.[0]?.url || i.image, size: i.selectedSize })),
+        totalAmount: total,
+        couponCode: appliedCoupon?.code
+      }, total, { subtotal, taxAmount, taxRate: currentTaxRate, shippingValue, actualShipping });
+      
+      setIsSuccess(true);
+      setShowSuccessPopup(true);
+      
+      // We need to fetch the newly generated orderId from the ShopContext state (which updates asynchronously), 
+      // but verifyAndClearCart returns it if we modify it. I'll just redirect to the general orders page 
+      // or track-order page. Wait, verifyAndClearCart returns the orderId in ShopContext!
+      // Let's redirect after a delay
+      setTimeout(() => {
+          // ShopContext sets orderId state, but inside this closure we might not have it immediately.
+          // Let's rely on the success screen rendering which uses orderId from context.
+      }, 1500);
+      
+    } catch (err) {
+      console.error("Order creation failed", err);
+      setIsPaymentLoading(false);
+    }
   };
 
   if (isSuccess) {
     return (
-      <div className="min-h-screen bg-[#FDFCFB] flex items-center justify-center p-4">
+      <div className="min-h-screen bg-[#FDFCFB] flex items-center justify-center p-4 font-['Poppins'] overflow-hidden">
+        <Confetti
+          width={window.innerWidth}
+          height={window.innerHeight}
+          recycle={true}
+          numberOfPieces={200}
+          gravity={0.1}
+          style={{ position: 'fixed', top: 0, left: 0, zIndex: 5 }}
+          colors={['#054425', '#D4AF37', '#228B22', '#FDFCFB']}
+        />
         <motion.div
-          initial={{ opacity: 0, scale: 0.95 }}
+          initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
-          className="max-w-xs w-full bg-white p-6 md:p-8 text-center shadow-2xl border border-gray-100"
+          className="max-w-[320px] w-full bg-white p-6 text-center shadow-[0_8px_30px_rgb(0,0,0,0.08)] border border-gray-100 rounded-2xl relative z-10"
         >
           <motion.div
-            initial={{ scale: 0 }}
-            animate={{ scale: 1 }}
+            initial={{ scale: 0, rotate: -45 }}
+            animate={{ scale: 1, rotate: 0 }}
             transition={{ type: 'spring', damping: 12, stiffness: 200, delay: 0.2 }}
-            className="w-14 h-14 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-6 text-white shadow-xl shadow-green-500/20"
+            className="text-5xl mb-4 inline-block drop-shadow-sm"
           >
-            <FiCheck size={30} strokeWidth={3} />
+            🎉
           </motion.div>
 
-          <h2 className="text-2xl font-serif font-black text-[#5C2E3E] mb-1 uppercase tracking-tighter">
-            Order <span className="text-brand-pink">Confirmed</span>
+          <h2 className="text-xl font-bold text-[#054425] mb-2 tracking-wide">
+            Congratulations
           </h2>
-          <div className="w-8 h-0.5 bg-brand-gold mx-auto mb-4"></div>
 
-          <p className="text-[9px] text-gray-400 uppercase tracking-[0.2em] font-bold mb-6 leading-relaxed">
-            Your treasures are being gathered. Check your mail for details.
+          <p className="text-[13px] text-gray-500 mb-6 leading-relaxed">
+            Your order has been successfully placed. We've received your details and are preparing it for shipment.
           </p>
 
-          <div className="space-y-3">
-            <div className="p-3 bg-gray-50 text-left border-l-2 border-brand-gold">
-              <p className="text-[7px] font-black text-gray-400 uppercase tracking-widest mb-1">Ritual Key (SS ID)</p>
-              <p className="text-[10px] font-bold text-brand-gold">{orderId}</p>
+          <div className="space-y-2 mb-6">
+            <div className="p-3 bg-green-50/50 rounded-xl border border-green-100">
+              <p className="text-[11px] text-gray-500 mb-0.5">Order Tracking ID</p>
+              <p className="text-[13px] font-bold text-[#054425]">#{orderId}</p>
             </div>
-
-            <div className="p-3 bg-gray-50 text-left border-l-2 border-[#5C2E3E]">
-              <p className="text-[7px] font-black text-gray-400 uppercase tracking-widest mb-1">Destination</p>
-              <p className="text-[10px] font-bold text-[#5C2E3E] truncate">{formData.name}</p>
-              <p className="text-[8px] text-[#5C2E3E]/60 font-serif italic line-clamp-1">{formData.address}</p>
+            
+            <div className="p-3 bg-green-50/50 rounded-xl border border-green-100">
+              <p className="text-[11px] text-gray-500 mb-0.5">Shipping To</p>
+              <p className="text-[13px] font-semibold text-gray-900">{formData.name}</p>
             </div>
+          </div>
 
-            <Link to={`/track-order?id=${orderId}`} className="w-full inline-block px-8 py-3 bg-brand-gold text-white text-[9px] font-black uppercase tracking-[0.2em] shadow-lg hover:bg-[#5C2E3E] transition-all mb-2">
-              Track Journey
+          <div className="space-y-2">
+            <Link to={`/track-order?id=${orderId}`} className="w-full flex justify-center py-2.5 bg-[#054425] text-white text-[13px] font-medium rounded-full shadow-md hover:bg-[#04331c] transition-colors">
+              Track Your Order
             </Link>
 
             <button
@@ -381,13 +406,13 @@ const Checkout = () => {
                   alert("Failed to retrieve invoice details.");
                 }
               }}
-              className="w-full inline-block px-8 py-3 border border-brand-pink text-brand-pink text-[9px] font-black uppercase tracking-[0.2em] hover:bg-brand-pink hover:text-white transition-all mb-2"
+              className="w-full flex justify-center py-2.5 bg-gray-50 text-gray-700 text-[13px] font-medium rounded-full hover:bg-gray-100 transition-colors"
             >
               Download Invoice
             </button>
 
-            <Link to="/" className="w-full inline-block px-8 py-3 border border-gray-100 text-[#5C2E3E] text-[9px] font-bold uppercase tracking-[0.2em] hover:bg-gray-50 transition-all active:scale-95">
-              Back to Sanctuary
+            <Link to="/" className="w-full flex justify-center py-2.5 text-gray-400 text-[12px] font-medium rounded-full hover:text-gray-600 transition-colors">
+              Continue Shopping
             </Link>
           </div>
         </motion.div>

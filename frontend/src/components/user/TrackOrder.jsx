@@ -1,20 +1,62 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { FiArrowLeft, FiCheck, FiMapPin, FiPackage, FiTruck, FiNavigation } from 'react-icons/fi';
 import { useNavigate, useSearchParams } from 'react-router-dom';
+import api from '../../utils/api';
 
 const TrackOrder = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const orderId = searchParams.get('id') || 'SB12345678';
+  const orderId = searchParams.get('id');
+  const [order, setOrder] = useState(null);
+  const [loading, setLoading] = useState(true);
 
-  // Mock timeline data
+  useEffect(() => {
+    if (orderId) {
+      api.get(`/orders/${orderId}`)
+        .then(res => {
+          if (res.data.success) {
+            setOrder(res.data.data);
+          }
+          setLoading(false);
+        })
+        .catch(err => {
+          console.error(err);
+          setLoading(false);
+        });
+    } else {
+      setLoading(false);
+    }
+  }, [orderId]);
+
+  if (loading) return <div className="min-h-screen bg-gray-50 p-8 text-center text-gray-500">Loading tracking details...</div>;
+  if (!order) return <div className="min-h-screen bg-gray-50 p-8 text-center text-gray-500">Order not found.</div>;
+
+  // Determine overall status based on items (minimum status)
+  const statusLevels = { 'Processing': 1, 'Packed': 2, 'Shipped': 3, 'Delivered': 4, 'Cancelled': -1 };
+  let minStatusLevel = 4;
+  let hasCancelled = false;
+  order.orderItems.forEach(item => {
+    const level = statusLevels[item.status] || 1;
+    if (level === -1) hasCancelled = true;
+    else if (level < minStatusLevel) minStatusLevel = level;
+  });
+  
+  if (minStatusLevel === 4 && order.orderItems.length === 0) minStatusLevel = 1;
+
+  let currentStatus = 'Processing';
+  if (minStatusLevel === 2) currentStatus = 'Packed';
+  if (minStatusLevel === 3) currentStatus = 'Shipped';
+  if (minStatusLevel === 4) currentStatus = 'Delivered';
+  if (hasCancelled && order.orderItems.length === 1) currentStatus = 'Cancelled';
+
+  const orderDate = new Date(order.createdAt).toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+
   const timeline = [
-    { title: 'Order Placed', date: '12 May 2024, 10:30 AM', completed: true, icon: <FiPackage size={12} /> },
-    { title: 'Processing', date: '12 May 2024, 02:15 PM', completed: true, icon: <FiCheck size={12} /> },
-    { title: 'Packed', date: '13 May 2024, 09:00 AM', completed: true, icon: <FiPackage size={12} /> },
-    { title: 'Shipped', date: '14 May 2024, 11:45 AM', completed: true, icon: <FiTruck size={12} /> },
-    { title: 'Out for Delivery', date: '15 May 2024, 08:30 AM', completed: false, isNext: true, icon: <FiMapPin size={12} /> },
-    { title: 'Delivered', date: 'Expected by 16 May 2024', completed: false, icon: <FiCheck size={12} /> }
+    { title: 'Order Placed', date: orderDate, completed: true, isNext: false, icon: <FiPackage size={12} /> },
+    { title: 'Processing', date: minStatusLevel >= 1 ? 'Started' : '', completed: minStatusLevel >= 1, isNext: minStatusLevel === 1, icon: <FiCheck size={12} /> },
+    { title: 'Packed', date: minStatusLevel >= 2 ? 'Packed' : '', completed: minStatusLevel >= 2, isNext: minStatusLevel === 2, icon: <FiPackage size={12} /> },
+    { title: 'Shipped', date: minStatusLevel >= 3 ? 'In Transit' : '', completed: minStatusLevel >= 3, isNext: minStatusLevel === 3, icon: <FiTruck size={12} /> },
+    { title: 'Delivered', date: minStatusLevel >= 4 ? 'Delivered' : 'Pending', completed: minStatusLevel >= 4, isNext: minStatusLevel === 4, icon: <FiCheck size={12} /> }
   ];
 
   return (
@@ -37,11 +79,11 @@ const TrackOrder = () => {
                     <div className="flex justify-between items-start mb-4 border-b border-[#054425]/10 pb-3">
                         <div>
                             <h1 className="text-lg md:text-xl font-bold font-['Poppins'] text-[#054425] mb-0.5 tracking-normal">Order Tracking</h1>
-                            <p className="text-[11px] md:text-xs font-['Poppins'] text-gray-500">Tracking ID: <span className="font-semibold text-gray-900">#{orderId}</span></p>
+                            <p className="text-[11px] md:text-xs font-['Poppins'] text-gray-500">Tracking ID: <span className="font-semibold text-gray-900">#{order._id?.slice(-6).toUpperCase()}</span></p>
                         </div>
                         <div className="text-right hidden sm:block">
                             <span className="inline-block bg-[#054425]/10 text-[#054425] font-['Poppins'] px-2.5 py-1 rounded text-[10px] font-semibold">
-                                In Transit
+                                {currentStatus}
                             </span>
                         </div>
                     </div>
@@ -110,9 +152,9 @@ const TrackOrder = () => {
                         <div>
                             <p className="text-[10px] md:text-xs font-['Poppins'] text-gray-500 mb-0.5">Shipping Address</p>
                             <p className="text-[11px] md:text-xs font-['Poppins'] text-gray-700 leading-relaxed">
-                                Trisha Mishra<br/>
-                                Sec.no.71, Indore<br/>
-                                Madhya Pradesh, 452009
+                                {order.shippingAddress?.address}<br/>
+                                {order.shippingAddress?.city}, {order.shippingAddress?.postalCode}<br/>
+                                {order.shippingAddress?.country}
                             </p>
                         </div>
                         <div>

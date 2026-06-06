@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Upload, CheckCircle2, ChevronRight, ChevronLeft, ArrowLeft } from 'lucide-react';
+import { Upload, CheckCircle2, ChevronRight, ChevronLeft, ArrowLeft, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import api from '../../utils/api';
 
 const steps = [
   { id: 1, title: 'Personal Info' },
@@ -14,6 +15,7 @@ const steps = [
 const VendorRegister = () => {
   const [currentStep, setCurrentStep] = useState(1);
   const [submitted, setSubmitted] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [direction, setDirection] = useState(1); // 1 for next, -1 for prev
   const navigate = useNavigate();
 
@@ -42,6 +44,51 @@ const VendorRegister = () => {
   });
 
   const [error, setError] = useState('');
+  const [availableCategories, setAvailableCategories] = useState([]);
+  const [selectedFiles, setSelectedFiles] = useState([]);
+
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const res = await api.get('/categories');
+        setAvailableCategories(res.data.data || []);
+      } catch (err) {
+        console.error('Failed to fetch categories:', err);
+      }
+    };
+    fetchCategories();
+  }, []);
+
+  // Poll for admin approval automatically when submitted
+  useEffect(() => {
+    let intervalId;
+    if (submitted && formData.email && formData.password) {
+      intervalId = setInterval(async () => {
+        try {
+          const res = await api.post('/vendors/login', {
+            email: formData.email,
+            password: formData.password
+          });
+          
+          if (res.data.success) {
+            clearInterval(intervalId);
+            localStorage.setItem('vendor_token', res.data.data.token);
+            localStorage.setItem('vendor_auth', 'true');
+            if (window.showVendorToast) {
+              window.showVendorToast('Approved! Logged in successfully.', 'success');
+            }
+            navigate('/vendor');
+          }
+        } catch (err) {
+          // Ignore 403 or 401 errors, it just means they are not approved yet
+        }
+      }, 5000); // Check every 5 seconds
+    }
+
+    return () => {
+      if (intervalId) clearInterval(intervalId);
+    };
+  }, [submitted, formData.email, formData.password, navigate]);
 
   const nextStep = () => {
     if (currentStep < steps.length) {
@@ -158,12 +205,44 @@ const VendorRegister = () => {
     return true;
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (!validateStep()) return;
     
     if (currentStep === steps.length) {
-      setSubmitted(true);
+      setIsSubmitting(true);
+      try {
+        let uploadedDocuments = [];
+        
+        if (selectedFiles.length > 0) {
+          const formDataUpload = new FormData();
+          selectedFiles.forEach(file => {
+            formDataUpload.append('documents', file);
+          });
+          
+          const uploadRes = await api.post('/upload', formDataUpload, {
+            headers: { 'Content-Type': 'multipart/form-data' }
+          });
+          
+          if (uploadRes.data.success) {
+            uploadedDocuments = uploadRes.data.data;
+          }
+        }
+
+        const vendorData = {
+          ...formData,
+          documents: uploadedDocuments
+        };
+
+        const res = await api.post('/vendors/register', vendorData);
+        if (res.data.success) {
+          setSubmitted(true);
+        }
+      } catch (err) {
+        setError(err.response?.data?.message || err.parsedMessage || 'Failed to register vendor.');
+      } finally {
+        setIsSubmitting(false);
+      }
     } else {
       nextStep();
     }
@@ -203,9 +282,17 @@ const VendorRegister = () => {
           </div>
           <h2 className="text-2xl font-serif font-black text-gray-800" style={{ color: '#0B3D1F', fontFamily: "'Cormorant Garamond', serif" }}>Application Submitted!</h2>
           
-          <div className="bg-emerald-50/60 border border-emerald-100/60 rounded-xl p-4 my-6 text-left">
+          <div className="bg-emerald-50/60 border border-emerald-100/60 rounded-xl p-4 my-6 text-left relative overflow-hidden">
+            <div className="absolute top-0 left-0 w-full h-1 bg-emerald-200">
+               <motion.div 
+                 className="h-full bg-emerald-500"
+                 animate={{ x: ["-100%", "100%"] }}
+                 transition={{ repeat: Infinity, duration: 1.5, ease: "linear" }}
+               />
+            </div>
             <p className="text-[10px] font-bold text-emerald-800 uppercase tracking-wide mb-1">Account Status</p>
             <p className="text-base font-black text-emerald-900 font-sans">Pending Admin Approval</p>
+            <p className="text-[10px] text-emerald-700 mt-2 font-medium">Checking status automatically...</p>
           </div>
           
           <p className="text-xs sm:text-sm text-gray-500 mb-6 leading-relaxed font-semibold">
@@ -611,10 +698,11 @@ const VendorRegister = () => {
                             className="w-full bg-white border border-gray-250 focus:border-[#054425] focus:ring-[#054425] px-4 py-2.5 rounded-xl text-xs font-semibold outline-none transition-all text-gray-750 cursor-pointer"
                           >
                             <option value="">Select Category</option>
-                            <option value="Hair Care">Hair Care</option>
-                            <option value="Skin Care">Skin Care</option>
-                            <option value="Wellness">Wellness</option>
-                            <option value="Soaps">Soaps</option>
+                            {availableCategories.map((cat) => (
+                              <option key={cat._id} value={cat.title}>
+                                {cat.title}
+                              </option>
+                            ))}
                           </select>
                         </div>
                       </div>
@@ -624,14 +712,47 @@ const VendorRegister = () => {
                     {currentStep === 5 && (
                       <div className="space-y-3 font-sans">
                         <div className="border-2 border-dashed border-gray-300 rounded-xl p-4 text-center bg-white hover:bg-gray-50/50 transition-colors cursor-pointer relative shadow-sm">
-                           <input type="file" className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" multiple accept=".pdf,image/*" />
+                           <input 
+                             type="file" 
+                             className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" 
+                             multiple 
+                             accept=".pdf,image/*" 
+                             onChange={(e) => {
+                               if (e.target.files) {
+                                 setSelectedFiles(Array.from(e.target.files));
+                               }
+                             }}
+                           />
                            <div className="w-10 h-10 bg-green-50 rounded-full flex items-center justify-center mx-auto mb-2 shadow-sm text-[#054425]">
                              <Upload size={16} />
                            </div>
                            <p className="text-[11px] font-bold text-gray-900 mb-0.5">Click to upload business documents</p>
                            <span className="text-[9px] text-gray-500 font-bold uppercase tracking-wider">PDF, JPG, PNG up to 10MB</span>
                         </div>
- 
+
+                        {/* File Previews */}
+                        {selectedFiles.length > 0 && (
+                          <div className="mt-3 flex flex-wrap gap-2">
+                            {selectedFiles.map((file, idx) => (
+                              <div key={idx} className="relative group w-16 h-16 rounded-lg border border-gray-200 overflow-hidden shadow-sm">
+                                {file.type.startsWith('image/') ? (
+                                  <img src={URL.createObjectURL(file)} alt="Preview" className="w-full h-full object-cover" />
+                                ) : (
+                                  <div className="w-full h-full flex flex-col items-center justify-center bg-gray-50">
+                                    <span className="text-[8px] font-bold text-gray-400">PDF</span>
+                                  </div>
+                                )}
+                                <button 
+                                  onClick={() => setSelectedFiles(prev => prev.filter((_, i) => i !== idx))}
+                                  className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-opacity"
+                                >
+                                  <X size={12} />
+                                </button>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+
                         <div className="space-y-2 py-2">
                           <label className="flex items-start gap-2.5 cursor-pointer select-none">
                             <input 
@@ -677,9 +798,10 @@ const VendorRegister = () => {
 
                 <button 
                   type="submit" 
-                  className="flex items-center gap-1.5 px-5 py-2.5 rounded-xl font-bold text-xs bg-[#054425] text-white shadow-md hover:bg-[#04331c] transition-all active:scale-95"
+                  disabled={isSubmitting}
+                  className={`flex items-center gap-1.5 px-5 py-2.5 rounded-xl font-bold text-xs text-white shadow-md transition-all active:scale-95 ${isSubmitting ? 'bg-gray-400 cursor-not-allowed' : 'bg-[#054425] hover:bg-[#04331c]'}`}
                 >
-                  {currentStep === steps.length ? 'Submit Application' : 'Continue'} 
+                  {currentStep === steps.length ? (isSubmitting ? 'Submitting...' : 'Submit Application') : 'Continue'} 
                   {currentStep !== steps.length && <ChevronRight size={14} />}
                 </button>
               </div>

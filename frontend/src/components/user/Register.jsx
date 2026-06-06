@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Link, useNavigate } from 'react-router-dom';
 import { useShop } from '../../context/ShopContext';
 import registerBg from '../../assets/images/register_herbs.jpg';
+import api from '../../utils/api';
 
 const Register = () => {
   const [form, setForm] = useState({
@@ -37,14 +38,22 @@ const Register = () => {
     return () => clearInterval(interval);
   }, [timer]);
 
-  const handleSendOtp = () => {
+  const handleSendOtp = async () => {
     if (!form.mobile || !/^\d{10}$/.test(form.mobile)) {
       showNotification("Please enter a valid 10-digit mobile number first", "error");
       return;
     }
-    setOtpSent(true);
-    setTimer(60);
-    showNotification("OTP sent successfully to your mobile number.", "success");
+    
+    try {
+      const response = await api.post('/users/send-register-otp', { mobile: form.mobile });
+      if (response.data.success) {
+        setOtpSent(true);
+        setTimer(60);
+        showNotification("OTP sent successfully to your mobile number.", "success");
+      }
+    } catch (error) {
+      showNotification(error.response?.data?.message || "Failed to send OTP", "error");
+    }
   };
 
   const handleInputChange = (e) => {
@@ -63,7 +72,7 @@ const Register = () => {
     form.otp.trim() !== '' &&
     form.agreed;
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (!form.agreed) {
       showNotification("Please agree to the Terms & Conditions", "error");
@@ -83,23 +92,31 @@ const Register = () => {
       return;
     }
 
-    // TEMPORARY CHECK FOR ALREADY REGISTERED USER
-    if (form.email.toLowerCase() === 'trishamishra115@gmail.com' || form.mobile === '8839044030') {
-      showNotification("Account already exists with this Email/Mobile. Please Sign In.", "error");
-      return;
-    }
-    
-    // MOCK REGISTRATION SUCCESS & LOGIN
-    const token = "mock-token-123";
-    const data = { name: form.name, phone: form.mobile, email: form.email, gender: form.gender, role: 'customer' };
-    localStorage.setItem('customer_token', token);
-    if (setUser && setIsAuthenticated) {
-      setUser(data);
-      setIsAuthenticated(true);
-    }
+    try {
+      const response = await api.post('/users/register', {
+        name: form.name,
+        gender: form.gender,
+        email: form.email,
+        mobile: form.mobile,
+        otp: form.otp
+      });
 
-    showNotification("Account created successfully! Welcome to Sada Bharat.", "success");
-    setTimeout(() => navigate('/'), 1200);
+      if (response.data.success) {
+        const token = response.data.data.token;
+        const userData = response.data.data;
+        
+        localStorage.setItem('customer_token', token);
+        if (setUser && setIsAuthenticated) {
+          setUser(userData);
+          setIsAuthenticated(true);
+        }
+
+        showNotification("Account created successfully! Welcome to Sada Bharat.", "success");
+        setTimeout(() => navigate('/'), 1200);
+      }
+    } catch (error) {
+      showNotification(error.response?.data?.message || "Registration failed", "error");
+    }
   };
 
   return (

@@ -43,6 +43,12 @@ const AdminLayout = () => {
     }
   }, [location]);
 
+  const [openMenus, setOpenMenus] = useState({ Vendors: true });
+
+  const toggleMenu = (title) => {
+    setOpenMenus(prev => ({ ...prev, [title]: !prev[title] }));
+  };
+
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [notifications, setNotifications] = useState([]);
@@ -82,8 +88,23 @@ const AdminLayout = () => {
     { title: 'Categories', path: '/admin/categories', icon: <FiLayers /> },
     { title: 'Products', path: '/admin/products', icon: <FiShoppingBag /> },
     { title: 'Inventory', path: '/admin/inventory', icon: <FiBox /> },
-    { title: 'Vendors', path: '/admin/vendors', icon: <FiUsers /> },
-    { title: 'Customers', path: '/admin/customers', icon: <FiUsers /> },
+    { 
+      title: 'Vendors', 
+      icon: <FiUsers />,
+      subItems: [
+        { title: 'Existing Vendors', path: '/admin/vendors' },
+        { title: 'New Joining Requests', path: '/admin/vendors/pending' },
+        { title: 'Blocked Vendors', path: '/admin/vendors/blocked' }
+      ]
+    },
+    { 
+      title: 'Customers', 
+      icon: <FiUsers />,
+      subItems: [
+        { title: 'Active Customers', path: '/admin/customers' },
+        { title: 'Blocked Customers', path: '/admin/customers/blocked' }
+      ]
+    },
     { title: 'Orders', path: '/admin/orders', icon: <FiShoppingBag /> },
     { title: 'Logistics & Taxes', path: '/admin/logistics', icon: <FiTruck /> },
     { title: 'Service Locations', path: '/admin/locations', icon: <FiMapPin /> },
@@ -140,34 +161,89 @@ const AdminLayout = () => {
           data-lenis-prevent
         >
           {menuItems.map((item) => (
-            <Link
-              key={item.title}
-              to={item.path}
-              title={!isSidebarOpen ? item.title : ''}
-              className={`flex items-center px-4 py-2.5 rounded-lg transition-all duration-200 ${location.pathname === item.path
-                ? 'bg-white/10 text-white font-medium shadow-[0_4px_12px_rgba(0,0,0,0.1)] backdrop-blur-sm'
-                : 'text-white/70 hover:bg-white/5 hover:text-white'
-                } ${!isSidebarOpen ? 'justify-center px-0' : 'justify-between'}`}
-            >
-              <div className="flex items-center gap-3">
-                <div className={`shrink-0 transition-all duration-300 ${location.pathname === item.path ? 'text-white' : ''}`}>
-                  {React.cloneElement(item.icon, { size: 18 })}
+            <React.Fragment key={item.title}>
+              {item.subItems ? (
+                <div>
+                  <button
+                    onClick={() => {
+                      if (!isSidebarOpen) setIsSidebarOpen(true);
+                      toggleMenu(item.title);
+                    }}
+                    title={!isSidebarOpen ? item.title : ''}
+                    className={`w-full flex items-center px-4 py-2.5 rounded-lg transition-all duration-200 text-white/70 hover:bg-white/5 hover:text-white ${!isSidebarOpen ? 'justify-center px-0' : 'justify-between'}`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className={`shrink-0 transition-all duration-300 ${location.pathname.startsWith(item.subItems[0].path) ? 'text-white' : ''}`}>
+                        {React.cloneElement(item.icon, { size: 18 })}
+                      </div>
+                      <span className={`text-[13px] font-medium font-poppins transition-all duration-300 whitespace-nowrap overflow-hidden ${
+                        isSidebarOpen ? 'opacity-100 max-w-full block' : 'opacity-0 max-w-0 hidden'
+                      }`}>
+                        {item.title}
+                      </span>
+                    </div>
+                    {isSidebarOpen && (
+                      <FiChevronDown size={14} className={`transition-transform duration-300 ${openMenus[item.title] ? 'rotate-180 text-white' : ''}`} />
+                    )}
+                  </button>
+                  
+                  <AnimatePresence>
+                    {isSidebarOpen && openMenus[item.title] && (
+                      <motion.div
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: 'auto', opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        className="overflow-hidden"
+                      >
+                        <div className="ml-9 mt-1 space-y-1 relative before:absolute before:left-0 before:top-2 before:bottom-2 before:w-px before:bg-white/10">
+                          {item.subItems.map(sub => (
+                            <Link
+                              key={sub.title}
+                              to={sub.path}
+                              className={`block px-4 py-1.5 text-[11px] font-medium font-poppins rounded-lg transition-all duration-200 relative ${
+                                location.pathname === sub.path
+                                  ? 'text-white bg-white/5 before:absolute before:left-[-1px] before:top-1/2 before:-translate-y-1/2 before:w-[3px] before:h-[3px] before:rounded-full before:bg-admin-gold'
+                                  : 'text-white/50 hover:text-white/90 hover:bg-white/5'
+                              }`}
+                            >
+                              {sub.title}
+                            </Link>
+                          ))}
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
                 </div>
+              ) : (
+                <Link
+                  to={item.path}
+                  title={!isSidebarOpen ? item.title : ''}
+                  className={`flex items-center px-4 py-2.5 rounded-lg transition-all duration-200 ${location.pathname === item.path
+                    ? 'bg-white/10 text-white font-medium shadow-[0_4px_12px_rgba(0,0,0,0.1)] backdrop-blur-sm'
+                    : 'text-white/70 hover:bg-white/5 hover:text-white'
+                    } ${!isSidebarOpen ? 'justify-center px-0' : 'justify-between'}`}
+                >
+                  <div className="flex items-center gap-3">
+                    <div className={`shrink-0 transition-all duration-300 ${location.pathname === item.path ? 'text-white' : ''}`}>
+                      {React.cloneElement(item.icon, { size: 18 })}
+                    </div>
 
-                <span className={`text-[13px] font-medium font-poppins transition-all duration-300 whitespace-nowrap overflow-hidden ${
-                  isSidebarOpen ? 'opacity-100 max-w-full block' : 'opacity-0 max-w-0 hidden'
-                }`}>
-                  {item.title}
-                </span>
-              </div>
+                    <span className={`text-[13px] font-medium font-poppins transition-all duration-300 whitespace-nowrap overflow-hidden ${
+                      isSidebarOpen ? 'opacity-100 max-w-full block' : 'opacity-0 max-w-0 hidden'
+                    }`}>
+                      {item.title}
+                    </span>
+                  </div>
 
-              {location.pathname === item.path && (
-                <motion.div
-                  layoutId="active-pill"
-                  className="absolute left-0 w-1 bg-admin-gold h-4 top-1/2 -translate-y-1/2 rounded-r-full"
-                />
+                  {location.pathname === item.path && (
+                    <motion.div
+                      layoutId="active-pill"
+                      className="absolute left-0 w-1 bg-admin-gold h-4 top-1/2 -translate-y-1/2 rounded-r-full"
+                    />
+                  )}
+                </Link>
               )}
-            </Link>
+            </React.Fragment>
           ))}
           <div className="h-20 w-full flex-shrink-0" />
         </nav>

@@ -1,50 +1,32 @@
 import React, { useState, useEffect } from 'react';
-import { FiUsers, FiCheckCircle, FiXCircle, FiEye, FiMoreVertical, FiShoppingBag, FiStar } from 'react-icons/fi';
+import { FiUsers, FiCheckCircle, FiXCircle, FiEye, FiShoppingBag, FiStar, FiRefreshCw, FiShieldOff } from 'react-icons/fi';
+import { useLocation } from 'react-router-dom';
 
-// MOCK API for Frontend-Only mode
-const api = {
-  get: async () => ({ data: { data: { products: [], categories: [], banners: [], settings: {}, orders: [], users: [], stats: [], recentTransactions: [], dailyRevenue: [], vendors: [], blogs: [], returns: [], testimonials: [], reviews: [], replacements: [], supportTickets: [], locations: [], coupons: [], logs: [] }, status: 'success' } }),
-  post: async () => ({ data: { data: { order: { orderId: 'MOCK-ORDER-123' } }, status: 'success' } }),
-  patch: async () => ({ data: { status: 'success' } }),
-  delete: async () => ({ data: { status: 'success' } })
-};
+import api from '../../utils/api';
 
 const AdminVendors = () => {
+    const location = useLocation();
     const [vendors, setVendors] = useState([]);
     const [loading, setLoading] = useState(true);
     const [selectedVendor, setSelectedVendor] = useState(null); // For details modal
 
+    const currentTab = location.pathname.includes('/pending') 
+        ? 'pending' 
+        : location.pathname.includes('/blocked') 
+            ? 'blocked' 
+            : 'approved';
+
     const fetchVendors = async () => {
         try {
             setLoading(true);
-            const res = await api.get('/admin/vendors'); // Attempt to fetch from backend
-            setVendors(res.data.data.vendors);
+            let endpoint = '/vendors/approved';
+            if (currentTab === 'pending') endpoint = '/vendors/pending';
+            if (currentTab === 'blocked') endpoint = '/vendors/blocked';
+            
+            const res = await api.get(endpoint);
+            setVendors(res.data.data || []);
         } catch (err) {
-            console.log('Using fallback mock data for vendors');
-            setVendors([
-                {
-                    _id: 'v1',
-                    name: 'Aarav Sharma',
-                    storeName: 'Aarav Organics',
-                    email: 'aarav.organics@example.com',
-                    phone: '+91 9876543210',
-                    status: 'Pending',
-                    joinedAt: '2026-06-01T10:00:00Z',
-                    productsCount: 0,
-                    rating: 0
-                },
-                {
-                    _id: 'v2',
-                    name: 'Priya Patel',
-                    storeName: 'Priya Wellness',
-                    email: 'priya@wellness.com',
-                    phone: '+91 8765432109',
-                    status: 'Approved',
-                    joinedAt: '2026-05-15T14:30:00Z',
-                    productsCount: 24,
-                    rating: 4.8
-                }
-            ]);
+            console.error('Failed to fetch vendors', err);
         } finally {
             setLoading(false);
         }
@@ -52,14 +34,23 @@ const AdminVendors = () => {
 
     useEffect(() => {
         fetchVendors();
-    }, []);
+    }, [currentTab]);
 
-    const handleStatusChange = async (vendorId, newStatus) => {
+    const handleStatusChange = async (vendorId, action) => {
         try {
-            // await api.patch(`/admin/vendors/${vendorId}/status`, { status: newStatus });
-            setVendors(prev => prev.map(v => v._id === vendorId ? { ...v, status: newStatus } : v));
+            if (action === 'approved') {
+                await api.put(`/vendors/${vendorId}/approve`);
+            } else if (action === 'blocked') {
+                await api.put(`/vendors/${vendorId}/block`);
+            } else if (action === 'unblock') {
+                await api.put(`/vendors/${vendorId}/unblock`);
+            }
+            
+            // Remove the vendor from the current view after status change
+            setVendors(prev => prev.filter(v => v._id !== vendorId));
+            setSelectedVendor(null);
         } catch (err) {
-            alert('Failed to update vendor status');
+            alert(`Failed to ${action} vendor`);
         }
     };
 
@@ -68,7 +59,7 @@ const AdminVendors = () => {
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
                     <h1 className="text-3xl font-['Cormorant',_serif] font-bold text-admin-dark leading-none mb-2">
-                        Vendor Management
+                        {currentTab === 'pending' ? 'New Joining Requests' : currentTab === 'blocked' ? 'Blocked Vendors' : 'Existing Vendors'}
                     </h1>
                     <p className="text-gray-500 text-[13px] font-poppins">
                         Manage seller accounts, verify credentials, and oversee store performance.
@@ -117,12 +108,12 @@ const AdminVendors = () => {
                                         <td className="px-6 py-4">
                                             <div className="flex items-center gap-3">
                                                 <div className="w-10 h-10 rounded-full bg-admin-dark text-white flex flex-col items-center justify-center font-['Cormorant',_serif] font-bold text-lg leading-none">
-                                                    {vendor.name.charAt(0)}
+                                                    {(vendor.fullName || vendor.name || 'V').charAt(0)}
                                                 </div>
                                                 <div>
-                                                    <p className="text-sm font-bold text-gray-800">{vendor.name}</p>
+                                                    <p className="text-sm font-bold text-gray-800">{vendor.fullName || vendor.name}</p>
                                                     <p className="text-xs text-gray-500">{vendor.email}</p>
-                                                    <p className="text-[10px] text-gray-400">{vendor.phone}</p>
+                                                    <p className="text-[10px] text-gray-400">{vendor.mobile || vendor.phone}</p>
                                                 </div>
                                             </div>
                                         </td>
@@ -130,12 +121,12 @@ const AdminVendors = () => {
                                             <span className="text-sm font-medium text-gray-800">{vendor.storeName}</span>
                                         </td>
                                         <td className="px-6 py-4">
-                                            <span className="text-sm text-gray-500">{new Date(vendor.joinedAt).toLocaleDateString()}</span>
+                                            <span className="text-sm text-gray-500">{new Date(vendor.createdAt || vendor.joinedAt).toLocaleDateString()}</span>
                                         </td>
                                         <td className="px-6 py-4">
                                             <div className="flex flex-col gap-1">
                                                 <div className="flex items-center gap-1 text-xs text-gray-600">
-                                                    <FiShoppingBag size={12} className="text-gray-400" /> {vendor.productsCount} Products
+                                                    <FiShoppingBag size={12} className="text-gray-400" /> {vendor.productsCount || 0} Products
                                                 </div>
                                                 <div className="flex items-center gap-1 text-xs text-gray-600">
                                                     <FiStar size={12} className="text-admin-gold" fill="currentColor" /> {vendor.rating > 0 ? vendor.rating : 'N/A'}
@@ -144,11 +135,10 @@ const AdminVendors = () => {
                                         </td>
                                         <td className="px-6 py-4">
                                             <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold uppercase tracking-widest ${
-                                                vendor.status === 'Approved' ? 'bg-green-50 text-green-600' : 
-                                                vendor.status === 'Blocked' ? 'bg-red-50 text-red-600' : 
-                                                'bg-orange-50 text-orange-600'
+                                                vendor.isBlocked ? 'bg-red-50 text-red-600' :
+                                                vendor.isApproved ? 'bg-green-50 text-green-600' : 'bg-orange-50 text-orange-600'
                                             }`}>
-                                                {vendor.status}
+                                                {vendor.isBlocked ? 'Blocked' : vendor.isApproved ? 'Approved' : 'Pending'}
                                             </span>
                                         </td>
                                         <td className="px-6 py-4 text-center">
@@ -156,14 +146,24 @@ const AdminVendors = () => {
                                                 <button onClick={() => setSelectedVendor(vendor)} className="p-2 bg-gray-100 hover:bg-admin-dark hover:text-white rounded-lg transition-all" title="View Details">
                                                     <FiEye size={14} />
                                                 </button>
-                                                {vendor.status !== 'Approved' && (
-                                                    <button onClick={() => handleStatusChange(vendor._id, 'Approved')} className="p-2 bg-green-50 text-green-600 hover:bg-green-500 hover:text-white rounded-lg transition-all" title="Approve">
-                                                        <FiCheckCircle size={14} />
+                                                {currentTab === 'pending' && (
+                                                    <>
+                                                        <button onClick={() => handleStatusChange(vendor._id, 'approved')} className="p-2 bg-green-50 text-green-600 hover:bg-green-500 hover:text-white rounded-lg transition-all" title="Approve">
+                                                            <FiCheckCircle size={14} />
+                                                        </button>
+                                                        <button onClick={() => handleStatusChange(vendor._id, 'blocked')} className="p-2 bg-red-50 text-red-600 hover:bg-red-500 hover:text-white rounded-lg transition-all" title="Reject/Block">
+                                                            <FiXCircle size={14} />
+                                                        </button>
+                                                    </>
+                                                )}
+                                                {currentTab === 'approved' && (
+                                                    <button onClick={() => handleStatusChange(vendor._id, 'blocked')} className="p-2 bg-red-50 text-red-600 hover:bg-red-500 hover:text-white rounded-lg transition-all" title="Block Vendor">
+                                                        <FiShieldOff size={14} />
                                                     </button>
                                                 )}
-                                                {vendor.status !== 'Blocked' && (
-                                                    <button onClick={() => handleStatusChange(vendor._id, 'Blocked')} className="p-2 bg-red-50 text-red-600 hover:bg-red-500 hover:text-white rounded-lg transition-all" title="Block">
-                                                        <FiXCircle size={14} />
+                                                {currentTab === 'blocked' && (
+                                                    <button onClick={() => handleStatusChange(vendor._id, 'unblock')} className="p-2 bg-blue-50 text-blue-600 hover:bg-blue-500 hover:text-white rounded-lg transition-all" title="Unblock Vendor">
+                                                        <FiRefreshCw size={14} />
                                                     </button>
                                                 )}
                                             </div>
@@ -189,17 +189,15 @@ const AdminVendors = () => {
                         <div className="p-6 space-y-6">
                             <div className="flex items-start gap-4">
                                 <div className="w-16 h-16 rounded-full bg-admin-dark text-white flex flex-col items-center justify-center font-['Cormorant',_serif] font-bold text-3xl leading-none">
-                                    {selectedVendor.name.charAt(0)}
+                                    {(selectedVendor.fullName || selectedVendor.name || 'V').charAt(0)}
                                 </div>
                                 <div>
                                     <h3 className="text-xl font-bold text-gray-800">{selectedVendor.storeName}</h3>
-                                    <p className="text-sm text-gray-500">Operated by: {selectedVendor.name}</p>
+                                    <p className="text-sm text-gray-500">Operated by: {selectedVendor.fullName || selectedVendor.name}</p>
                                     <span className={`mt-2 inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold uppercase tracking-widest ${
-                                        selectedVendor.status === 'Approved' ? 'bg-green-50 text-green-600' : 
-                                        selectedVendor.status === 'Blocked' ? 'bg-red-50 text-red-600' : 
-                                        'bg-orange-50 text-orange-600'
+                                        selectedVendor.isApproved ? 'bg-green-50 text-green-600' : 'bg-orange-50 text-orange-600'
                                     }`}>
-                                        {selectedVendor.status}
+                                        {selectedVendor.isApproved ? 'Approved' : 'Pending'}
                                     </span>
                                 </div>
                             </div>
@@ -208,32 +206,79 @@ const AdminVendors = () => {
                                 <div className="p-4 bg-gray-50 rounded-xl">
                                     <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Contact Info</p>
                                     <p className="text-sm text-gray-800 font-medium">{selectedVendor.email}</p>
-                                    <p className="text-sm text-gray-800 font-medium">{selectedVendor.phone}</p>
+                                    <p className="text-sm text-gray-800 font-medium">{selectedVendor.mobile || selectedVendor.phone}</p>
                                 </div>
                                 <div className="p-4 bg-gray-50 rounded-xl">
-                                    <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Metrics</p>
-                                    <p className="text-sm text-gray-800 font-medium">Products: {selectedVendor.productsCount}</p>
-                                    <p className="text-sm text-gray-800 font-medium flex items-center gap-1">Rating: {selectedVendor.rating > 0 ? selectedVendor.rating : 'N/A'} <FiStar className="text-admin-gold" fill="currentColor"/></p>
+                                    <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Business Details</p>
+                                    <p className="text-sm text-gray-800 font-medium">Type: {selectedVendor.businessType}</p>
+                                    <p className="text-sm text-gray-800 font-medium">GST: {selectedVendor.gstNumber}</p>
                                 </div>
                                 <div className="p-4 bg-gray-50 rounded-xl col-span-2">
-                                    <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Business Verification Documents</p>
-                                    <div className="flex gap-4 mt-3">
-                                        <div className="w-24 h-32 bg-gray-200 border border-gray-300 rounded flex items-center justify-center text-xs text-gray-500">GSTIN</div>
-                                        <div className="w-24 h-32 bg-gray-200 border border-gray-300 rounded flex items-center justify-center text-xs text-gray-500">FSSAI</div>
-                                    </div>
-                                    <p className="text-xs text-gray-400 mt-2 italic">Note: Real document previews will render here.</p>
+                                    <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Location Info</p>
+                                    <p className="text-sm text-gray-800 font-medium">{selectedVendor.businessAddress}</p>
+                                    <p className="text-sm text-gray-800 font-medium">{selectedVendor.city}, {selectedVendor.state}</p>
                                 </div>
+                                <div className="p-4 bg-gray-50 rounded-xl col-span-2">
+                                    <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Bank Details</p>
+                                    <div className="grid grid-cols-2 gap-2 mt-2">
+                                        <p className="text-sm text-gray-800 font-medium">Bank: {selectedVendor.bankName}</p>
+                                        <p className="text-sm text-gray-800 font-medium">Holder: {selectedVendor.accountHolderName}</p>
+                                        <p className="text-sm text-gray-800 font-medium">A/C No: {selectedVendor.accountNumber}</p>
+                                        <p className="text-sm text-gray-800 font-medium">IFSC: {selectedVendor.ifscCode}</p>
+                                        {selectedVendor.upiId && <p className="text-sm text-gray-800 font-medium">UPI: {selectedVendor.upiId}</p>}
+                                    </div>
+                                </div>
+                                <div className="p-4 bg-gray-50 rounded-xl col-span-2">
+                                    <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Store Description</p>
+                                    <p className="text-sm text-gray-800 font-medium">{selectedVendor.storeDescription}</p>
+                                    {selectedVendor.categories?.length > 0 && (
+                                        <p className="text-sm text-gray-800 font-medium mt-2">Categories: {selectedVendor.categories.join(', ')}</p>
+                                    )}
+                                </div>
+
+                                {selectedVendor.documents && selectedVendor.documents.length > 0 && (
+                                    <div className="p-4 bg-gray-50 rounded-xl col-span-2">
+                                        <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3">Uploaded Documents</p>
+                                        <div className="flex flex-wrap gap-4">
+                                            {selectedVendor.documents.map((doc, idx) => {
+                                                const url = doc.startsWith('http') ? doc : `http://localhost:5000${doc}`;
+                                                const isImage = url.match(/\.(jpeg|jpg|gif|png)$/i) != null;
+                                                return (
+                                                    <a key={idx} href={url} target="_blank" rel="noopener noreferrer" className="block w-24 h-24 rounded-xl border border-gray-200 overflow-hidden shadow-sm hover:shadow-md transition-shadow bg-white">
+                                                        {isImage ? (
+                                                            <img src={url} alt={`Document ${idx + 1}`} className="w-full h-full object-cover" />
+                                                        ) : (
+                                                            <div className="w-full h-full flex flex-col items-center justify-center p-2 text-center">
+                                                                <span className="text-[10px] font-bold text-gray-500 uppercase">View Doc</span>
+                                                            </div>
+                                                        )}
+                                                    </a>
+                                                );
+                                            })}
+                                        </div>
+                                    </div>
+                                )}
                             </div>
                         </div>
                         <div className="p-6 border-t border-gray-100 flex justify-end gap-3 bg-gray-50">
-                            {selectedVendor.status !== 'Blocked' && (
-                                <button onClick={() => { handleStatusChange(selectedVendor._id, 'Blocked'); setSelectedVendor(null); }} className="px-6 py-2 bg-white border border-red-200 text-red-600 rounded-lg text-sm font-bold hover:bg-red-50 transition-all">
+                            {currentTab === 'pending' && (
+                                <>
+                                    <button onClick={() => handleStatusChange(selectedVendor._id, 'blocked')} className="px-6 py-2 bg-white border border-red-200 text-red-600 rounded-lg text-sm font-bold hover:bg-red-50 transition-all">
+                                        Reject/Block Vendor
+                                    </button>
+                                    <button onClick={() => handleStatusChange(selectedVendor._id, 'approved')} className="px-6 py-2 bg-green-500 text-white rounded-lg text-sm font-bold hover:bg-green-600 transition-all">
+                                        Approve Vendor
+                                    </button>
+                                </>
+                            )}
+                            {currentTab === 'approved' && (
+                                <button onClick={() => handleStatusChange(selectedVendor._id, 'blocked')} className="px-6 py-2 bg-white border border-red-200 text-red-600 rounded-lg text-sm font-bold hover:bg-red-50 transition-all">
                                     Block Vendor
                                 </button>
                             )}
-                            {selectedVendor.status !== 'Approved' && (
-                                <button onClick={() => { handleStatusChange(selectedVendor._id, 'Approved'); setSelectedVendor(null); }} className="px-6 py-2 bg-green-500 text-white rounded-lg text-sm font-bold hover:bg-green-600 transition-all">
-                                    Approve Vendor
+                            {currentTab === 'blocked' && (
+                                <button onClick={() => handleStatusChange(selectedVendor._id, 'unblock')} className="px-6 py-2 bg-blue-500 text-white rounded-lg text-sm font-bold hover:bg-blue-600 transition-all">
+                                    Unblock Vendor
                                 </button>
                             )}
                         </div>

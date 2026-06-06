@@ -1,15 +1,34 @@
 const express = require('express');
-const { signup, registerCustomer, getUsers } = require('../controllers/userController');
+const { signup, login, sendRegisterOtp, register, sendOtp, verifyOtp, getMe, updateProfile, addAddress, updateAddress, deleteAddress, getUsers, getBlockedUsers, blockUser, unblockUser } = require('../controllers/userController');
+const { protect, authorize } = require('../middlewares/authMiddleware');
 
 const router = express.Router();
 
 router.route('/')
-  .get(getUsers);
+  .get(protect, authorize('admin'), getUsers);
 
-// Signup for Admin and Vendor
+router.get('/blocked', protect, authorize('admin'), getBlockedUsers);
+router.put('/:id/block', protect, authorize('admin'), blockUser);
+router.put('/:id/unblock', protect, authorize('admin'), unblockUser);
+
 router.post('/signup', signup);
+router.post('/login', login);
 
-// Register/Login for Customer (Mobile)
-router.post('/register-customer', registerCustomer);
+router.post('/send-register-otp', sendRegisterOtp);
+router.post('/register', register);
+
+router.post('/send-otp', sendOtp);
+router.post('/verify-otp', verifyOtp);
+
+router.route('/profile')
+  .get(protect, getMe)
+  .put(protect, updateProfile);
+
+router.route('/addresses')
+  .post(protect, addAddress);
+
+router.route('/addresses/:id')
+  .put(protect, updateAddress)
+  .delete(protect, deleteAddress);
 
 module.exports = router;

@@ -2,34 +2,81 @@ import React, { useState, useEffect } from 'react';
 import { useShop } from '../../context/ShopContext';
 import { Link, useNavigate } from 'react-router-dom';
 import { 
-  FiShoppingBag, FiShoppingCart, FiHeart, FiStar, FiTag, FiEdit2, FiUser, FiMail, FiPhone, FiClock, FiCalendar, FiMapPin, FiCheck, FiLock, FiSettings, FiLogOut, FiBell 
+  FiShoppingBag, FiShoppingCart, FiHeart, FiStar, FiTag, FiEdit2, FiUser, FiMail, FiPhone, FiClock, FiCalendar, FiMapPin, FiCheck, FiLock, FiSettings, FiLogOut, FiBell, FiTrash2 
 } from 'react-icons/fi';
 
-// MOCK API for Frontend-Only mode
-const api = {
-  get: async () => ({ data: { data: { products: [], categories: [], banners: [], settings: {}, orders: [], users: [], stats: [], recentTransactions: [], dailyRevenue: [], vendors: [], blogs: [], returns: [], testimonials: [], reviews: [], replacements: [], supportTickets: [], locations: [], coupons: [], logs: [] }, status: 'success' } }),
-  post: async () => ({ data: { data: { order: { orderId: 'MOCK-ORDER-123' } }, status: 'success' } }),
-  patch: async () => ({ data: { status: 'success' } }),
-  delete: async () => ({ data: { status: 'success' } })
-};
 import ProfileSidebar from './ProfileSidebar';
+import api from '../../utils/api';
 
 const Profile = () => {
-  const { user, isAuthenticated, logout, wishlistCount, cartCount, setIsCartDrawerOpen } = useShop();
+  const { user, setUser, isAuthenticated, logout, wishlistCount, cartCount, setIsCartDrawerOpen } = useShop();
   const navigate = useNavigate();
   const [totalOrders, setTotalOrders] = useState(0);
   const [editingAddressId, setEditingAddressId] = useState(null);
+  const [addressForm, setAddressForm] = useState({ title: '', addressLine: '', mobile: '', isDefault: false });
+  const [isAddingNew, setIsAddingNew] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [notification, setNotification] = useState(null);
+
+  const showNotification = (msg, type = 'success') => {
+    setNotification({ msg, type });
+    setTimeout(() => setNotification(null), 3000);
+  };
 
   useEffect(() => {
     if (!isAuthenticated) navigate('/login');
     if (user) {
       api.get('/orders/my-orders').then(res => {
-        if (res.data.status === 'success') {
+        if (res.data.success) {
           setTotalOrders(res.data.data.orders.length);
         }
       }).catch(err => console.error(err));
     }
   }, [isAuthenticated, navigate, user]);
+
+  const handleAddressSave = async () => {
+    setIsSaving(true);
+    try {
+      if (isAddingNew) {
+        const res = await api.post('/users/addresses', addressForm);
+        if (res.data.success) {
+          const updatedUser = { ...user, addresses: res.data.data.addresses };
+          setUser(updatedUser);
+          setIsAddingNew(false);
+          showNotification('Address added successfully!');
+        }
+      } else if (editingAddressId) {
+        const res = await api.put(`/users/addresses/${editingAddressId}`, addressForm);
+        if (res.data.success) {
+          const updatedUser = { ...user, addresses: res.data.data.addresses };
+          setUser(updatedUser);
+          setEditingAddressId(null);
+          showNotification('Address updated successfully!');
+        }
+      }
+    } catch (err) {
+      console.error('Failed to save address', err);
+      showNotification('Failed to save address.', 'error');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleAddressDelete = async (id) => {
+    if (!window.confirm("Are you sure you want to delete this address?")) return;
+    try {
+      const res = await api.delete(`/users/addresses/${id}`);
+      if (res.data.success) {
+        const updatedUser = { ...user, addresses: res.data.data.addresses };
+        setUser(updatedUser);
+        if (editingAddressId === id) setEditingAddressId(null);
+        showNotification('Address deleted successfully!');
+      }
+    } catch (err) {
+      console.error('Failed to delete address', err);
+      showNotification('Failed to delete address.', 'error');
+    }
+  };
 
   if (!user) return null;
 
@@ -173,7 +220,17 @@ const Profile = () => {
                 </div>
                 <div>
                   <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Mobile Number</p>
-                  <p className="text-[13px] font-bold text-gray-900 mt-0.5">{user.phone ? `+91 ${user.phone}` : 'Not Provided'}</p>
+                  <p className="text-[13px] font-bold text-gray-900 mt-0.5">{user.mobile ? `+91 ${user.mobile}` : 'Not Provided'}</p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-[#F4F8F5] flex items-center justify-center text-[#054425] shrink-0">
+                  <FiUser className="w-4 h-4" />
+                </div>
+                <div>
+                  <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Gender</p>
+                  <p className="text-[13px] font-bold text-gray-900 mt-0.5 capitalize">{user.gender || 'Not Provided'}</p>
                 </div>
               </div>
 
@@ -184,94 +241,114 @@ const Profile = () => {
           <div className="bg-white border border-gray-100 rounded-xl p-4 md:p-5 shadow-sm">
             <div className="flex justify-between items-center mb-4">
               <h3 className="text-base font-serif font-bold text-gray-900">Saved Addresses</h3>
-              <button className="text-[11px] font-bold text-[#054425] hover:underline">View All Addresses</button>
+              <button 
+                onClick={() => { setEditingAddressId(null); setIsAddingNew(true); setAddressForm({ title: '', addressLine: '', mobile: user.mobile || '', isDefault: false }); }}
+                className="text-[11px] font-bold text-[#054425] hover:underline"
+              >
+                + Add New Address
+              </button>
             </div>
+            
+            {notification && (
+              <div className={`p-3 rounded text-xs font-bold mb-4 ${notification.type === 'error' ? 'bg-red-50 text-red-600' : 'bg-green-50 text-green-600'}`}>
+                {notification.msg}
+              </div>
+            )}
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               
-              {/* Address 1: Home */}
-              <div className="border border-gray-100 rounded-xl p-4 relative hover:border-[#054425]/30 transition-colors bg-gray-50/50">
-                <button 
-                  onClick={() => setEditingAddressId(editingAddressId === 1 ? null : 1)}
-                  className="absolute top-4 right-4 flex items-center justify-center text-gray-400 hover:text-[#054425] transition-colors"
-                >
-                  <FiEdit2 className="w-4 h-4" />
-                </button>
-                
-                {editingAddressId === 1 ? (
+              {isAddingNew && (
+                <div className="border border-[#054425]/30 rounded-xl p-4 relative bg-green-50/20">
                   <div className="flex flex-col gap-3 max-w-[90%]">
                     <div className="flex items-center gap-2">
-                      <span className="bg-[#E6F0E9] text-[#054425] text-[9px] font-bold px-2 py-0.5 rounded uppercase">Default</span>
-                      <input type="text" defaultValue="Home" className="text-xs font-bold text-gray-900 bg-transparent border-b border-gray-200 focus:border-[#054425] outline-none px-1 py-0.5 w-1/2" />
+                      <input type="text" placeholder="Title (e.g. Home)" value={addressForm.title} onChange={(e) => setAddressForm({...addressForm, title: e.target.value})} className="text-xs font-bold text-gray-900 bg-transparent border-b border-gray-200 focus:border-[#054425] outline-none px-1 py-0.5 w-1/2" />
                     </div>
                     <textarea 
-                      defaultValue="123, Green Park, New Delhi&#10;Delhi - 110016, India" 
+                      placeholder="Full Address"
+                      value={addressForm.addressLine}
+                      onChange={(e) => setAddressForm({...addressForm, addressLine: e.target.value})}
                       className="text-xs text-gray-600 bg-white border border-gray-200 rounded p-2 focus:outline-none focus:border-[#054425] resize-none h-16 w-full"
                     />
-                    <input 
-                      type="text" 
-                      defaultValue="+91 98765 43210" 
-                      className="text-xs text-gray-900 font-medium bg-white border border-gray-200 rounded p-2 focus:outline-none focus:border-[#054425] w-full" 
-                    />
-                    <div>
-                      <button onClick={() => setEditingAddressId(null)} className="text-[10px] font-bold bg-[#054425] text-white px-3 py-1.5 rounded hover:bg-[#04331c] transition-colors">Save</button>
-                    </div>
-                  </div>
-                ) : (
-                  <>
-                    <div className="flex items-center gap-2 mb-2">
-                      <span className="bg-[#E6F0E9] text-[#054425] text-[9px] font-bold px-2 py-0.5 rounded uppercase">Default</span>
-                      <span className="text-xs font-bold text-gray-900">Home</span>
-                    </div>
-                    <p className="text-xs text-gray-500 leading-relaxed max-w-[85%]">
-                      123, Green Park, New Delhi<br/>
-                      Delhi - 110016, India<br/>
-                      <span className="text-gray-900 font-medium mt-1 inline-block">+91 98765 43210</span>
-                    </p>
-                  </>
-                )}
-              </div>
-
-              {/* Address 2: Office */}
-              <div className="border border-gray-100 rounded-xl p-4 relative hover:border-[#054425]/30 transition-colors bg-white">
-                <button 
-                  onClick={() => setEditingAddressId(editingAddressId === 2 ? null : 2)}
-                  className="absolute top-4 right-4 flex items-center justify-center text-gray-400 hover:text-[#054425] transition-colors"
-                >
-                  <FiEdit2 className="w-4 h-4" />
-                </button>
-
-                {editingAddressId === 2 ? (
-                  <div className="flex flex-col gap-3 max-w-[90%]">
                     <div className="flex items-center gap-2">
-                      <input type="text" defaultValue="Office" className="text-xs font-bold text-gray-900 bg-transparent border-b border-gray-200 focus:border-[#054425] outline-none px-1 py-0.5 w-1/2" />
+                      <input type="checkbox" id="isDefaultNew" checked={addressForm.isDefault} onChange={(e) => setAddressForm({...addressForm, isDefault: e.target.checked})} className="rounded text-[#054425]" />
+                      <label htmlFor="isDefaultNew" className="text-[10px] text-gray-600">Set as Default</label>
                     </div>
-                    <textarea 
-                      defaultValue="456, Sector 21, Noida&#10;Uttar Pradesh - 201301, India" 
-                      className="text-xs text-gray-600 bg-white border border-gray-200 rounded p-2 focus:outline-none focus:border-[#054425] resize-none h-16 w-full"
-                    />
-                    <input 
-                      type="text" 
-                      defaultValue="+91 98765 43210" 
-                      className="text-xs text-gray-900 font-medium bg-white border border-gray-200 rounded p-2 focus:outline-none focus:border-[#054425] w-full" 
-                    />
-                    <div>
-                      <button onClick={() => setEditingAddressId(null)} className="text-[10px] font-bold bg-[#054425] text-white px-3 py-1.5 rounded hover:bg-[#04331c] transition-colors">Save</button>
+                    <div className="flex gap-2 mt-1">
+                      <button onClick={handleAddressSave} disabled={isSaving} className={`text-[10px] font-bold text-white px-3 py-1.5 rounded transition-colors ${isSaving ? 'bg-gray-400 cursor-not-allowed' : 'bg-[#054425] hover:bg-[#04331c]'}`}>{isSaving ? 'Saving...' : 'Save'}</button>
+                      <button onClick={() => setIsAddingNew(false)} disabled={isSaving} className="text-[10px] font-bold bg-gray-200 text-gray-700 px-3 py-1.5 rounded hover:bg-gray-300 transition-colors">Cancel</button>
                     </div>
                   </div>
-                ) : (
-                  <>
-                    <div className="flex items-center gap-2 mb-2">
-                      <span className="text-xs font-bold text-gray-900">Office</span>
+                </div>
+              )}
+
+              {user.addresses && user.addresses.map((address) => (
+                <div key={address._id} className="border border-gray-100 rounded-xl p-4 relative hover:border-[#054425]/30 transition-colors bg-white">
+                  <button 
+                    onClick={() => {
+                      setIsAddingNew(false);
+                      if (editingAddressId === address._id) {
+                        setEditingAddressId(null);
+                      } else {
+                        setEditingAddressId(address._id);
+                        setAddressForm({
+                          title: address.title,
+                          addressLine: address.addressLine,
+                          mobile: user.mobile || address.mobile || '',
+                          isDefault: address.isDefault
+                        });
+                      }
+                    }}
+                    className="absolute top-4 right-10 flex items-center justify-center text-gray-400 hover:text-[#054425] transition-colors"
+                  >
+                    <FiEdit2 className="w-4 h-4" />
+                  </button>
+
+                  <button 
+                    onClick={() => handleAddressDelete(address._id)}
+                    className="absolute top-4 right-4 flex items-center justify-center text-gray-400 hover:text-red-500 transition-colors"
+                  >
+                    <FiTrash2 className="w-4 h-4" />
+                  </button>
+
+                  {editingAddressId === address._id ? (
+                    <div className="flex flex-col gap-3 max-w-[90%]">
+                      <div className="flex items-center gap-2">
+                        <input type="text" value={addressForm.title} onChange={(e) => setAddressForm({...addressForm, title: e.target.value})} className="text-xs font-bold text-gray-900 bg-transparent border-b border-gray-200 focus:border-[#054425] outline-none px-1 py-0.5 w-1/2" />
+                      </div>
+                      <textarea 
+                        value={addressForm.addressLine}
+                        onChange={(e) => setAddressForm({...addressForm, addressLine: e.target.value})}
+                        className="text-xs text-gray-600 bg-white border border-gray-200 rounded p-2 focus:outline-none focus:border-[#054425] resize-none h-16 w-full"
+                      />
+                      <div className="flex items-center gap-2">
+                        <input type="checkbox" id={`isDefault-${address._id}`} checked={addressForm.isDefault} onChange={(e) => setAddressForm({...addressForm, isDefault: e.target.checked})} className="rounded text-[#054425]" />
+                        <label htmlFor={`isDefault-${address._id}`} className="text-[10px] text-gray-600">Set as Default</label>
+                      </div>
+                      <div className="flex gap-2 mt-1">
+                        <button onClick={handleAddressSave} disabled={isSaving} className={`text-[10px] font-bold text-white px-3 py-1.5 rounded transition-colors ${isSaving ? 'bg-gray-400 cursor-not-allowed' : 'bg-[#054425] hover:bg-[#04331c]'}`}>{isSaving ? 'Saving...' : 'Save'}</button>
+                        <button onClick={() => setEditingAddressId(null)} disabled={isSaving} className="text-[10px] font-bold bg-gray-200 text-gray-700 px-3 py-1.5 rounded hover:bg-gray-300 transition-colors">Cancel</button>
+                      </div>
                     </div>
-                    <p className="text-xs text-gray-500 leading-relaxed max-w-[85%]">
-                      456, Sector 21, Noida<br/>
-                      Uttar Pradesh - 201301, India<br/>
-                      <span className="text-gray-900 font-medium mt-1 inline-block">+91 98765 43210</span>
-                    </p>
-                  </>
-                )}
-              </div>
+                  ) : (
+                    <>
+                      <div className="flex items-center gap-2 mb-2">
+                        {address.isDefault && <span className="bg-[#E6F0E9] text-[#054425] text-[9px] font-bold px-2 py-0.5 rounded uppercase">Default</span>}
+                        <span className="text-xs font-bold text-gray-900">{address.title}</span>
+                      </div>
+                      <p className="text-xs text-gray-500 leading-relaxed max-w-[85%] whitespace-pre-wrap">
+                        {address.addressLine}<br/>
+                        <span className="text-gray-900 font-medium mt-1 inline-block">{address.mobile ? `+91 ${address.mobile}` : ''}</span>
+                      </p>
+                    </>
+                  )}
+                </div>
+              ))}
+              
+              {!isAddingNew && (!user.addresses || user.addresses.length === 0) && (
+                <div className="col-span-2 text-center py-6 text-gray-400 text-xs">
+                  No addresses saved yet.
+                </div>
+              )}
 
             </div>
           </div>

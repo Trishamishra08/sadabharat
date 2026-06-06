@@ -1,8 +1,68 @@
-import React from 'react';
-import { Search, Filter, AlertTriangle, AlertCircle, CheckCircle2 } from 'lucide-react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { Search, Filter, AlertTriangle, AlertCircle, CheckCircle2, RefreshCw } from 'lucide-react';
 import { motion } from 'framer-motion';
+import api from '../../utils/api';
 
 const VendorInventory = () => {
+  const [products, setProducts] = useState([]);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [filter, setFilter] = useState('All Stock');
+  const [editingId, setEditingId] = useState(null);
+  const [editStockValue, setEditStockValue] = useState('');
+  const [isUpdating, setIsUpdating] = useState(false);
+
+  const fetchProducts = useCallback(async () => {
+    try {
+      const res = await api.get('/products/vendor');
+      if (res.data.success) {
+        setProducts(res.data.data);
+      }
+    } catch (err) {
+      console.error('Failed to fetch vendor inventory:', err);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchProducts();
+  }, [fetchProducts]);
+
+  const handleUpdateStock = async (id) => {
+    if (editStockValue === '' || isNaN(editStockValue)) return;
+    setIsUpdating(true);
+    try {
+      await api.put(`/inventory/${id}`, { stock: Number(editStockValue) });
+      fetchProducts();
+      setEditingId(null);
+    } catch (error) {
+      alert("Failed to update stock: " + (error.response?.data?.message || error.message));
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
+  const inventoryItems = products.map(p => ({
+    id: p._id,
+    name: p.name,
+    sku: p.sku || `SB-${p._id.slice(-6).toUpperCase()}`,
+    stock: p.stock !== undefined ? p.stock : 100,
+    alert: 15,
+    updated: new Date(p.updatedAt || Date.now()).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+    status: p.stock === 0 ? 'Out of Stock' : p.stock < 15 ? 'Low Stock' : 'Healthy'
+  }));
+
+  const filteredItems = inventoryItems.filter(item => {
+    const matchesSearch = item.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
+                          item.sku.toLowerCase().includes(searchQuery.toLowerCase());
+    
+    if (filter === 'Low Stock') return matchesSearch && item.stock < item.alert && item.stock > 0;
+    if (filter === 'Out of Stock') return matchesSearch && item.stock === 0;
+    return matchesSearch;
+  });
+
+  const outOfStockCount = inventoryItems.filter(i => i.stock === 0).length;
+  const lowStockCount = inventoryItems.filter(i => i.stock > 0 && i.stock < i.alert).length;
+  const healthyStockCount = inventoryItems.filter(i => i.stock >= i.alert).length;
+
   return (
     <div className="space-y-4 pb-6 max-w-[1400px] mx-auto -mt-2">
       {/* Header */}
@@ -11,47 +71,41 @@ const VendorInventory = () => {
           <h1 className="text-2xl font-serif font-bold text-gray-900 leading-tight">Inventory Management</h1>
           <p className="text-[12px] text-gray-500 mt-0.5 font-sans">Monitor stock levels and manage your warehouse.</p>
         </div>
+        <button onClick={fetchProducts} className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-lg text-[13px] font-medium text-gray-700 hover:bg-gray-50 shadow-sm transition-colors">
+          <RefreshCw size={14} /> Refresh Data
+        </button>
       </div>
       
       {/* Alert Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-2">
         <motion.div 
-          initial={{ opacity: 0, rotateX: 90 }}
-          whileInView={{ opacity: 1, rotateX: 0 }}
-          viewport={{ once: false, amount: 0.2 }}
-          transition={{ type: "spring", stiffness: 300, damping: 20 }}
+          initial={{ opacity: 0, rotateX: 90 }} whileInView={{ opacity: 1, rotateX: 0 }} viewport={{ once: false, amount: 0.2 }} transition={{ type: "spring", stiffness: 300, damping: 20 }}
           className="bg-[#FFF0F0] border border-red-100 p-4 rounded-xl flex items-center gap-4 shadow-sm"
         >
           <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center text-red-500 shadow-sm"><AlertCircle size={20} /></div>
           <div>
             <p className="text-[11px] font-bold text-red-600 uppercase tracking-wide mb-0.5">Out of Stock</p>
-            <h3 className="text-xl font-medium text-gray-800 font-sans">1</h3>
+            <h3 className="text-xl font-medium text-gray-800 font-sans">{outOfStockCount}</h3>
           </div>
         </motion.div>
         <motion.div 
-          initial={{ opacity: 0, rotateX: 90 }}
-          whileInView={{ opacity: 1, rotateX: 0 }}
-          viewport={{ once: false, amount: 0.2 }}
-          transition={{ type: "spring", stiffness: 300, damping: 20, delay: 0.1 }}
+          initial={{ opacity: 0, rotateX: 90 }} whileInView={{ opacity: 1, rotateX: 0 }} viewport={{ once: false, amount: 0.2 }} transition={{ type: "spring", stiffness: 300, damping: 20, delay: 0.1 }}
           className="bg-[#FFF8E1] border border-orange-100 p-4 rounded-xl flex items-center gap-4 shadow-sm"
         >
           <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center text-orange-500 shadow-sm"><AlertTriangle size={20} /></div>
           <div>
             <p className="text-[11px] font-bold text-orange-600 uppercase tracking-wide mb-0.5">Low Stock</p>
-            <h3 className="text-xl font-medium text-gray-800 font-sans">4</h3>
+            <h3 className="text-xl font-medium text-gray-800 font-sans">{lowStockCount}</h3>
           </div>
         </motion.div>
         <motion.div 
-          initial={{ opacity: 0, rotateX: 90 }}
-          whileInView={{ opacity: 1, rotateX: 0 }}
-          viewport={{ once: false, amount: 0.2 }}
-          transition={{ type: "spring", stiffness: 300, damping: 20, delay: 0.2 }}
+          initial={{ opacity: 0, rotateX: 90 }} whileInView={{ opacity: 1, rotateX: 0 }} viewport={{ once: false, amount: 0.2 }} transition={{ type: "spring", stiffness: 300, damping: 20, delay: 0.2 }}
           className="bg-[#E8F5E9] border border-green-100 p-4 rounded-xl flex items-center gap-4 shadow-sm"
         >
           <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center text-[#2E7D32] shadow-sm"><CheckCircle2 size={20} /></div>
           <div>
             <p className="text-[11px] font-bold text-[#2E7D32] uppercase tracking-wide mb-0.5">Healthy Stock</p>
-            <h3 className="text-xl font-medium text-gray-800 font-sans">42</h3>
+            <h3 className="text-xl font-medium text-gray-800 font-sans">{healthyStockCount}</h3>
           </div>
         </motion.div>
       </div>
@@ -64,14 +118,17 @@ const VendorInventory = () => {
             <input 
               type="text" 
               placeholder="Search SKU or Product..." 
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full pl-8 pr-3 py-1.5 bg-gray-50 border border-gray-200 rounded-lg text-[12px] focus:outline-none focus:border-[#054425] focus:ring-1 focus:ring-[#054425] font-sans font-medium"
             />
           </div>
           <div className="flex gap-2 w-full sm:w-auto">
-            <button className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-3 py-1.5 border border-gray-200 text-gray-700 text-[12px] font-medium rounded-lg hover:bg-gray-50 transition-colors">
-              <Filter size={14} /> Filters
-            </button>
-            <select className="flex-1 sm:flex-none bg-white border border-gray-200 rounded-lg px-3 py-1.5 text-[12px] font-medium text-gray-700 outline-none hover:bg-gray-50 cursor-pointer">
+            <select 
+              value={filter}
+              onChange={(e) => setFilter(e.target.value)}
+              className="flex-1 sm:flex-none bg-white border border-gray-200 rounded-lg px-3 py-1.5 text-[12px] font-medium text-gray-700 outline-none hover:bg-gray-50 cursor-pointer"
+            >
               <option>All Stock</option>
               <option>Low Stock</option>
               <option>Out of Stock</option>
@@ -93,16 +150,21 @@ const VendorInventory = () => {
               </tr>
             </thead>
             <tbody className="text-[12px] text-gray-800">
-              {[
-                { name: 'AMLA Powder', sku: 'SB-AP-100', stock: 0, alert: 10, updated: 'Today, 10:30 AM', status: 'Out of Stock' },
-                { name: 'BHRINGRAJ Hair Oil', sku: 'SB-BHO-200', stock: 12, alert: 20, updated: 'Yesterday', status: 'Low Stock' },
-                { name: 'NEEM TULSI Face Wash', sku: 'SB-NTFW-100', stock: 45, alert: 15, updated: 'May 28, 2024', status: 'Healthy' },
-                { name: 'ASHWAGANDHA Capsules', sku: 'SB-AC-60', stock: 120, alert: 20, updated: 'May 25, 2024', status: 'Healthy' },
-              ].map((item, i) => (
-                <tr key={i} className="border-b border-gray-50 hover:bg-gray-50/50 transition-colors">
-                  <td className="px-4 py-2.5">
-                    <p className="font-medium text-gray-800 leading-tight">{item.name}</p>
-                    <p className="text-[11px] text-gray-500 mt-0.5">{item.sku}</p>
+              {filteredItems.map((item) => (
+                <tr key={item.id} className={`border-b transition-colors relative ${item.stock === 0 ? 'bg-red-50/20 border-red-100' : 'border-gray-50 hover:bg-gray-50/50'}`}>
+                  <td className="px-4 py-2.5 relative">
+                    {item.stock === 0 && (
+                      <motion.div 
+                        initial={{ x: '-200%' }}
+                        animate={{ x: '1000%' }}
+                        transition={{ repeat: Infinity, duration: 3, ease: "linear" }}
+                        className="absolute inset-y-0 w-1/2 bg-gradient-to-r from-transparent via-red-500/15 to-transparent pointer-events-none z-0"
+                      />
+                    )}
+                    <div className="relative z-10">
+                      <p className="font-medium text-gray-800 leading-tight">{item.name}</p>
+                      <p className="text-[11px] text-gray-500 mt-0.5">{item.sku}</p>
+                    </div>
                   </td>
                   <td className="px-4 py-2.5 font-medium font-sans text-[13px] text-gray-800">{item.stock}</td>
                   <td className="px-4 py-2.5 text-gray-500 font-medium">at {item.alert} units</td>
@@ -118,12 +180,50 @@ const VendorInventory = () => {
                   <td className="px-4 py-2.5 text-gray-500 text-[11px] font-medium">{item.updated}</td>
                   <td className="px-4 py-2.5 text-right">
                     <div className="flex justify-end items-center gap-2">
-                       <input type="number" defaultValue={item.stock} className="w-14 px-2 py-1 border border-gray-200 rounded-md text-[11px] text-center outline-none focus:border-[#054425]" />
-                       <button className="px-2.5 py-1 border border-gray-200 text-gray-700 font-medium rounded-md hover:bg-gray-50 transition-colors text-[11px]">Save</button>
+                      {editingId === item.id ? (
+                        <>
+                          <input 
+                            type="number" 
+                            autoFocus
+                            value={editStockValue} 
+                            onChange={(e) => setEditStockValue(e.target.value)}
+                            disabled={isUpdating}
+                            className="w-14 px-2 py-1 border border-[#054425] rounded-md text-[11px] text-center outline-none ring-1 ring-[#054425]/20" 
+                          />
+                          <button 
+                            onClick={() => handleUpdateStock(item.id)} 
+                            disabled={isUpdating}
+                            className="px-2 py-1 bg-[#054425] text-white font-medium rounded-md hover:bg-black transition-colors text-[11px] disabled:opacity-50"
+                          >
+                            Save
+                          </button>
+                          <button 
+                            onClick={() => setEditingId(null)} 
+                            disabled={isUpdating}
+                            className="px-2 py-1 border border-gray-200 text-gray-700 font-medium rounded-md hover:bg-gray-50 transition-colors text-[11px] disabled:opacity-50"
+                          >
+                            Cancel
+                          </button>
+                        </>
+                      ) : (
+                        <button 
+                          onClick={() => { setEditingId(item.id); setEditStockValue(String(item.stock)); }}
+                          className="px-3 py-1 border border-gray-200 text-gray-700 font-medium rounded-md hover:bg-gray-50 transition-colors text-[11px]"
+                        >
+                          Edit Stock
+                        </button>
+                      )}
                     </div>
                   </td>
                 </tr>
               ))}
+              {filteredItems.length === 0 && (
+                <tr>
+                  <td colSpan="6" className="py-12 text-center text-gray-400 text-sm">
+                    No products found in inventory.
+                  </td>
+                </tr>
+              )}
             </tbody>
           </table>
         </div>

@@ -1,0 +1,320 @@
+const Order = require('../models/orderModel');
+const Product = require('../models/productModel');
+const Razorpay = require('razorpay');
+const crypto = require('crypto');
+// @desc    Create new order
+// @route   POST /api/orders
+// @access  Private
+const createOrder = async (req, res) => {
+  try {
+    const {
+      items,
+      shippingAddress,
+      paymentMethod,
+      taxAmount,
+      shippingAmount,
+      totalAmount
+    } = req.body;
+
+    if (!items || items.length === 0) {
+      return res.status(400).json({ success: false, message: 'No order items' });
+    }
+
+    // Process items to get accurate data and vendor/admin mapping
+    const orderItems = await Promise.all(items.map(async (item) => {
+      const product = await Product.findById(item.product);
+      if (!product) throw new Error(`Product not found: ${item.product}`);
+      
+      return {
+        product: product._id,
+        name: product.name,
+        qty: item.quantity || 1,
+        price: product.price, // Security: Use DB price, not frontend price
+        image: product.images?.[0]?.url || item.image || '',
+        vendor: product.vendor, // Security: Assign owner based on DB
+        admin: product.admin,
+        status: 'Processing'
+      };
+    }));
+
+    const itemsPrice = orderItems.reduce((acc, item) => acc + (item.price * item.qty), 0);
+
+    const order = new Order({
+      user: req.user._id,
+      orderItems,
+      shippingAddress,
+      paymentMethod,
+      itemsPrice,
+      taxPrice: taxAmount || 0,
+      shippingPrice: shippingAmount || 0,
+      totalPrice: totalAmount, // Accept final total taking coupons into account
+      isPaid: false
+    });
+
+    const createdOrder = await order.save();
+
+    res.status(201).json({
+      success: true,
+      data: {
+        order: {
+          orderId: createdOrder._id,
+          ...createdOrder._doc
+        }
+      }
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// @desc    Create Razorpay Order
+// @route   POST /api/orders/razorpay/create
+// @access  Private
+const createRazorpayOrder = async (req, res) => {
+  try {
+    const { amount } = req.body;
+    
+    // Check if RAZORPAY_KEY_ID is available, otherwise return mock
+    if (!process.env.RAZORPAY_KEY_ID || !process.env.RAZORPAY_KEY_SECRET) {
+       console.warn('Razorpay keys not found. Returning mock order id.');
+       return res.status(200).json({
+          success: true,
+          data: {
+             order: {
+                id: 'mock_order_' + Date.now(),
+                amount: amount * 100,
+                currency: 'INR'
+             }
+          }
+       });
+    }
+
+    const instance = new Razorpay({
+      key_id: process.env.RAZORPAY_KEY_ID,
+      key_secret: process.env.RAZORPAY_KEY_SECRET,
+    });
+
+    const options = {
+      amount: Math.round(amount * 100), // amount in smallest currency unit
+      currency: "INR",
+      receipt: "receipt_order_" + Date.now(),
+    };
+
+    const order = await instance.orders.create(options);
+
+    if (!order) return res.status(500).send("Some error occured");
+
+    res.status(200).json({ success: true, data: { order } });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// @desc    Verify Razorpay Payment and Save Order
+// @route   POST /api/orders/razorpay/verify
+// @access  Private
+const verifyRazorpayOrder = async (req, res) => {
+  try {
+    const { razorpay_order_id, razorpay_payment_id, razorpay_signature, orderDetails } = req.body;
+
+    // Verify signature only if keys exist
+    if (process.env.RAZORPAY_KEY_SECRET) {
+      const sign = razorpay_order_id + "|" + razorpay_payment_id;
+      const expectedSign = crypto
+        .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET)
+        .update(sign.toString())
+        .digest("hex");
+
+      if (razorpay_signature !== expectedSign) {
+        return res.status(400).json({ success: false, message: "Invalid signature sent!" });
+      }
+    }
+
+    // Now we create the actual order in MongoDB, similar to createOrder
+    const {
+      items,
+      shippingAddress,
+      taxAmount,
+      shippingAmount,
+      totalAmount
+    } = orderDetails;
+
+    const orderItems = await Promise.all(items.map(async (item) => {
+      const product = await Product.findById(item.product);
+      if (!product) throw new Error(`Product not found: ${item.product}`);
+      return {
+        product: product._id,
+        name: product.name,
+        qty: item.quantity || 1,
+        price: product.price,
+        image: product.images?.[0]?.url || item.image || '',
+        vendor: product.vendor,
+        admin: product.admin,
+        status: 'Processing'
+      };
+    }));
+
+    const itemsPrice = orderItems.reduce((acc, item) => acc + (item.price * item.qty), 0);
+
+    const order = new Order({
+      user: req.user._id,
+      orderItems,
+      shippingAddress,
+      paymentMethod: 'Online',
+      paymentResult: {
+        id: razorpay_payment_id,
+        status: 'completed',
+        update_time: new Date().toISOString()
+      },
+      itemsPrice,
+      taxPrice: taxAmount || 0,
+      shippingPrice: shippingAmount || 0,
+      totalPrice: totalAmount,
+      isPaid: true,
+      paidAt: Date.now()
+    });
+
+    const createdOrder = await order.save();
+
+    res.status(200).json({
+      success: true,
+      message: "Payment verified successfully",
+      data: {
+        order: {
+          orderId: createdOrder._id,
+          ...createdOrder._doc
+        }
+      }
+    });
+
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// @desc    Get logged in user orders
+// @route   GET /api/orders/my-orders
+// @access  Private
+const getMyOrders = async (req, res) => {
+  try {
+    const orders = await Order.find({ user: req.user._id }).sort('-createdAt');
+    res.status(200).json({ success: true, data: { orders } });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// @desc    Get order by ID
+// @route   GET /api/orders/:id
+// @access  Private
+const getOrderById = async (req, res) => {
+  try {
+    const order = await Order.findById(req.params.id);
+
+    if (order) {
+      // Allow if admin or order belongs to user
+      if (req.user.role === 'admin' || order.user.toString() === req.user._id.toString()) {
+        return res.status(200).json({ success: true, data: order });
+      } else {
+        return res.status(401).json({ success: false, message: 'Not authorized to view this order' });
+      }
+    } else {
+      res.status(404).json({ success: false, message: 'Order not found' });
+    }
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// @desc    Get all orders containing items from the logged-in vendor
+// @route   GET /api/orders/vendor
+// @access  Private (Vendor)
+const getVendorOrders = async (req, res) => {
+  try {
+    const vendorId = req.user._id;
+
+    // Find orders that have at least one item belonging to this vendor
+    const orders = await Order.find({ 'orderItems.vendor': vendorId })
+      .populate('user', 'name email')
+      .sort('-createdAt')
+      .lean(); // Use lean to easily modify the items array
+
+    // Filter the items array in each order so the vendor ONLY sees their own products
+    const filteredOrders = orders.map(order => {
+      order.orderItems = order.orderItems.filter(
+        item => item.vendor && item.vendor.toString() === vendorId.toString()
+      );
+      // Recalculate amount for vendor's visibility (Optional, depending on UI)
+      order.vendorAmount = order.orderItems.reduce((acc, item) => acc + (item.price * item.qty), 0);
+      return order;
+    });
+
+    res.status(200).json({ success: true, data: filteredOrders });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// @desc    Get all orders for the platform
+// @route   GET /api/orders/admin
+// @access  Private (Admin)
+const getAdminOrders = async (req, res) => {
+  try {
+    const orders = await Order.find({})
+      .populate('user', 'name email')
+      .populate('orderItems.vendor', 'storeName fullName')
+      .populate('orderItems.admin', 'name')
+      .sort('-createdAt');
+
+    res.status(200).json({ success: true, data: orders });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// @desc    Update the status of a specific item within an order
+// @route   PUT /api/orders/:orderId/item/:itemId/status
+// @access  Private (Admin or Vendor)
+const updateOrderItemStatus = async (req, res) => {
+  try {
+    const { orderId, itemId } = req.params;
+    const { status, trackingNumber } = req.body;
+
+    const order = await Order.findById(orderId);
+    if (!order) {
+      return res.status(404).json({ success: false, message: 'Order not found' });
+    }
+
+    // Find the specific item
+    const item = order.orderItems.find(i => i._id.toString() === itemId.toString());
+    if (!item) {
+      return res.status(404).json({ success: false, message: 'Item not found in order' });
+    }
+
+    // Authorization check
+    if (req.user.role === 'vendor' && (!item.vendor || item.vendor.toString() !== req.user._id.toString())) {
+      return res.status(403).json({ success: false, message: 'Not authorized to update this item' });
+    }
+
+    // Update fields
+    if (status) item.status = status;
+    if (trackingNumber !== undefined) item.trackingNumber = trackingNumber;
+
+    await order.save();
+
+    res.status(200).json({ success: true, message: 'Item status updated', data: order });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+module.exports = {
+  createOrder,
+  createRazorpayOrder,
+  verifyRazorpayOrder,
+  getMyOrders,
+  getOrderById,
+  getVendorOrders,
+  getAdminOrders,
+  updateOrderItemStatus
+};

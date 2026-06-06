@@ -4,13 +4,7 @@ import { FiUser, FiLock, FiEye, FiEyeOff, FiCheckCircle, FiPhone, FiMail } from 
 import { useShop } from '../../context/ShopContext';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 
-// MOCK API for Frontend-Only mode
-const api = {
-  get: async () => ({ data: { data: { products: [], categories: [], banners: [], settings: {}, orders: [], users: [], stats: [], recentTransactions: [], dailyRevenue: [], vendors: [], blogs: [], returns: [], testimonials: [], reviews: [], replacements: [], supportTickets: [], locations: [], coupons: [], logs: [] }, status: 'success' } }),
-  post: async () => ({ data: { data: { order: { orderId: 'MOCK-ORDER-123' } }, status: 'success' } }),
-  patch: async () => ({ data: { status: 'success' } }),
-  delete: async () => ({ data: { status: 'success' } })
-};
+import api from '../../utils/api';
 
 const Auth = () => {
   const { isAuthenticated, setIsAuthenticated, setUser } = useShop();
@@ -59,7 +53,7 @@ const Auth = () => {
     }
   };
 
-  const handleSendOtp = () => {
+  const handleSendOtp = async () => {
     const newErrors = {};
     if (!form.mobile || form.mobile.length !== 10) {
       newErrors.mobile = 'Enter a valid 10-digit mobile number';
@@ -70,9 +64,16 @@ const Auth = () => {
       return;
     }
 
-    setOtpSent(true);
-    setTimer(60);
-    showNotification("OTP sent successfully to your mobile number.");
+    try {
+      const res = await api.post('/users/send-otp', { mobile: form.mobile });
+      if (res.data.success) {
+        setOtpSent(true);
+        setTimer(60);
+        showNotification("OTP sent successfully to your mobile number.");
+      }
+    } catch (error) {
+      showNotification(error.response?.data?.message || "Failed to send OTP", "error");
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -100,38 +101,39 @@ const Auth = () => {
     setLoading(true);
 
     try {
-      let token, data;
-
       if (isAdminPath) {
-        if (form.email === 'admin@gmail.com' && form.password === '123456') {
-          token = "admin-mock-token-123";
-          data = { name: 'Admin User', email: form.email, role: 'admin' };
-        } else {
-          throw new Error("Invalid admin credentials.");
+        // Admin Login
+        const res = await api.post('/users/login', {
+          email: form.email,
+          password: form.password
+        });
+        if (res.data.success) {
+          const { token, ...userData } = res.data.data;
+          localStorage.setItem('admin_token', token);
+          if (setUser) setUser(userData);
+          setIsAuthenticated(true);
+          showNotification("Login Successful! Welcome to Sada Bharat.", "success");
+          const from = location.state?.from || '/admin';
+          setTimeout(() => navigate(from), 1200);
         }
       } else {
-        // --- MOCK SUCCESS FOR UI TESTING ---
-        token = "mock-token-123";
-        data = { name: 'Test User', phone: form.mobile, role: 'customer' };
-        // -----------------------------------
+        // Customer Login
+        const res = await api.post('/users/verify-otp', {
+          mobile: form.mobile,
+          otp: form.otp
+        });
+        if (res.data.success) {
+          const { token, ...userData } = res.data.data;
+          localStorage.setItem('customer_token', token);
+          if (setUser) setUser(userData);
+          setIsAuthenticated(true);
+          showNotification("Login Successful! Welcome to Sada Bharat.", "success");
+          const from = location.state?.from || '/';
+          setTimeout(() => navigate(from), 1200);
+        }
       }
-
-      localStorage.setItem(isAdminPath ? 'admin_token' : 'customer_token', token);
-      setUser(data);
-      setIsAuthenticated(true);
-
-      // FCM Push Removed
-
-      showNotification("Login Successful! Welcome to Sada Bharat.");
-      const from = location.state?.from || (isAdminPath ? '/admin' : '/');
-      setTimeout(() => navigate(from), 1200);
-
     } catch (err) {
-      if (err.message === "Invalid admin credentials.") {
-        showNotification(err.message, 'error');
-      } else {
-        showNotification(err.response?.data?.message || "Invalid credentials.", 'error');
-      }
+      showNotification(err.response?.data?.message || "Invalid credentials.", 'error');
     } finally {
       setLoading(false);
     }

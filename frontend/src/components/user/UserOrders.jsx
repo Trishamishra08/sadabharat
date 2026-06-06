@@ -4,14 +4,7 @@ import { FiPackage, FiTruck, FiCheckCircle, FiClock, FiBox, FiX, FiUploadCloud, 
 import { Link } from 'react-router-dom';
 import { useShop } from '../../context/ShopContext';
 
-// MOCK API for Frontend-Only mode
-const api = {
-  get: async () => ({ data: { data: { products: [], categories: [], banners: [], settings: {}, orders: [], users: [], stats: [], recentTransactions: [], dailyRevenue: [], vendors: [], blogs: [], returns: [], testimonials: [], reviews: [], replacements: [], supportTickets: [], locations: [], coupons: [], logs: [] }, status: 'success' } }),
-  post: async () => ({ data: { data: { order: { orderId: 'MOCK-ORDER-123' } }, status: 'success' } }),
-  patch: async () => ({ data: { status: 'success' } }),
-  delete: async () => ({ data: { status: 'success' } })
-};
-
+import api from '../../utils/api';
 
 import ProfileSidebar from './ProfileSidebar';
 
@@ -97,7 +90,7 @@ const RMAModal = ({ order, onClose, isBankOnly = false }) => {
                 <div className="bg-brand-dark px-5 py-3 flex justify-between items-center sticky top-0 z-10">
                     <div>
                         <h2 className="text-white text-[10px] font-black uppercase tracking-widest leading-none mb-1">Ritual Restoration</h2>
-                        <p className="text-white/40 text-[7px] font-bold uppercase tracking-widest">Order ID: {order.orderId}</p>
+                        <p className="text-white/40 text-[7px] font-bold uppercase tracking-widest">Order ID: {order._id?.slice(-6).toUpperCase()}</p>
                     </div>
                     <button onClick={onClose} className="text-white/60 hover:text-white transition-colors">
                         <FiX size={20} />
@@ -316,63 +309,63 @@ const UserOrders = () => {
             <div className="w-full px-4 lg:px-8 flex flex-col lg:flex-row gap-6">
                 <ProfileSidebar activeTab="orders" />
                 
-                <div className="flex-1 flex flex-col gap-5">
-                    <div className="flex justify-between items-end mb-2 border-b border-gray-100 pb-4">
+                <div className="flex-1 flex flex-col gap-4">
+                    <div className="flex justify-between items-center mb-4 pb-2 border-b border-gray-100">
                         <div>
-                            <h1 className="text-3xl md:text-4xl font-serif font-black text-brand-dark uppercase tracking-tighter">
-                                Your <span className="text-brand-pink italic">Journeys</span>
+                            <h1 className="text-2xl font-bold text-[#054425]">
+                                My Orders
                             </h1>
-                            <p className="text-[10px] text-gray-400 font-black uppercase tracking-widest mt-1">
-                                Ritual History : {orders.length} Dispatched
+                            <p className="text-xs text-gray-500 font-medium mt-1">
+                                You have {orders.length} orders
                             </p>
                         </div>
                     </div>
 
-                    <div className="space-y-6">
+                    <div className="space-y-4">
                         {orders.map((order) => (
                             <motion.div
                                 key={order._id}
                                 initial={{ opacity: 0, y: 10 }}
                                 animate={{ opacity: 1, y: 0 }}
-                                className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden group"
+                                className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden group"
                             >
-                                <div className="bg-gray-50/50 px-6 py-4 border-b border-gray-100 flex flex-wrap justify-between items-center gap-4">
-                                    <div className="flex items-center gap-4">
-                                        <div className={`w-10 h-10 rounded-full flex items-center justify-center shadow-inner ${order.status === 'Delivered' ? 'bg-green-50 text-green-600' :
-                                            order.status === 'Processing' ? 'bg-orange-50 text-orange-500' :
-                                                'bg-brand-pink/10 text-brand-pink'
+                                <div className="bg-gray-50/50 py-3 px-4 border-b border-gray-100 flex flex-wrap justify-between items-center gap-4">
+                                    <div className="flex items-center gap-3">
+                                        <div className={`w-8 h-8 rounded-full flex items-center justify-center shadow-sm ${order.status === 'Delivered' ? 'bg-green-100 text-green-700' :
+                                            order.status === 'Processing' ? 'bg-amber-100 text-amber-600' :
+                                                'bg-[#054425]/10 text-[#054425]'
                                             }`}>
-                                            {order.status === 'Delivered' ? <FiCheckCircle size={18} /> : order.status === 'Processing' ? <FiClock size={18} /> : <FiTruck size={18} />}
+                                            {order.status === 'Delivered' ? <FiCheckCircle size={16} /> : order.status === 'Processing' ? <FiClock size={16} /> : <FiTruck size={16} />}
                                         </div>
                                         <div>
-                                            <p className="text-[8px] font-black text-gray-400 uppercase tracking-widest mb-0.5">Order ID</p>
-                                            <p className="text-[11px] font-black text-brand-dark tracking-widest">{order.orderId}</p>
+                                            <p className="text-xs text-gray-500 font-medium">Order ID</p>
+                                            <p className="text-sm font-bold text-gray-900">#{order._id?.slice(-6).toUpperCase()}</p>
                                         </div>
                                     </div>
 
                                     <div className="flex items-center gap-6">
                                         <div className="text-right hidden sm:block">
-                                            <p className="text-[8px] font-black text-gray-400 uppercase tracking-widest mb-0.5">Manifest Placed</p>
-                                            <p className="text-[11px] font-bold text-gray-600">{new Date(order.createdAt).toLocaleDateString()}</p>
+                                            <p className="text-xs text-gray-500 font-medium">Placed On</p>
+                                            <p className="text-sm font-semibold text-gray-900">{new Date(order.createdAt).toLocaleDateString()}</p>
                                         </div>
                                         <div className="text-right">
-                                            <p className="text-[8px] font-black text-gray-400 uppercase tracking-widest mb-0.5">Total Value</p>
-                                            <p className="text-[13px] font-black text-brand-gold">₹{order.totalAmount}</p>
+                                            <p className="text-xs text-gray-500 font-medium">Total</p>
+                                            <p className="text-sm font-bold text-[#054425]">₹{order.totalPrice}</p>
                                         </div>
-                                        <div className="flex flex-wrap items-center gap-3">
+                                        <div className="flex flex-wrap items-center gap-2">
                                             <button
                                                 onClick={(e) => {
                                                     e.preventDefault();
                                                     import('../../utils/invoiceHelper').then(m => m.generateInvoice(order));
                                                 }}
-                                                className="bg-white border-2 border-[#5C2E3E]/10 text-[#5C2E3E] px-4 py-2 rounded-lg text-[9px] font-black uppercase tracking-widest hover:bg-[#5C2E3E] hover:text-white transition-all flex items-center gap-2 shadow-sm"
+                                                className="bg-white border border-gray-200 text-gray-700 px-3 py-1.5 rounded-lg text-xs font-semibold hover:bg-gray-50 transition-all flex items-center gap-1 shadow-sm"
                                             >
-                                                <FiDownload className={order.status === 'Delivered' ? 'text-brand-pink' : ''} />
-                                                Download Invoice
+                                                <FiDownload />
+                                                Invoice
                                             </button>
                                             <Link
-                                                to={`/track-order?id=${order.orderId}`}
-                                                className="bg-[#5C2E3E] text-white px-5 py-2.5 rounded-lg text-[9px] font-black uppercase tracking-widest hover:bg-brand-pink transition-colors shadow-md shadow-brand-pink/10"
+                                                to={`/track-order?id=${order._id}`}
+                                                className="bg-[#054425] text-white px-4 py-1.5 rounded-lg text-xs font-semibold hover:bg-[#04331c] transition-colors shadow-sm"
                                             >
                                                 Track Order
                                             </Link>
@@ -381,23 +374,23 @@ const UserOrders = () => {
                                 </div>
 
                                 {/* Items List */}
-                                <div className="p-6">
-                                    <div className="space-y-4">
-                                        {order.items.map((item, index) => (
+                                <div className="py-2 px-4">
+                                    <div className="space-y-2">
+                                        {order.orderItems?.map((item, index) => (
                                             <Link
                                                 key={index}
-                                                to={`/track-order?id=${order.orderId}`}
-                                                className="flex gap-4 items-center p-3 hover:bg-gray-50 transition-colors rounded-xl group/item border border-transparent hover:border-brand-pink/10"
+                                                to={`/track-order?id=${order._id}`}
+                                                className="flex gap-4 items-center py-1.5 px-2 hover:bg-gray-50 transition-colors rounded-lg group border border-transparent hover:border-gray-200"
                                             >
-                                                <div className="w-16 h-16 bg-[#F9F6F4] rounded-xl overflow-hidden shrink-0 border border-gray-100">
-                                                    <img src={item.image || 'https://via.placeholder.com/150'} alt={item.name} className="w-full h-full object-cover mix-blend-multiply" />
+                                                <div className="w-14 h-14 bg-white rounded-md overflow-hidden shrink-0 border border-gray-100 flex items-center justify-center">
+                                                    <img src={item.image || 'https://via.placeholder.com/150'} alt={item.name} className="max-w-full max-h-full object-contain" />
                                                 </div>
                                                 <div className="flex-1 text-left">
-                                                    <h4 className="text-[11px] font-black font-serif text-[#5C2E3E] uppercase tracking-widest group-hover/item:text-brand-pink transition-colors">{item.name}</h4>
-                                                    <p className="text-[9px] text-gray-400 font-bold uppercase tracking-widest mt-0.5">Qty: {item.quantity}</p>
+                                                    <h4 className="text-sm font-semibold text-gray-900 group-hover:text-[#054425] transition-colors line-clamp-1">{item.name}</h4>
+                                                    <p className="text-xs text-gray-500 font-medium mt-0.5">Qty: {item.qty}</p>
                                                 </div>
-                                                <div className="text-right">
-                                                    <span className="text-[11px] font-black text-gray-600">₹{item.price}</span>
+                                                <div className="text-right pr-2">
+                                                    <span className="text-sm font-bold text-gray-900">₹{item.price}</span>
                                                 </div>
                                             </Link>
                                         ))}

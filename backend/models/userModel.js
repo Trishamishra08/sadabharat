@@ -11,6 +11,10 @@ const userSchema = new mongoose.Schema({
     sparse: true, // Allows null/undefined to be ignored for uniqueness
     lowercase: true,
   },
+  gender: {
+    type: String,
+    enum: ['male', 'female', 'other']
+  },
   mobile: {
     type: String,
     unique: true,
@@ -20,9 +24,14 @@ const userSchema = new mongoose.Schema({
     type: String,
     // Not required globally because 'user' role logs in with OTP
   },
-  address: {
-    type: String
-  },
+  addresses: [
+    {
+      title: { type: String, default: 'Home' },
+      addressLine: String,
+      mobile: String,
+      isDefault: { type: Boolean, default: false }
+    }
+  ],
   profile: {
     type: String
   },
@@ -35,22 +44,15 @@ const userSchema = new mongoose.Schema({
     type: Boolean,
     default: true
   },
-  vendorDetails: {
-    // Storing Vendor specific details here
-    businessName: String,
-    gstNumber: String,
-    businessType: String,
-    businessAddress: String,
-    city: String,
-    state: String,
-    accountHolderName: String,
-    bankName: String,
-    accountNumber: String,
-    ifscCode: String,
-    upiId: String,
-    storeName: String,
-    storeDescription: String,
-    categories: [String],
+  otp: {
+    type: String
+  },
+  otpExpiry: {
+    type: Date
+  },
+  isBlocked: {
+    type: Boolean,
+    default: false
   }
 }, {
   timestamps: true

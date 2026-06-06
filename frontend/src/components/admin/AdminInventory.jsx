@@ -1,271 +1,250 @@
-import React, { useState, useEffect } from 'react';
-import { useShop } from '../../context/ShopContext';
-
-// MOCK API for Frontend-Only mode
-const api = {
-  get: async () => ({ data: { data: { products: [], categories: [], banners: [], settings: {}, orders: [], users: [], stats: [], recentTransactions: [], dailyRevenue: [], vendors: [], blogs: [], returns: [], testimonials: [], reviews: [], replacements: [], supportTickets: [], locations: [], coupons: [], logs: [] }, status: 'success' } }),
-  post: async () => ({ data: { data: { order: { orderId: 'MOCK-ORDER-123' } }, status: 'success' } }),
-  patch: async () => ({ data: { status: 'success' } }),
-  delete: async () => ({ data: { status: 'success' } })
-};
-
-import {
-  FiPackage,
-  FiAlertTriangle,
-  FiArrowUp,
-  FiArrowDown,
-  FiSearch,
-  FiFilter,
-  FiRefreshCw,
-  FiDatabase,
-  FiShoppingBag,
-  FiActivity,
-  FiEdit3,
-  FiCheck,
-  FiX
-} from 'react-icons/fi';
+import React, { useState, useEffect, useCallback } from 'react';
+import { Search, Filter, AlertTriangle, AlertCircle, CheckCircle2, RefreshCw, Database } from 'lucide-react';
 import { motion } from 'framer-motion';
+import api from '../../utils/api';
 
 const AdminInventory = () => {
-  const { products, fetchData } = useShop();
+  const [products, setProducts] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
-  const [filter, setFilter] = useState('All'); // All, Low Stock, Out of Stock
+  const [filter, setFilter] = useState('All Stock');
   const [editingId, setEditingId] = useState(null);
   const [editStockValue, setEditStockValue] = useState('');
   const [isUpdating, setIsUpdating] = useState(false);
-  const [orders, setOrders] = useState([]);
 
-  // Fetch orders for reservation logic
-  useEffect(() => {
-    const fetchOrders = async () => {
-      try {
-        const res = await api.get('/orders');
-        setOrders(res.data.data.orders);
-      } catch (err) {
-        console.error("Failed to fetch orders for inventory analysis:", err);
+  const fetchProducts = useCallback(async () => {
+    try {
+      const res = await api.get('/products/admin');
+      if (res.data.success) {
+        setProducts(res.data.data);
       }
-    };
-    fetchOrders();
+    } catch (err) {
+      console.error('Failed to fetch admin inventory:', err);
+    }
   }, []);
 
-  // Sync with live DB products and calculate reservations
-  const inventoryItems = products.map(p => {
-    // Safety check for products
-    if (!p) return null;
-
-    // Calculate reserved quantities (Orders in Pending, Processing, or Shipped)
-    const reservedCount = (orders || []).reduce((acc, order) => {
-      // Skip null orders or those already Delivered/Cancelled
-      if (!order || !order.items || ['Delivered', 'Cancelled'].includes(order.status)) return acc;
-
-      const orderItem = order.items.find(item => {
-        const itemId = item?.product?._id || item?.product;
-        return String(itemId) === String(p._id);
-      });
-
-      return acc + (orderItem ? (Number(orderItem.quantity) || 0) : 0);
-    }, 0);
-
-    return {
-      ...p,
-      id: p._id,
-      stock: p.stock !== undefined ? p.stock : 100,
-      reserved: reservedCount,
-      warehouse: 'Primary Vault',
-      lastUpdated: new Date(p.updatedAt || Date.now()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-    };
-  }).filter(Boolean); // Filter out any null entries
-
-  const filteredItems = inventoryItems.filter(item => {
-    const displayId = item.id.slice(-6).toUpperCase();
-    const matchesSearch = item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      displayId.toLowerCase().includes(searchQuery.toLowerCase());
-
-    if (filter === 'Low Stock') return matchesSearch && item.stock < 10 && item.stock > 0;
-    if (filter === 'Out of Stock') return matchesSearch && item.stock === 0;
-    return matchesSearch;
-  });
+  useEffect(() => {
+    fetchProducts();
+  }, [fetchProducts]);
 
   const handleUpdateStock = async (id) => {
     if (editStockValue === '' || isNaN(editStockValue)) return;
     setIsUpdating(true);
     try {
-      await api.patch(`/products/${id}`, { stock: Number(editStockValue) });
-      fetchData(); // Sync globally
+      await api.put(`/inventory/${id}`, { stock: Number(editStockValue) });
+      fetchProducts();
       setEditingId(null);
     } catch (error) {
-      alert("Failed to patch inventory bounds.");
+      alert("Failed to update stock: " + (error.response?.data?.message || error.message));
     } finally {
       setIsUpdating(false);
     }
   };
 
+  const inventoryItems = products.map(p => ({
+    id: p._id,
+    name: p.name,
+    sku: p.sku || `SB-${p._id.slice(-6).toUpperCase()}`,
+    stock: p.stock !== undefined ? p.stock : 100,
+    price: p.price || 0,
+    vendorName: p.vendor?.fullName || p.vendor?.storeName || (p.admin ? (p.admin.name || 'Admin') : 'System'),
+    alert: 15,
+    updated: new Date(p.updatedAt || Date.now()).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+    status: p.stock === 0 ? 'Out of Stock' : p.stock < 15 ? 'Low Stock' : 'Healthy'
+  }));
+
+  const filteredItems = inventoryItems.filter(item => {
+    const matchesSearch = item.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
+                          item.sku.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                          item.vendorName.toLowerCase().includes(searchQuery.toLowerCase());
+    
+    if (filter === 'Low Stock') return matchesSearch && item.stock < item.alert && item.stock > 0;
+    if (filter === 'Out of Stock') return matchesSearch && item.stock === 0;
+    return matchesSearch;
+  });
+
+  const outOfStockCount = inventoryItems.filter(i => i.stock === 0).length;
+  const lowStockCount = inventoryItems.filter(i => i.stock > 0 && i.stock < i.alert).length;
+  const healthyStockCount = inventoryItems.filter(i => i.stock >= i.alert).length;
   const totalValuation = inventoryItems.reduce((acc, item) => acc + (item.price * item.stock), 0);
 
-  const stats = [
-    { title: 'Total SKUs', value: inventoryItems.length, icon: <FiPackage />, color: 'text-blue-600', bg: 'bg-blue-50' },
-    { title: 'Critical Stock', value: inventoryItems.filter(i => i.stock < 10 && i.stock > 0).length, icon: <FiAlertTriangle />, color: 'text-red-500', bg: 'bg-red-50' },
-    { title: 'Out of Stock', value: inventoryItems.filter(i => i.stock === 0).length, icon: <FiActivity />, color: 'text-admin-accent', bg: 'bg-brand-light' },
-    { title: 'Vault Valuation', value: `₹${(totalValuation / 100000).toFixed(2)}L`, icon: <FiDatabase />, color: 'text-green-600', bg: 'bg-green-50' }
-  ];
-
   return (
-    <div className="max-w-7xl mx-auto space-y-4">
-      <div className="flex justify-between items-end">
+    <div className="space-y-4 pb-6 max-w-[1400px] mx-auto -mt-2">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-3xl font-['Cormorant',_serif] font-bold text-admin-dark leading-none mb-1">
-            Inventory Vault
-          </h1>
-          <p className="text-gray-500 text-[13px] font-poppins">Real-time Stock Audits & Warehousing</p>
+          <h1 className="text-2xl font-serif font-bold text-gray-900 leading-tight">Inventory Vault</h1>
+          <p className="text-[12px] text-gray-500 mt-0.5 font-sans">Real-time Stock Audits & Warehousing.</p>
         </div>
-        <div className="flex items-center gap-2">
-          <button onClick={() => fetchData()} className="flex items-center gap-2 bg-white px-3 py-1.5 rounded-none border border-admin-accent/5 text-xs font-sans font-bold uppercase tracking-widest shadow-sm hover:bg-admin-accent/[0.02] transition-colors active:scale-95">
-            <FiRefreshCw /> REFRESH LIVE DATA
-          </button>
-        </div>
+        <button onClick={fetchProducts} className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-lg text-[13px] font-medium text-gray-700 hover:bg-gray-50 shadow-sm transition-colors">
+          <RefreshCw size={14} /> Refresh Live Data
+        </button>
+      </div>
+      
+      {/* Alert Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-2">
+        <motion.div 
+          initial={{ opacity: 0, rotateX: 90 }} whileInView={{ opacity: 1, rotateX: 0 }} viewport={{ once: false, amount: 0.2 }} transition={{ type: "spring", stiffness: 300, damping: 20 }}
+          className="bg-[#FFF0F0] border border-red-100 p-4 rounded-xl flex items-center gap-4 shadow-sm"
+        >
+          <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center text-red-500 shadow-sm"><AlertCircle size={20} /></div>
+          <div>
+            <p className="text-[11px] font-bold text-red-600 uppercase tracking-wide mb-0.5">Out of Stock</p>
+            <h3 className="text-xl font-medium text-gray-800 font-sans">{outOfStockCount}</h3>
+          </div>
+        </motion.div>
+        <motion.div 
+          initial={{ opacity: 0, rotateX: 90 }} whileInView={{ opacity: 1, rotateX: 0 }} viewport={{ once: false, amount: 0.2 }} transition={{ type: "spring", stiffness: 300, damping: 20, delay: 0.1 }}
+          className="bg-[#FFF8E1] border border-orange-100 p-4 rounded-xl flex items-center gap-4 shadow-sm"
+        >
+          <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center text-orange-500 shadow-sm"><AlertTriangle size={20} /></div>
+          <div>
+            <p className="text-[11px] font-bold text-orange-600 uppercase tracking-wide mb-0.5">Low Stock</p>
+            <h3 className="text-xl font-medium text-gray-800 font-sans">{lowStockCount}</h3>
+          </div>
+        </motion.div>
+        <motion.div 
+          initial={{ opacity: 0, rotateX: 90 }} whileInView={{ opacity: 1, rotateX: 0 }} viewport={{ once: false, amount: 0.2 }} transition={{ type: "spring", stiffness: 300, damping: 20, delay: 0.2 }}
+          className="bg-[#E8F5E9] border border-green-100 p-4 rounded-xl flex items-center gap-4 shadow-sm"
+        >
+          <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center text-[#2E7D32] shadow-sm"><CheckCircle2 size={20} /></div>
+          <div>
+            <p className="text-[11px] font-bold text-[#2E7D32] uppercase tracking-wide mb-0.5">Healthy Stock</p>
+            <h3 className="text-xl font-medium text-gray-800 font-sans">{healthyStockCount}</h3>
+          </div>
+        </motion.div>
+        <motion.div 
+          initial={{ opacity: 0, rotateX: 90 }} whileInView={{ opacity: 1, rotateX: 0 }} viewport={{ once: false, amount: 0.2 }} transition={{ type: "spring", stiffness: 300, damping: 20, delay: 0.3 }}
+          className="bg-[#F3E8FF] border border-purple-100 p-4 rounded-xl flex items-center gap-4 shadow-sm"
+        >
+          <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center text-purple-600 shadow-sm"><Database size={20} /></div>
+          <div>
+            <p className="text-[11px] font-bold text-purple-600 uppercase tracking-wide mb-0.5">Vault Valuation</p>
+            <h3 className="text-xl font-medium text-gray-800 font-sans">₹{(totalValuation / 100000).toFixed(2)}L</h3>
+          </div>
+        </motion.div>
       </div>
 
-      {/* Analytics Grid */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        {stats.map((stat, i) => (
-          <motion.div
-            key={i}
-            whileHover={{ y: -2 }}
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: i * 0.1 }}
-            className="bg-white p-3.5 rounded-xl border border-gray-100 shadow-sm flex items-center justify-between group cursor-default"
-          >
-            <div className="flex flex-col">
-              <span className="text-sm font-sans font-medium text-gray-500 capitalize tracking-normal leading-none mb-1">{stat.title}</span>
-              <span className="text-xl font-bold text-gray-800">{stat.value}</span>
-            </div>
-            <div className={`w-10 h-10 ${stat.bg} ${stat.color} rounded-lg flex items-center justify-center shadow-inner group-hover:scale-105 transition-transform`}>
-              {React.cloneElement(stat.icon, { size: 18 })}
-            </div>
-          </motion.div>
-        ))}
-      </div>
-
-      {/* Inventory Controls */}
-      <div className="flex flex-col md:flex-row gap-4 items-center justify-between bg-white p-3 border border-admin-accent/5 shadow-sm">
-        <div className="flex items-center gap-2 w-full md:w-96">
-          <div className="flex-1 bg-brand-light/20 border border-admin-accent/5 p-2 flex items-center gap-2 group focus-within:border-admin-accent/20 transition-all">
-            <FiSearch size={14} className="text-gray-300" />
-            <input
-              type="text"
-              placeholder="Filter by SKU or Product Name..."
-              className="bg-transparent border-none outline-none text-sm font-sans font-medium capitalize w-full"
+      <div className="bg-white rounded-xl shadow-[0_2px_10px_rgba(0,0,0,0.02)] border border-gray-100 overflow-hidden">
+        {/* Toolbar */}
+        <div className="p-3 border-b border-gray-100 flex flex-col sm:flex-row justify-between items-center gap-3">
+          <div className="relative w-full sm:w-72">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={14} />
+            <input 
+              type="text" 
+              placeholder="Search SKU, Product, or Vendor..." 
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full pl-8 pr-3 py-1.5 bg-gray-50 border border-gray-200 rounded-lg text-[12px] focus:outline-none focus:border-[#054425] focus:ring-1 focus:ring-[#054425] font-sans font-medium"
             />
           </div>
-        </div>
-        <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-2 md:pb-0">
-          {['All', 'Low Stock', 'Out of Stock'].map(f => (
-            <button
-              key={f}
-              onClick={() => setFilter(f)}
-              className={`px-4 py-1.5 text-xs font-sans font-bold uppercase tracking-widest border transition-all ${filter === f ? 'bg-admin-dark text-white border-brand-dark' : 'bg-transparent text-gray-400 border-gray-100 hover:border-admin-accent/20'}`}
+          <div className="flex gap-2 w-full sm:w-auto">
+            <select 
+              value={filter}
+              onChange={(e) => setFilter(e.target.value)}
+              className="flex-1 sm:flex-none bg-white border border-gray-200 rounded-lg px-3 py-1.5 text-[12px] font-medium text-gray-700 outline-none hover:bg-gray-50 cursor-pointer"
             >
-              {f}
-            </button>
-          ))}
+              <option>All Stock</option>
+              <option>Low Stock</option>
+              <option>Out of Stock</option>
+            </select>
+          </div>
         </div>
-      </div>
 
-      {/* Stock Table */}
-      <div className="bg-white rounded-none border border-admin-accent/10 shadow-xl overflow-hidden">
+        {/* Table */}
         <div className="overflow-x-auto">
-          <table className="w-full text-left">
+          <table className="w-full text-left border-collapse">
             <thead>
-              <tr className="bg-admin-dark text-white">
-                <th className="px-6 py-4 text-xs font-sans font-bold uppercase tracking-widest">Asset info</th>
-                <th className="px-6 py-4 text-xs font-sans font-bold uppercase tracking-widest">Warehouse</th>
-                <th className="px-6 py-4 text-xs font-sans font-bold uppercase tracking-widest">Stock Level</th>
-                <th className="px-6 py-4 text-xs font-sans font-bold uppercase tracking-widest text-right">Unit Price</th>
+              <tr className="bg-gray-50/50 text-[11px] text-gray-500 uppercase tracking-widest border-b border-gray-100">
+                <th className="px-4 py-3 font-semibold">Product & SKU</th>
+                <th className="px-4 py-3 font-semibold">Owner / Vendor</th>
+                <th className="px-4 py-3 font-semibold">Current Stock</th>
+                <th className="px-4 py-3 font-semibold">Status</th>
+                <th className="px-4 py-3 font-semibold">Last Updated</th>
+                <th className="px-4 py-3 font-semibold text-right">Update Stock</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-brand-pink/5">
+            <tbody className="text-[12px] text-gray-800">
               {filteredItems.map((item) => (
-                <tr key={item.id} className="hover:bg-brand-light/10 transition-colors group">
-                  <td className="px-6 py-4">
-                    <div className="flex items-center gap-4">
-                      <div className="w-10 h-10 bg-brand-light/20 p-1 border border-admin-accent/5 shrink-0 relative">
-                        <img src={item.image} alt="" className="w-full h-full object-contain mix-blend-multiply opacity-80" />
-                        {item.stock < 10 && (
-                          <div className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 border-2 border-white rounded-full animate-ping" />
-                        )}
-                      </div>
-                      <div>
-                        <h4 className="text-sm font-sans font-medium text-gray-800 line-clamp-1 max-w-[180px] leading-tight mb-1">{item.name}</h4>
-                        <div className="flex items-center gap-2">
-                          <span className="text-[11px] font-medium text-admin-accent uppercase">ID: {item.id.slice(-6).toUpperCase()}</span>
-                          <span className="w-1 h-1 bg-gray-200 rounded-full" />
-                          <span className="text-xs font-medium text-gray-400">CAT: {item.category}</span>
-                        </div>
-                      </div>
+                <tr key={item.id} className={`border-b transition-colors relative ${item.stock === 0 ? 'bg-red-50/20 border-red-100' : 'border-gray-50 hover:bg-gray-50/50'}`}>
+                  <td className="px-4 py-2.5 relative">
+                    {item.stock === 0 && (
+                      <motion.div 
+                        initial={{ x: '-200%' }}
+                        animate={{ x: '1000%' }}
+                        transition={{ repeat: Infinity, duration: 3, ease: "linear" }}
+                        className="absolute inset-y-0 w-1/2 bg-gradient-to-r from-transparent via-red-500/15 to-transparent pointer-events-none z-0"
+                      />
+                    )}
+                    <div className="relative z-10">
+                      <p className="font-medium text-gray-800 leading-tight">{item.name}</p>
+                      <p className="text-[11px] text-gray-500 mt-0.5">{item.sku}</p>
                     </div>
                   </td>
-                  <td className="px-6 py-4 text-sm font-sans font-medium text-gray-600">{item.warehouse}</td>
-                  <td className="px-6 py-4">
-                    <div className="space-y-1.5 min-w-[140px]">
+                  <td className="px-4 py-2.5">
+                    <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 text-[10px] font-bold border border-blue-100">
+                      {item.vendorName}
+                    </span>
+                  </td>
+                  <td className="px-4 py-2.5 font-medium font-sans text-[13px] text-gray-800">{item.stock}</td>
+                  <td className="px-4 py-2.5">
+                    <span className={`px-2 py-0.5 rounded text-[9px] font-bold ${
+                      item.status === 'Healthy' ? 'bg-[#E8F5E9] text-[#2E7D32] border border-[#C8E6C9]' : 
+                      item.status === 'Low Stock' ? 'bg-[#FFF8E1] text-[#F9A825] border border-[#FFECB3]' : 
+                      'bg-[#FFEBEE] text-[#C62828] border border-[#FFCDD2]'
+                    }`}>
+                      {item.status}
+                    </span>
+                  </td>
+                  <td className="px-4 py-2.5 text-gray-500 text-[11px] font-medium">{item.updated}</td>
+                  <td className="px-4 py-2.5 text-right">
+                    <div className="flex justify-end items-center gap-2">
                       {editingId === item.id ? (
-                        <div className="flex items-center gap-2">
-                          <input
-                            type="number"
+                        <>
+                          <input 
+                            type="number" 
                             autoFocus
-                            value={editStockValue}
+                            value={editStockValue} 
                             onChange={(e) => setEditStockValue(e.target.value)}
-                            className="w-16 bg-white border border-admin-accent/20 rounded px-2 py-1 text-xs font-bold outline-none ring-1 ring-brand-pink/10"
                             disabled={isUpdating}
+                            className="w-14 px-2 py-1 border border-[#054425] rounded-md text-[11px] text-center outline-none ring-1 ring-[#054425]/20" 
                           />
-                          <button onClick={() => handleUpdateStock(item.id)} disabled={isUpdating} className="text-green-500 hover:text-green-600 disabled:opacity-50">
-                            <FiCheck size={14} />
+                          <button 
+                            onClick={() => handleUpdateStock(item.id)} 
+                            disabled={isUpdating}
+                            className="px-2 py-1 bg-[#054425] text-white font-medium rounded-md hover:bg-black transition-colors text-[11px] disabled:opacity-50"
+                          >
+                            Save
                           </button>
-                          <button onClick={() => setEditingId(null)} disabled={isUpdating} className="text-red-400 hover:text-red-500 disabled:opacity-50">
-                            <FiX size={14} />
+                          <button 
+                            onClick={() => setEditingId(null)} 
+                            disabled={isUpdating}
+                            className="px-2 py-1 border border-gray-200 text-gray-700 font-medium rounded-md hover:bg-gray-50 transition-colors text-[11px] disabled:opacity-50"
+                          >
+                            Cancel
                           </button>
-                        </div>
+                        </>
                       ) : (
-                        <div className="flex justify-between items-center text-xs font-medium capitalize group/edit cursor-pointer" onClick={() => { setEditingId(item.id); setEditStockValue(String(item.stock)); }}>
-                          <span className={`${item.stock < 10 ? 'text-red-500 font-black animate-pulse' : 'text-gray-500'} flex items-center gap-1`}>
-                            {item.stock} Units <FiEdit3 size={10} className="text-admin-accent/50" />
-                          </span>
-                          <span className={`${item.stock < 10 ? 'text-red-400' : 'text-gray-300'}`}>{item.stock === 0 ? 'Depleted' : 'In Stock'}</span>
-                        </div>
+                        <button 
+                          onClick={() => { setEditingId(item.id); setEditStockValue(String(item.stock)); }}
+                          className="px-3 py-1 border border-gray-200 text-gray-700 font-medium rounded-md hover:bg-gray-50 transition-colors text-[11px]"
+                        >
+                          Edit Stock
+                        </button>
                       )}
-
-                      <div className="h-1 bg-gray-100 rounded-none overflow-hidden flex">
-                        <motion.div
-                          initial={{ width: 0 }}
-                          animate={{ width: `${Math.min(100, (item.stock / 50) * 100)}%` }}
-                          className={`h-full ${item.stock < 10 ? 'bg-red-500' : item.stock < 25 ? 'bg-amber-400' : 'bg-admin-accent'}`}
-                        />
-                      </div>
-                      <div className="flex justify-between items-center pt-1">
-                        <span className={`text-xs font-medium capitalize tracking-normal ${item.stock > 40 ? 'text-green-500' : 'text-gray-400'}`}>
-                          {item.stock > 40 ? 'High Demand' : item.stock > 15 ? 'Stable' : 'Risk Factor'}
-                        </span>
-                        <span className="text-xs text-gray-400 font-medium capitalize truncate max-w-[80px]">Update: {item.lastUpdated}</span>
-                      </div>
                     </div>
-                  </td>
-                  <td className="px-6 py-4 text-right">
-                    <p className="text-sm font-sans font-medium text-gray-800 leading-none">₹{item.price}</p>
-                    <p className="text-xs text-gray-400 font-medium tracking-normal mt-1">Total: ₹{item.price * item.stock}</p>
                   </td>
                 </tr>
               ))}
+              {filteredItems.length === 0 && (
+                <tr>
+                  <td colSpan="6" className="py-12 text-center text-gray-400 text-sm">
+                    No products found in inventory.
+                  </td>
+                </tr>
+              )}
             </tbody>
           </table>
         </div>
-        {filteredItems.length === 0 && (
-          <div className="p-20 text-center">
-            <div className="text-gray-200 mb-4 flex justify-center"><FiShoppingBag size={48} /></div>
-            <p className="text-sm font-sans font-medium text-gray-500 tracking-wider capitalize">No Assets Found In Current Audit</p>
-          </div>
-        )}
       </div>
     </div>
   );

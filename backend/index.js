@@ -3,6 +3,13 @@ const express = require('express');
 const cors = require('cors');
 const userRoutes = require('./routes/userRoutes');
 const categoryRoutes = require('./routes/categoryRoutes');
+const productRoutes = require('./routes/productRoutes');
+const bannerRoutes = require('./routes/bannerRoutes');
+const settingsRoutes = require('./routes/settingsRoutes');
+const vendorRoutes = require('./routes/vendorRoutes');
+const uploadRoutes = require('./routes/uploadRoutes');
+const inventoryRoutes = require('./routes/inventoryRoutes');
+const orderRoutes = require('./routes/orderRoutes');
 const { errorHandler } = require('./middlewares/errorHandler');
 const connectDB = require('./config/db');
 
@@ -20,6 +27,16 @@ app.use(express.urlencoded({ extended: true }));
 // Routes
 app.use('/api/users', userRoutes);
 app.use('/api/categories', categoryRoutes);
+app.use('/api/products', productRoutes);
+app.use('/api/banners', bannerRoutes);
+app.use('/api/settings', settingsRoutes);
+app.use('/api/vendors', vendorRoutes);
+app.use('/api/upload', uploadRoutes);
+app.use('/api/inventory', inventoryRoutes);
+app.use('/api/orders', orderRoutes);
+
+const path = require('path');
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Root Route
 app.get('/', (req, res) => {

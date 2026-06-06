@@ -147,22 +147,22 @@ const Navbar = () => {
       className="sticky top-0 z-50 w-full shadow-sm bg-white"
     >
       {/* ROW 1: Branding, Search & Main Icons (Super Compact with Soft Premium Herbal Gradient) */}
-      <div className="py-2 border-b border-gray-100" style={{ background: 'linear-gradient(135deg, #F5F9F6 0%, #E2ECE5 100%)' }}>
-        <div className="w-full px-2 flex items-center justify-between gap-4">
+      <div className="py-1 md:py-1.5 border-b border-gray-100" style={{ background: 'linear-gradient(135deg, #F5F9F6 0%, #E2ECE5 100%)' }}>
+        <div className="w-full px-2 lg:px-4 flex items-center justify-between gap-2 md:gap-4">
           
           {/* Left Column: Logo Brand Block aligned to the left corner (No Overlap) */}
           <div className="flex items-center justify-start shrink-0">
-            <Link to="/" className="flex items-center gap-1.5 md:gap-3.5 cursor-pointer group">
+            <Link to="/" className="flex items-center gap-1.5 md:gap-2 cursor-pointer group">
               <img
                 src={logo}
                 alt="Sada Bharat Logo"
-                className="h-8 md:h-16 w-auto object-contain transition-transform group-hover:scale-105"
+                className="h-8 md:h-11 w-auto object-contain transition-transform group-hover:scale-105"
               />
               
               <div className="flex flex-col leading-none select-none">
                 {/* website name styled as a proper heading */}
                 <h1 
-                  className="text-[12px] md:text-xl font-black uppercase whitespace-nowrap"
+                  className="text-[12px] md:text-[17px] font-black uppercase whitespace-nowrap"
                   style={{ 
                     fontFamily: "'Cormorant Garamond', serif", 
                     color: '#054425', 
@@ -173,10 +173,10 @@ const Navbar = () => {
                 </h1>
                 
                 {/* tagline "AYURVEDIC" underneath with elegant gold lines */}
-                <div className="flex items-center gap-0.5 md:gap-1.5 w-full justify-center mt-0.5 md:mt-1">
+                <div className="flex items-center gap-0.5 md:gap-1 w-full justify-center mt-0 md:mt-0.5">
                   <span className="h-[1px] bg-[#D4AF37] flex-1"></span>
                   <span 
-                    className="text-[5px] md:text-[8px] uppercase tracking-[0.2em] text-[#054425] font-black"
+                    className="text-[5px] md:text-[7px] uppercase tracking-[0.2em] text-[#054425] font-black"
                     style={{ fontFamily: "'Inter', sans-serif" }}
                   >
                     Ayurvedic
@@ -188,17 +188,17 @@ const Navbar = () => {
           </div>
 
           {/* Center Column: Perfectly Centered Search Bar (Premium Capsule Shape) */}
-          <div className="hidden md:flex flex-1 justify-center max-w-3xl mx-6">
+          <div className="hidden md:flex flex-1 justify-center max-w-2xl mx-4 lg:mx-8">
             <form onSubmit={handleSearchSubmit} className="w-full">
-              <div className="relative w-full flex">
+              <div className="relative w-full flex shadow-sm">
                 <div className="relative flex-1">
-                  <FiSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-sm" />
+                  <FiSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-[13px]" />
                   <input
                     type="text"
                     placeholder="Search Ayurvedic products..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full bg-white border border-gray-200 rounded-l-full pl-10 pr-4 py-2 md:py-2.5 text-xs md:text-sm font-medium text-gray-700 focus:bg-white focus:border-[#054425] outline-none transition-all placeholder:text-gray-400 font-sans"
+                    className="w-full bg-white border border-gray-200 rounded-l-full pl-9 pr-4 py-1.5 md:py-[7px] text-[13px] font-medium text-gray-700 focus:bg-white focus:border-[#054425] outline-none transition-all placeholder:text-gray-400 font-sans"
                   />
                 </div>
                 <button
@@ -425,14 +425,14 @@ const Navbar = () => {
       </div>
 
       {/* ROW 2: Navigation Links Bar (Forest Green Background, Tighter Padding) */}
-      <div className="hidden lg:block bg-[#054425] py-2">
-        <div className="container mx-auto px-8 flex justify-center items-center">
-          <div className="flex items-center gap-10">
+      <div className="hidden lg:block bg-[#054425] py-0.5">
+        <div className="container mx-auto px-4 flex justify-center items-center">
+          <div className="flex items-center gap-6 lg:gap-8">
             {menuItems.map((item) => (
-              <div key={item.name} className="relative group py-2">
+              <div key={item.name} className="relative group py-1.5">
                 <Link
                   to={item.link}
-                  className="flex items-center gap-1.5 text-sm font-semibold uppercase tracking-wider text-white hover:text-[#D4AF37] transition-colors relative py-0.5"
+                  className="flex items-center gap-1.5 text-[13px] font-semibold uppercase tracking-wider text-white hover:text-[#D4AF37] transition-colors relative py-0.5"
                   style={{ fontFamily: "'Cormorant Garamond', serif" }}
                 >
                   {item.hasIcon && <FiHome className="text-sm" />}
@@ -458,39 +458,22 @@ const Navbar = () => {
                   }>
                     {item.isMegaMenu ? (
                       <div className="w-full grid grid-cols-4 gap-8">
-                        {/* Column 1: Basic Categories */}
-                        <div className="flex flex-col gap-3">
-                          <h4 className="text-[11px] font-black uppercase text-[#054425] tracking-widest border-b border-[#054425]/10 pb-2 mb-2">By Category</h4>
-                          {categories && categories.slice(0, 6).map((cat, idx) => (
-                            <Link key={idx} to={`/shop?category=${encodeURIComponent(cat.name)}`} className="text-[12px] text-gray-600 hover:text-[#054425] hover:font-bold transition-all" style={{ fontFamily: "'Poppins', sans-serif" }}>
-                              {cat.name}
-                            </Link>
-                          ))}
-                        </div>
-                        {/* Column 2: By Concern */}
-                        <div className="flex flex-col gap-3">
-                          <h4 className="text-[11px] font-black uppercase text-[#054425] tracking-widest border-b border-[#054425]/10 pb-2 mb-2">By Concern</h4>
-                          {['Hair Fall', 'Acne & Pimple', 'Glowing Skin', 'Immunity Boost', 'Digestion', 'Stress Relief'].map((concern, idx) => (
-                            <Link key={idx} to={`/shop?search=${encodeURIComponent(concern)}`} className="text-[12px] text-gray-600 hover:text-[#054425] hover:font-bold transition-all" style={{ fontFamily: "'Poppins', sans-serif" }}>
-                              {concern}
-                            </Link>
-                          ))}
-                        </div>
-                        {/* Column 3: Top Ingredients */}
-                        <div className="flex flex-col gap-3">
-                          <h4 className="text-[11px] font-black uppercase text-[#054425] tracking-widest border-b border-[#054425]/10 pb-2 mb-2">Key Ingredients</h4>
-                          {[
-                            { name: 'Ashwagandha', price: 'Vitality' },
-                            { name: 'Bhringraj', price: 'Hair Growth' },
-                            { name: 'Neem & Tulsi', price: 'Purifying' },
-                            { name: 'Turmeric (Haldi)', price: 'Glow' },
-                            { name: 'Amla', price: 'Vitamin C' }
-                          ].map((ing, idx) => (
-                            <Link key={idx} to={`/shop?search=${encodeURIComponent(ing.name)}`} className="flex flex-col group/ing" style={{ fontFamily: "'Poppins', sans-serif" }}>
-                              <span className="text-[12px] text-gray-700 group-hover/ing:text-[#054425] group-hover/ing:font-bold transition-all">{ing.name}</span>
-                              <span className="text-[9px] text-gray-400 italic">For {ing.price}</span>
-                            </Link>
-                          ))}
+                        {/* Dynamic Categories (Spanning 3 grid columns) */}
+                        <div className="col-span-3">
+                          <h4 className="text-[11px] font-black uppercase text-[#054425] tracking-widest border-b border-[#054425]/10 pb-2 mb-4">All Categories</h4>
+                          {categories && categories.length > 0 ? (
+                            <div className="columns-1 md:columns-2 lg:columns-3 gap-8">
+                              {categories.map((cat, idx) => (
+                                <div key={idx} className="break-inside-avoid mb-3">
+                                  <Link to={`/shop?category=${encodeURIComponent(cat.name)}`} className="text-[13px] text-gray-600 hover:text-[#054425] hover:font-bold transition-all block" style={{ fontFamily: "'Poppins', sans-serif" }}>
+                                    {cat.name}
+                                  </Link>
+                                </div>
+                              ))}
+                            </div>
+                          ) : (
+                            <div className="text-sm text-gray-500 py-4">Loading categories...</div>
+                          )}
                         </div>
                         {/* Column 4: Promotional Block */}
                         <div className="flex flex-col rounded-xl overflow-hidden group/promo relative bg-[#F4F8F5]">

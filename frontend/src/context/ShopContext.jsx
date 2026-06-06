@@ -1,8 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import api from '../utils/api';
 import { motion, AnimatePresence } from 'framer-motion';
-
-import { initialProducts } from '../data/products';
 import realApi from '../utils/api';
 
 const ShopContext = createContext();
@@ -46,21 +44,10 @@ const FlyItem = ({ item, onComplete }) => {
   );
 };
 
-const fallbackBanners = [
-  {
-    _id: 'ayur-slide-1',
-    title: 'Pure Ayurvedic\nGoodness',
-    subtitle: '100% NATURAL',
-    description: 'Natural ingredients for a healthy body, mind & soul',
-    image: '/ayurvedic_hero.png',
-    link: '/shop'
-  }
-];
-
 export const ShopProvider = ({ children }) => {
-  const [products, setProducts] = useState(initialProducts);
+  const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
-  const [banners, setBanners] = useState(fallbackBanners);
+  const [banners, setBanners] = useState([]);
   const [cart, setCart] = useState([]);
   const [wishlist, setWishlist] = useState([]);
   const [settings, setSettings] = useState({
@@ -120,10 +107,10 @@ export const ShopProvider = ({ children }) => {
     try {
       setLoading(true);
       const [prodRes, catRes, banRes, setRes] = await Promise.all([
-        api.get('/products').catch(() => ({ data: { data: { products: [] } } })),
-        realApi.get('/categories').catch(() => ({ data: { data: [] } })),
-        api.get('/banners').catch(() => ({ data: { data: { banners: [] } } })),
-        api.get('/settings').catch(() => ({ data: { data: { settings: {} } } }))
+        api.get('/products'),
+        realApi.get('/categories'),
+        api.get('/banners'),
+        api.get('/settings')
       ]);
 
       // Load custom products from localStorage
@@ -137,13 +124,8 @@ export const ShopProvider = ({ children }) => {
         console.error("Failed to parse custom products", e);
       }
 
-      const apiProducts = prodRes.data.data.products;
-      let mergedProducts = [];
-      if (apiProducts && apiProducts.length > 0 && apiProducts.some(p => p.name?.toLowerCase().includes('bhringraj') || p.category?.toLowerCase().includes('hair'))) {
-        mergedProducts = [...apiProducts];
-      } else {
-        mergedProducts = [...initialProducts];
-      }
+      const apiProducts = prodRes.data.data.products || [];
+      let mergedProducts = [...apiProducts];
 
       // Add custom products at the beginning if they don't already exist by _id
       customProducts.forEach(cp => {
@@ -166,12 +148,8 @@ export const ShopProvider = ({ children }) => {
         setCategories([]);
       }
 
-      const apiBanners = banRes.data.data.banners;
-      if (apiBanners && apiBanners.length > 0) {
-        setBanners(apiBanners);
-      } else {
-        setBanners(fallbackBanners);
-      }
+      const apiBanners = banRes.data.data.banners || [];
+      setBanners(apiBanners);
 
       if (setRes.data.data.settings) {
         setSettings(setRes.data.data.settings);
@@ -188,15 +166,10 @@ export const ShopProvider = ({ children }) => {
         }
       } catch (e) {}
 
-      let mergedProducts = [...initialProducts];
-      customProducts.forEach(cp => {
-        if (!mergedProducts.some(p => p._id === cp._id)) {
-          mergedProducts.unshift(cp);
-        }
-      });
+      let mergedProducts = [...(customProducts || [])];
       setProducts(mergedProducts);
       setCategories([]);
-      setBanners(fallbackBanners);
+      setBanners([]);
     } finally {
       setLoading(false);
     }
@@ -209,18 +182,9 @@ export const ShopProvider = ({ children }) => {
     const token = localStorage.getItem(tokenKey);
 
     if (token) {
-      // --- MOCK SUCCESS FOR UI TESTING ---
-      if (token === "mock-token-123") {
-        setIsAuthenticated(true);
-        setUser({ name: 'Test User', role: isAdminScope ? 'admin' : 'customer' });
-        setIsAuthLoading(false);
-        return;
-      }
-      // -----------------------------------
-
       try {
-        const res = await api.get('/auth/me');
-        if (res.data.status === 'success') {
+        const res = await api.get('/users/profile');
+        if (res.data.success) {
           setIsAuthenticated(true);
           setUser(res.data.data.user);
         }
@@ -263,7 +227,12 @@ export const ShopProvider = ({ children }) => {
     try {
       if (!isAuthenticated) throw new Error("User unauthorized.");
 
-      const { items: _, totalAmount: __, couponCode: ___, ...shippingAddress } = details;
+      const { items: _, totalAmount: __, couponCode: ___, ...restDetails } = details;
+      const shippingAddress = {
+        ...restDetails,
+        postalCode: restDetails.pincode,
+        country: restDetails.country || "India"
+      };
 
       const payload = {
         razorpay_order_id: razorpayResponse.razorpay_order_id,
@@ -314,7 +283,12 @@ export const ShopProvider = ({ children }) => {
       const defaultTotal = cart.reduce((acc, item) => acc + (item.price * item.quantity), 0);
       const totalAmount = customTotal !== undefined ? customTotal : defaultTotal;
 
-      const { couponCode, ...shippingAddress } = details;
+      const { couponCode, ...restDetails } = details;
+      const shippingAddress = {
+        ...restDetails,
+        postalCode: restDetails.pincode,
+        country: restDetails.country || "India"
+      };
 
       const payload = {
         items: (details.items || cart).map(item => ({

@@ -200,10 +200,13 @@ const AdminRoutes = () => (
       <Route path="/settings" element={<AdminSettings />} />
       <Route path="/inventory" element={<AdminInventory />} />
       <Route path="/vendors" element={<AdminVendors />} />
+      <Route path="/vendors/pending" element={<AdminVendors />} />
+      <Route path="/vendors/blocked" element={<AdminVendors />} />
       <Route path="/returns" element={<AdminReturns />} />
       <Route path="/coupons" element={<AdminCoupons />} />
       <Route path="/offers" element={<AdminOffers />} />
       <Route path="/customers" element={<AdminUsers />} />
+      <Route path="/customers/blocked" element={<AdminUsers />} />
       <Route path="/blogs" element={<AdminBlogs />} />
       <Route path="/testimonials" element={<AdminTestimonials />} />
       <Route path="/reviews" element={<AdminReviews />} />
@@ -219,13 +222,13 @@ const VendorRoutes = () => (
     {/* Public Vendor Routes */}
     <Route path="/login" element={<VendorLogin />} />
     <Route path="/register" element={<VendorRegister />} />
-
     {/* Protected Vendor Routes */}
     <Route element={<VendorAuthGuard />}>
       <Route element={<VendorLayout />}>
         <Route path="/" element={<VendorDashboard />} />
         <Route path="/products" element={<VendorProducts />} />
         <Route path="/add-product" element={<VendorAddProduct />} />
+        <Route path="/edit-product/:id" element={<VendorAddProduct />} />
         <Route path="/inventory" element={<VendorInventory />} />
         <Route path="/orders" element={<VendorOrders />} />
         <Route path="/returns" element={<VendorReturns />} />
