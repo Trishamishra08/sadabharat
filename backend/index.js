@@ -10,6 +10,9 @@ const vendorRoutes = require('./routes/vendorRoutes');
 const uploadRoutes = require('./routes/uploadRoutes');
 const inventoryRoutes = require('./routes/inventoryRoutes');
 const orderRoutes = require('./routes/orderRoutes');
+const offerRoutes = require('./routes/offerRoutes');
+const couponRoutes = require('./routes/couponRoutes');
+const blogRoutes = require('./routes/blogRoutes');
 const { errorHandler } = require('./middlewares/errorHandler');
 const connectDB = require('./config/db');
 
@@ -34,6 +37,15 @@ app.use('/api/vendors', vendorRoutes);
 app.use('/api/upload', uploadRoutes);
 app.use('/api/inventory', inventoryRoutes);
 app.use('/api/orders', orderRoutes);
+app.use('/api/offers', offerRoutes);
+app.use('/api/coupons', couponRoutes);
+app.use('/api/blogs', blogRoutes);
+const adminRoutes = require('./routes/adminRoutes');
+app.use('/api/admins', adminRoutes);
+const testimonialRoutes = require('./routes/testimonialRoutes');
+app.use('/api/testimonials', testimonialRoutes);
+const notificationRoutes = require('./routes/notificationRoutes');
+app.use('/api/notifications', notificationRoutes);
 
 const path = require('path');
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));

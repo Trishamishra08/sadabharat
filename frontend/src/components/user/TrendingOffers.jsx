@@ -1,31 +1,29 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
+import api from '../../utils/api';
 
 const TrendingOffers = () => {
-  const offers = [
-    {
-      id: 1,
-      badge: 'Up to 30% OFF',
-      title: 'On Hair Care Products',
-      image: '/hair_care_offer.png',
-      link: '/shop?category=Hair Care'
-    },
-    {
-      id: 2,
-      badge: 'Flat 20% OFF',
-      title: 'On Skin Care Range',
-      image: '/skin_care_offer.png',
-      link: '/shop?category=Skin Care'
-    },
-    {
-      id: 3,
-      badge: 'Free',
-      title: 'Herbal Tea\nOn Orders Above ₹999',
-      image: '/herbal_tea_offer.png',
-      link: '/shop?category=Herbal Tea'
-    }
-  ];
+  const [offers, setOffers] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchOffers = async () => {
+      try {
+        const res = await api.get('/offers');
+        if (res.data?.success) {
+          setOffers(res.data.data);
+        }
+      } catch (err) {
+        console.error('Failed to fetch trending offers:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchOffers();
+  }, []);
+
+  if (loading) return null;
 
   return (
     <section className="pt-4 md:pt-6 pb-2 md:pb-4 bg-white overflow-hidden">
@@ -59,7 +57,7 @@ const TrendingOffers = () => {
           >
             {[...offers, ...offers].map((offer, index) => (
               <div
-                key={`${offer.id}-${index}`}
+                key={offer._id || index}
                 className="relative w-[300px] md:w-[450px] shrink-0 aspect-[3.5/2.1] rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-500 group border border-gray-100 bg-[#F4F8F5]"
               >
                 {/* Product Background Image */}
@@ -88,7 +86,7 @@ const TrendingOffers = () => {
 
                   {/* Pill-shaped Dark Green Shop Now Button */}
                   <Link
-                    to={offer.link}
+                    to={`/shop?category=${offer.category}`}
                     className="bg-[#054425] hover:bg-[#0d5c34] text-white px-5 py-2.5 rounded-full text-[9px] font-black uppercase tracking-widest transition-colors w-fit shadow-md hover:shadow-lg active:scale-95"
                   >
                     Shop Now

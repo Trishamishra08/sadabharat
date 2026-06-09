@@ -8,7 +8,7 @@ import api from '../../utils/api';
 
 import ProfileSidebar from './ProfileSidebar';
 
-const RMAModal = ({ order, onClose, isBankOnly = false }) => {
+export const RMAModal = ({ order, onClose, isBankOnly = false }) => {
 
     const { user } = useShop();
     const [reason, setReason] = useState('');
@@ -25,16 +25,27 @@ const RMAModal = ({ order, onClose, isBankOnly = false }) => {
         ifscCode: user?.bankDetails?.ifscCode || ''
     });
 
+    // Convert file to Base64 to store in DB directly (as there's no upload endpoint available)
+    const fileToBase64 = (file) => {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = () => resolve(reader.result);
+            reader.onerror = (error) => reject(error);
+        });
+    };
+
     const handleFileChange = async (e) => {
         const files = Array.from(e.target.files);
         if (files.length === 0) return;
 
         setIsUploading(true);
         try {
-            const uploadPromises = files.map(file => uploadToCloudinary(file));
-            const urls = await Promise.all(uploadPromises);
-            setImages(prev => [...prev, ...urls]);
+            const uploadPromises = files.map(file => fileToBase64(file));
+            const base64Images = await Promise.all(uploadPromises);
+            setImages(prev => [...prev, ...base64Images]);
         } catch (err) {
+            console.error(err);
             alert("Visual verification upload failed. Please try smaller files.");
         } finally {
             setIsUploading(false);
@@ -52,8 +63,14 @@ const RMAModal = ({ order, onClose, isBankOnly = false }) => {
             };
 
             if (action === 'Refund') {
-                if (!bankDetails.accountNumber || !bankDetails.ifscCode) {
-                    return alert("Bank Details are essential for sacred refunds.");
+                if (!bankDetails.accountName.trim() || !bankDetails.bankName.trim()) {
+                    return alert("Please provide a valid Account Holder Name and Bank Name.");
+                }
+                if (!bankDetails.accountNumber || bankDetails.accountNumber.length < 9) {
+                    return alert("Please enter a valid Account Number (minimum 9 digits).");
+                }
+                if (!bankDetails.ifscCode || bankDetails.ifscCode.length !== 11) {
+                    return alert("Please enter a valid 11-character IFSC Code.");
                 }
                 payload.refundAccountDetails = bankDetails;
             }
@@ -105,17 +122,17 @@ const RMAModal = ({ order, onClose, isBankOnly = false }) => {
                         <div className="grid grid-cols-2 gap-3">
                             <button
                                 onClick={() => setAction('Refund')}
-                                className={`py-4 px-4 border rounded-xl flex flex-col items-center gap-2 transition-all ${action === 'Refund' ? 'bg-brand-pink/10 border-brand-pink text-brand-pink shadow-inner' : 'bg-gray-50 border-gray-100 text-gray-400 hover:border-gray-200'}`}
+                                className={`py-4 px-4 border rounded-xl flex flex-col items-center gap-2 transition-all ${action === 'Refund' ? 'bg-[#054425]/10 border-[#054425] text-[#054425] shadow-inner' : 'bg-gray-50 border-gray-100 text-gray-400 hover:border-gray-200'}`}
                             >
                                 <FiTruck size={16} />
-                                <span className="text-[8px] font-black uppercase tracking-widest">Return & Refund</span>
+                                <span className="text-[8px] font-black uppercase tracking-widest font-['Poppins']">Return & Refund</span>
                             </button>
                             <button
                                 onClick={() => setAction('Replace')}
-                                className={`py-3 px-3 border rounded-xl flex flex-col items-center gap-1.5 transition-all ${action === 'Replace' ? 'bg-brand-gold/10 border-brand-gold text-brand-gold shadow-inner' : 'bg-gray-50 border-gray-100 text-gray-400 hover:border-gray-200'}`}
+                                className={`py-3 px-3 border rounded-xl flex flex-col items-center gap-1.5 transition-all ${action === 'Replace' ? 'bg-[#054425]/10 border-[#054425] text-[#054425] shadow-inner' : 'bg-gray-50 border-gray-100 text-gray-400 hover:border-gray-200'}`}
                             >
                                 <FiBox size={16} />
-                                <span className="text-[8px] font-black uppercase tracking-widest">Replacement</span>
+                                <span className="text-[8px] font-black uppercase tracking-widest font-['Poppins']">Replacement</span>
                             </button>
                         </div>
                     </div>
@@ -139,7 +156,7 @@ const RMAModal = ({ order, onClose, isBankOnly = false }) => {
                             value={reason}
                             onChange={(e) => setReason(e.target.value)}
                             placeholder="Detail the issue..."
-                            className="w-full bg-gray-50 border border-gray-100 rounded-xl px-4 py-2.5 text-[10px] font-bold outline-none focus:border-brand-pink/30 h-20 resize-none transition-all"
+                            className="w-full bg-gray-50 border border-gray-100 rounded-xl px-4 py-2.5 text-xs font-['Poppins'] text-gray-800 outline-none focus:border-[#054425]/30 h-20 resize-none transition-all"
                         />
                     </div>
 
@@ -175,9 +192,13 @@ const RMAModal = ({ order, onClose, isBankOnly = false }) => {
                                     <input
                                         type="text"
                                         value={bankDetails.accountName}
-                                        onChange={(e) => setBankDetails({ ...bankDetails, accountName: e.target.value })}
-                                        className="w-full bg-white border border-gray-100 rounded-lg px-2.5 py-1.5 text-[10px] font-bold text-brand-dark focus:border-brand-pink/30 outline-none"
+                                        onChange={(e) => {
+                                            const val = e.target.value.replace(/[^a-zA-Z\s]/g, '');
+                                            setBankDetails({ ...bankDetails, accountName: val });
+                                        }}
+                                        className="w-full bg-white border border-gray-200 rounded-lg px-3 py-2 text-xs font-medium text-gray-800 font-['Poppins'] focus:border-green-500 focus:ring-1 focus:ring-green-500 outline-none transition-all"
                                         placeholder="Name on account"
+                                        maxLength={50}
                                     />
                                 </div>
                                 <div className="space-y-1">
@@ -185,9 +206,13 @@ const RMAModal = ({ order, onClose, isBankOnly = false }) => {
                                     <input
                                         type="text"
                                         value={bankDetails.accountNumber}
-                                        onChange={(e) => setBankDetails({ ...bankDetails, accountNumber: e.target.value })}
-                                        className="w-full bg-white border border-gray-100 rounded-lg px-2.5 py-1.5 text-[10px] font-bold text-brand-dark focus:border-brand-pink/30 outline-none"
+                                        onChange={(e) => {
+                                            const val = e.target.value.replace(/\D/g, ''); // Only digits
+                                            setBankDetails({ ...bankDetails, accountNumber: val });
+                                        }}
+                                        className="w-full bg-white border border-gray-200 rounded-lg px-3 py-2 text-xs font-medium text-gray-800 font-['Poppins'] focus:border-green-500 focus:ring-1 focus:ring-green-500 outline-none transition-all"
                                         placeholder="000000000000"
+                                        maxLength={18}
                                     />
                                 </div>
                                 <div className="space-y-1">
@@ -195,9 +220,13 @@ const RMAModal = ({ order, onClose, isBankOnly = false }) => {
                                     <input
                                         type="text"
                                         value={bankDetails.bankName}
-                                        onChange={(e) => setBankDetails({ ...bankDetails, bankName: e.target.value })}
-                                        className="w-full bg-white border border-gray-100 rounded-lg px-2.5 py-1.5 text-[10px] font-bold text-brand-dark focus:border-brand-pink/30 outline-none"
+                                        onChange={(e) => {
+                                            const val = e.target.value.replace(/[^a-zA-Z\s]/g, '');
+                                            setBankDetails({ ...bankDetails, bankName: val });
+                                        }}
+                                        className="w-full bg-white border border-gray-200 rounded-lg px-3 py-2 text-xs font-medium text-gray-800 font-['Poppins'] focus:border-green-500 focus:ring-1 focus:ring-green-500 outline-none transition-all"
                                         placeholder="Bank Name"
+                                        maxLength={50}
                                     />
                                 </div>
                                 <div className="space-y-1">
@@ -205,9 +234,13 @@ const RMAModal = ({ order, onClose, isBankOnly = false }) => {
                                     <input
                                         type="text"
                                         value={bankDetails.ifscCode}
-                                        onChange={(e) => setBankDetails({ ...bankDetails, ifscCode: e.target.value.toUpperCase() })}
-                                        className="w-full bg-white border border-gray-100 rounded-lg px-2.5 py-1.5 text-[10px] font-bold text-brand-dark focus:border-brand-pink/30 outline-none"
+                                        onChange={(e) => {
+                                            const val = e.target.value.replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
+                                            setBankDetails({ ...bankDetails, ifscCode: val });
+                                        }}
+                                        className="w-full bg-white border border-gray-200 rounded-lg px-3 py-2 text-xs font-medium text-gray-800 font-['Poppins'] focus:border-green-500 focus:ring-1 focus:ring-green-500 outline-none transition-all"
                                         placeholder="IFSC0000000"
+                                        maxLength={11}
                                     />
                                 </div>
                             </div>

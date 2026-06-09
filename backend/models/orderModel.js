@@ -86,6 +86,27 @@ const orderSchema = new mongoose.Schema({
   },
   deliveredAt: {
     type: Date
+  },
+  returnStatus: {
+    type: String,
+    enum: ['Not Requested', 'Return Requested', 'Return Approved', 'Return Rejected', 'Returned', 'Replace Requested', 'Replace Approved', 'Replace Rejected', 'Replaced'],
+    default: 'Not Requested'
+  },
+  returnReason: {
+    type: String
+  },
+  returnAction: {
+    type: String,
+    enum: ['Refund', 'Replace']
+  },
+  returnImages: [{
+    type: String
+  }],
+  refundAccountDetails: {
+    accountName: String,
+    bankName: String,
+    accountNumber: String,
+    ifscCode: String
   }
 }, {
   timestamps: true

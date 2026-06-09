@@ -1,16 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { FiPlus, FiEdit2, FiTrash2, FiLayers, FiCalendar, FiClock, FiUploadCloud } from 'react-icons/fi';
-
-// MOCK API for Frontend-Only mode
-const api = {
-  get: async () => ({ data: { data: { products: [], categories: [], banners: [], settings: {}, orders: [], users: [], stats: [], recentTransactions: [], dailyRevenue: [], vendors: [], blogs: [], returns: [], testimonials: [], reviews: [], replacements: [], supportTickets: [], locations: [], coupons: [], logs: [] }, status: 'success' } }),
-  post: async () => ({ data: { data: { order: { orderId: 'MOCK-ORDER-123' } }, status: 'success' } }),
-  patch: async () => ({ data: { status: 'success' } }),
-  delete: async () => ({ data: { status: 'success' } })
-};
-
-
+import api from '../../utils/api';
 
 const AdminBlogs = () => {
     const [blogs, setBlogs] = useState([]);
@@ -47,14 +38,24 @@ const AdminBlogs = () => {
 
     const handleChange = (e) => setFormData({ ...formData, [e.target.name]: e.target.value });
 
+    // Base64 File Conversion
+    const fileToBase64 = (file) => {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = () => resolve(reader.result);
+            reader.onerror = (error) => reject(error);
+        });
+    };
+
     const handleFileChange = async (e) => {
         const file = e.target.files[0];
         if (!file) return;
 
         setIsUploading(true);
         try {
-            const url = URL.createObjectURL(file);
-            setFormData(prev => ({ ...prev, image: url }));
+            const base64 = await fileToBase64(file);
+            setFormData(prev => ({ ...prev, image: base64 }));
         } catch (err) {
             alert('Upload failed: ' + err.message);
         } finally {
@@ -90,15 +91,11 @@ const AdminBlogs = () => {
     };
 
     return (
-        <div className="pt-8 md:pt-12 pb-12 px-4 md:px-8 space-y-8 max-w-7xl mx-auto">
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div className="px-6 py-4">
+            <div className="flex items-center justify-between mb-4">
                 <div>
-                    <h1 className="text-3xl font-['Cormorant',_serif] font-bold text-admin-dark leading-none mb-2">
-          <FiLayers className="text-admin-accent" /> Journal Management
-        </h1>
-        <p className="text-gray-500 text-[13px] font-poppins">
-          Editorial content & storytelling
-        </p>
+                    <h1 className="text-xl font-semibold text-gray-800">Journal Management</h1>
+                    <p className="text-xs text-gray-400 mt-0.5">Editorial content & storytelling</p>
                 </div>
                 <button
                     onClick={() => { 

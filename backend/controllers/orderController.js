@@ -53,6 +53,29 @@ const createOrder = async (req, res) => {
 
     const createdOrder = await order.save();
 
+    // Create Earning records for vendor products
+    const Earning = require('../models/earningModel');
+    for (const item of createdOrder.orderItems) {
+      if (item.vendor) {
+        const commissionRate = 15; // Default 15% platform commission
+        const itemTotal = item.price * item.qty;
+        const commissionAmount = (itemTotal * commissionRate) / 100;
+        const netEarning = itemTotal - commissionAmount;
+
+        await Earning.create({
+          vendor: item.vendor,
+          order: createdOrder._id,
+          orderItem: item._id,
+          productName: item.name,
+          totalAmount: itemTotal,
+          commissionRate,
+          commissionAmount,
+          netEarning,
+          status: 'Pending' // Initially pending until delivered
+        });
+      }
+    }
+
     res.status(201).json({
       success: true,
       data: {
@@ -175,6 +198,28 @@ const verifyRazorpayOrder = async (req, res) => {
     });
 
     const createdOrder = await order.save();
+
+    const Earning = require('../models/earningModel');
+    for (const item of createdOrder.orderItems) {
+      if (item.vendor) {
+        const commissionRate = 15;
+        const itemTotal = item.price * item.qty;
+        const commissionAmount = (itemTotal * commissionRate) / 100;
+        const netEarning = itemTotal - commissionAmount;
+
+        await Earning.create({
+          vendor: item.vendor,
+          order: createdOrder._id,
+          orderItem: item._id,
+          productName: item.name,
+          totalAmount: itemTotal,
+          commissionRate,
+          commissionAmount,
+          netEarning,
+          status: 'Pending'
+        });
+      }
+    }
 
     res.status(200).json({
       success: true,
@@ -308,6 +353,87 @@ const updateOrderItemStatus = async (req, res) => {
   }
 };
 
+// @desc    Request a return or replacement
+// @route   PATCH /api/orders/:id/request-return
+// @access  Private
+const requestReturn = async (req, res) => {
+  try {
+    const { returnReason, returnAction, returnImages, refundAccountDetails } = req.body;
+    const order = await Order.findById(req.params.id);
+
+    if (!order) {
+      return res.status(404).json({ success: false, message: 'Order not found' });
+    }
+
+    if (order.user.toString() !== req.user._id.toString()) {
+      return res.status(401).json({ success: false, message: 'Not authorized' });
+    }
+
+    const allDelivered = order.orderItems.length > 0 && order.orderItems.every(item => item.status === 'Delivered');
+    if (!allDelivered) {
+      return res.status(400).json({ success: false, message: 'Can only request return for fully delivered orders' });
+    }
+
+    order.returnStatus = returnAction === 'Replace' ? 'Replace Requested' : 'Return Requested';
+    order.returnReason = returnReason;
+    order.returnAction = returnAction;
+    if (returnImages) order.returnImages = returnImages;
+    if (refundAccountDetails) order.refundAccountDetails = refundAccountDetails;
+
+    await order.save();
+
+    res.status(200).json({ success: true, message: 'Return/Replacement requested successfully', data: order });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// @desc    Update refund details
+// @route   PATCH /api/orders/:id/update-refund-details
+// @access  Private
+const updateRefundDetails = async (req, res) => {
+  try {
+    const { refundAccountDetails } = req.body;
+    const order = await Order.findById(req.params.id);
+
+    if (!order) {
+      return res.status(404).json({ success: false, message: 'Order not found' });
+    }
+
+    if (order.user.toString() !== req.user._id.toString()) {
+      return res.status(401).json({ success: false, message: 'Not authorized' });
+    }
+
+    order.refundAccountDetails = refundAccountDetails;
+    await order.save();
+
+    res.status(200).json({ success: true, message: 'Refund details updated', data: order });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// @desc    Admin update return/replacement status
+// @route   PATCH /api/orders/:id/admin-update-return
+// @access  Private (Admin)
+const adminUpdateReturn = async (req, res) => {
+  try {
+    const { returnStatus } = req.body;
+    const order = await Order.findById(req.params.id);
+
+    if (!order) {
+      return res.status(404).json({ success: false, message: 'Order not found' });
+    }
+
+    order.returnStatus = returnStatus;
+    await order.save();
+
+    res.status(200).json({ success: true, message: `Return status updated to ${returnStatus}`, data: order });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
 module.exports = {
   createOrder,
   createRazorpayOrder,
@@ -316,5 +442,8 @@ module.exports = {
   getOrderById,
   getVendorOrders,
   getAdminOrders,
-  updateOrderItemStatus
+  updateOrderItemStatus,
+  requestReturn,
+  updateRefundDetails,
+  adminUpdateReturn
 };

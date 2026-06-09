@@ -310,7 +310,7 @@ const VendorLayout = () => {
         </header>
 
         {/* Content Area */}
-        <div className="p-4 md:p-5 lg:p-6">
+        <div className="p-4 md:p-5 lg:p-6 min-h-[calc(100vh-56px)]">
           <Outlet />
         </div>
       </main>

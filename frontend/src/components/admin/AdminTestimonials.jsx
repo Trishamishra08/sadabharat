@@ -1,16 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { FiPlus, FiEdit2, FiTrash2, FiUsers, FiStar, FiCheckCircle, FiUpload } from 'react-icons/fi';
-
-// MOCK API for Frontend-Only mode
-const api = {
-  get: async () => ({ data: { data: { products: [], categories: [], banners: [], settings: {}, orders: [], users: [], stats: [], recentTransactions: [], dailyRevenue: [], vendors: [], blogs: [], returns: [], testimonials: [], reviews: [], replacements: [], supportTickets: [], locations: [], coupons: [], logs: [] }, status: 'success' } }),
-  post: async () => ({ data: { data: { order: { orderId: 'MOCK-ORDER-123' } }, status: 'success' } }),
-  patch: async () => ({ data: { status: 'success' } }),
-  delete: async () => ({ data: { status: 'success' } })
-};
-
-
+import api from '../../utils/api';
 
 const AdminTestimonials = () => {
     const [testimonials, setTestimonials] = useState([]);
@@ -21,11 +12,11 @@ const AdminTestimonials = () => {
 
     const initialFormState = {
         name: '',
-        text: '',
+        content: '',
         image: '',
         rating: 5,
-        rotate: 'rotate-2',
-        status: 'Approved'
+        role: 'Verified Buyer',
+        isApproved: true
     };
 
     const [formData, setFormData] = useState(initialFormState);
@@ -36,11 +27,11 @@ const AdminTestimonials = () => {
 
         try {
             setUploading(true);
-            const url = URL.createObjectURL(file);
+            const url = URL.createObjectURL(file); // Note: replace with real upload if needed
             setFormData(prev => ({ ...prev, image: url }));
         } catch (err) {
             console.error('Upload failed:', err);
-            alert('Image upload failed: Secure bridge connection failed.');
+            alert('Image upload failed.');
         } finally {
             setUploading(false);
         }
@@ -49,7 +40,7 @@ const AdminTestimonials = () => {
     const fetchTestimonials = async () => {
         try {
             setLoading(true);
-            const res = await api.get('/testimonials/admin');
+            const res = await api.get('/admins/testimonials');
             setTestimonials(res.data.data.testimonials);
         } catch (err) {
             console.error('Failed to fetch testimonials:', err);
@@ -65,10 +56,12 @@ const AdminTestimonials = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
+            // Handle parsing status to isApproved Boolean
+            const payload = { ...formData, isApproved: formData.status === 'Approved' };
             if (editingId) {
-                await api.patch(`/testimonials/${editingId}`, formData);
+                await api.patch(`/admins/testimonials/${editingId}`, payload);
             } else {
-                await api.post('/testimonials', formData);
+                await api.post('/admins/testimonials', payload);
             }
             setIsModalOpen(false);
             setEditingId(null);
@@ -82,7 +75,7 @@ const AdminTestimonials = () => {
     const handleDelete = async (id) => {
         if (!window.confirm('Archive this feedback?')) return;
         try {
-            await api.delete(`/testimonials/${id}`);
+            await api.delete(`/admins/testimonials/${id}`);
             fetchTestimonials();
         } catch (err) {
             alert('Delete failed');
@@ -125,13 +118,13 @@ const AdminTestimonials = () => {
                                     <h3 className="text-sm font-black text-brand-dark uppercase tracking-tighter">{testi.name}</h3>
                                     <div className="flex text-brand-gold gap-0.5"><FiStar size={10} fill="currentColor" /> <FiStar size={10} fill="currentColor" /> <FiStar size={10} fill="currentColor" /> <FiStar size={10} fill="currentColor" /> <FiStar size={10} fill="currentColor" /></div>
                                 </div>
-                                <p className="text-[10px] text-gray-500 leading-relaxed line-clamp-4 italic">"{testi.text}"</p>
+                                <p className="text-[10px] text-gray-500 leading-relaxed line-clamp-4 italic">"{testi.content}"</p>
                                 <div className="flex items-center justify-between pt-4 border-t border-gray-50">
-                                    <span className={`text-[8px] font-black uppercase px-2 py-1 flex items-center gap-1 ${testi.status === 'Approved' ? 'bg-green-50 text-green-600' : 'bg-orange-50 text-orange-600'}`}>
-                                        <FiCheckCircle size={10} /> {testi.status}
+                                    <span className={`text-[8px] font-black uppercase px-2 py-1 flex items-center gap-1 ${testi.isApproved ? 'bg-green-50 text-green-600' : 'bg-orange-50 text-orange-600'}`}>
+                                        <FiCheckCircle size={10} /> {testi.isApproved ? 'Approved' : 'Pending'}
                                     </span>
                                     <div className="flex items-center gap-1">
-                                        <button onClick={() => { setEditingId(testi._id); setFormData(testi); setIsModalOpen(true); }} className="p-2 text-gray-300 hover:text-brand-pink transition-colors"><FiEdit2 size={12} /></button>
+                                        <button onClick={() => { setEditingId(testi._id); setFormData({...testi, status: testi.isApproved ? 'Approved' : 'Pending'}); setIsModalOpen(true); }} className="p-2 text-gray-300 hover:text-brand-pink transition-colors"><FiEdit2 size={12} /></button>
                                         <button onClick={() => handleDelete(testi._id)} className="p-2 text-gray-300 hover:text-red-500 transition-colors"><FiTrash2 size={12} /></button>
                                     </div>
                                 </div>
@@ -174,7 +167,7 @@ const AdminTestimonials = () => {
                                 </div>
                                 <div className="md:col-span-2 space-y-1">
                                     <label className="text-[8px] font-bold text-gray-400 uppercase tracking-widest">Voice Narrative</label>
-                                    <textarea name="text" value={formData.text || ''} onChange={handleChange} required className="w-full bg-gray-50 border border-transparent p-3 text-[10px] font-bold outline-none focus:bg-white focus:border-brand-pink-lite transition-all h-20 resize-none" placeholder="Enter customer success story..."></textarea>
+                                    <textarea name="content" value={formData.content || ''} onChange={handleChange} required className="w-full bg-gray-50 border border-transparent p-3 text-[10px] font-bold outline-none focus:bg-white focus:border-brand-pink-lite transition-all h-20 resize-none" placeholder="Enter customer success story..."></textarea>
                                 </div>
                                 <div className="space-y-1">
                                     <label className="text-[8px] font-bold text-gray-400 uppercase tracking-widest">Aesthetic Rotation</label>

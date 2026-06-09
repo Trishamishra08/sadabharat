@@ -51,25 +51,25 @@ import AdminCategories from './components/admin/AdminCategories';
 import AdminUsers from './components/admin/AdminUsers';
 import AdminOrders from './components/admin/AdminOrders';
 import AdminFinance from './components/admin/AdminFinance';
+import AdminPayouts from './components/admin/AdminPayouts';
 import AdminBanners from './components/admin/AdminBanners';
 import AdminSettings from './components/admin/AdminSettings';
 import AdminLayout from './components/admin/AdminLayout';
 import AdminComingSoon from './components/admin/AdminComingSoon';
 import AdminInventory from './components/admin/AdminInventory';
-import AdminCoupons from './components/admin/AdminCoupons';
+import AdminCoupons from './components/admin/AdminCoupons';
 import AdminOffers from './components/admin/AdminOffers';
 import AdminVendors from './components/admin/AdminVendors';
 import AdminReturns from './components/admin/AdminReturns';
 import AdminBlogs from './components/admin/AdminBlogs';
-import AdminTestimonials from './components/admin/AdminTestimonials';
 import AdminInstagram from './components/admin/AdminInstagram';
 import AdminReplacements from './components/admin/AdminReplacements';
 import AdminReviews from './components/admin/AdminReviews';
+import AdminNotifications from './components/admin/AdminNotifications';
 import AdminSupport from './components/admin/AdminSupport';
 import AdminLogistics from './components/admin/AdminLogistics';
 import AdminLocations from './components/admin/AdminLocations';
 import AdminLogin from './components/admin/AdminLogin';
-import { FiBox, FiRotateCcw, FiRefreshCw, FiTag, FiShoppingBag, FiUsers } from 'react-icons/fi';
 
 // Vendor Module Imports
 import VendorLayout from './components/vendor/VendorLayout';
@@ -183,6 +183,8 @@ const UserRoutes = () => {
   );
 };
 
+
+
 const AdminRoutes = () => (
   <Routes>
     {/* Standalone Route for Admin Login */}
@@ -196,6 +198,7 @@ const AdminRoutes = () => (
       <Route path="/users" element={<AdminUsers />} />
       <Route path="/orders" element={<AdminOrders />} />
       <Route path="/finance" element={<AdminFinance />} />
+      <Route path="/payouts" element={<AdminPayouts />} />
       <Route path="/banners" element={<AdminBanners />} />
       <Route path="/settings" element={<AdminSettings />} />
       <Route path="/inventory" element={<AdminInventory />} />
@@ -208,8 +211,8 @@ const AdminRoutes = () => (
       <Route path="/customers" element={<AdminUsers />} />
       <Route path="/customers/blocked" element={<AdminUsers />} />
       <Route path="/blogs" element={<AdminBlogs />} />
-      <Route path="/testimonials" element={<AdminTestimonials />} />
       <Route path="/reviews" element={<AdminReviews />} />
+      <Route path="/notifications" element={<AdminNotifications />} />
       <Route path="/support" element={<AdminSupport />} />
       <Route path="/logistics" element={<AdminLogistics />} />
       <Route path="/locations" element={<AdminLocations />} />

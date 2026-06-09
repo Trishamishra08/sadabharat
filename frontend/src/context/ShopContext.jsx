@@ -47,6 +47,7 @@ const FlyItem = ({ item, onComplete }) => {
 export const ShopProvider = ({ children }) => {
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
+  const [offers, setOffers] = useState([]);
   const [banners, setBanners] = useState([]);
   const [cart, setCart] = useState([]);
   const [wishlist, setWishlist] = useState([]);
@@ -106,11 +107,12 @@ export const ShopProvider = ({ children }) => {
   const fetchData = useCallback(async () => {
     try {
       setLoading(true);
-      const [prodRes, catRes, banRes, setRes] = await Promise.all([
-        api.get('/products'),
+      const [prodRes, catRes, banRes, setRes, offerRes] = await Promise.all([
+        realApi.get('/products'),
         realApi.get('/categories'),
-        api.get('/banners'),
-        api.get('/settings')
+        realApi.get('/banners'),
+        api.get('/settings'),
+        realApi.get('/offers')
       ]);
 
       // Load custom products from localStorage
@@ -153,6 +155,10 @@ export const ShopProvider = ({ children }) => {
 
       if (setRes.data.data.settings) {
         setSettings(setRes.data.data.settings);
+      }
+
+      if (offerRes.data.success && offerRes.data.data) {
+        setOffers(offerRes.data.data);
       }
     } catch (err) {
       console.error("Failed to fetch store data, using high-fidelity fallback:", err.message);
@@ -398,6 +404,7 @@ export const ShopProvider = ({ children }) => {
       fetchData,
       products,
       categories,
+      offers,
       banners,
       cart,
       wishlist,

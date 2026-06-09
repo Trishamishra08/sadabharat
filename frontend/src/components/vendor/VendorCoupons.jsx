@@ -1,7 +1,32 @@
-import React from 'react';
-import { Tag, Plus } from 'lucide-react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { Tag } from 'lucide-react';
+import api from '../../utils/api';
 
 const VendorCoupons = () => {
+  const [coupons, setCoupons] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  const fetchCoupons = useCallback(async () => {
+      try {
+          setLoading(true);
+          const res = await api.get('/coupons');
+          const fetched = res.data?.data?.coupons;
+          if (fetched && fetched.length > 0) {
+              setCoupons(fetched);
+          } else {
+              setCoupons([]);
+          }
+      } catch (err) {
+          console.error("Failed to fetch coupons:", err);
+      } finally {
+          setLoading(false);
+      }
+  }, []);
+
+  useEffect(() => {
+      fetchCoupons();
+  }, [fetchCoupons]);
+
   return (
     <div className="space-y-4 pb-6 max-w-[1400px] mx-auto -mt-2">
       <div className="flex justify-between items-center">
@@ -9,9 +34,6 @@ const VendorCoupons = () => {
           <h1 className="text-2xl font-serif font-bold text-gray-900 leading-tight">Coupons</h1>
           <p className="text-[12px] text-gray-500 mt-0.5 font-sans">Manage your discount codes and promotions.</p>
         </div>
-        <button className="flex items-center gap-1.5 px-3 py-1.5 bg-[#054425] text-white rounded-lg text-[12px] font-medium shadow-sm hover:bg-[#04331c] transition-colors">
-          <Plus size={14} /> Create Coupon
-        </button>
       </div>
 
       <div className="bg-white rounded-xl shadow-[0_2px_10px_rgba(0,0,0,0.02)] border border-gray-100 overflow-hidden">
@@ -27,30 +49,38 @@ const VendorCoupons = () => {
               </tr>
             </thead>
             <tbody className="text-[12px] text-gray-800">
-              {[
-                { code: 'SUMMER20', discount: '20% OFF', usage: '45/100', expiry: 'Jun 30, 2024', status: 'Active' },
-                { code: 'WELCOME10', discount: '10% OFF', usage: 'Unlimited', expiry: 'Dec 31, 2024', status: 'Active' },
-                { code: 'FLASH50', discount: '₹50 OFF', usage: '500/500', expiry: 'May 15, 2024', status: 'Expired' },
-              ].map((coupon, i) => (
-                <tr key={i} className="border-b border-gray-50 hover:bg-gray-50/50 transition-colors">
-                  <td className="px-4 py-2.5">
-                    <div className="flex items-center gap-2">
-                       <Tag size={14} className="text-[#388E3C]" />
-                       <span className="font-medium text-gray-800">{coupon.code}</span>
-                    </div>
-                  </td>
-                  <td className="px-4 py-2.5 font-medium text-gray-800">{coupon.discount}</td>
-                  <td className="px-4 py-2.5 text-gray-600 font-medium">{coupon.usage}</td>
-                  <td className="px-4 py-2.5 text-gray-500 font-medium">{coupon.expiry}</td>
-                  <td className="px-4 py-2.5">
-                    <span className={`px-2 py-0.5 rounded text-[9px] font-bold ${
-                      coupon.status === 'Active' ? 'bg-[#E8F5E9] text-[#2E7D32] border border-[#C8E6C9]' : 'bg-[#FFEBEE] text-[#C62828] border border-[#FFCDD2]'
-                    }`}>
-                      {coupon.status}
-                    </span>
-                  </td>
-                </tr>
-              ))}
+              {loading ? (
+                  <tr><td colSpan="5" className="px-4 py-10 text-center text-gray-400 font-medium">Loading coupons...</td></tr>
+              ) : coupons.length > 0 ? (
+                  coupons.map((c) => (
+                    <tr key={c._id} className="border-b border-gray-50 hover:bg-gray-50/50 transition-colors">
+                      <td className="px-4 py-2.5">
+                        <div className="flex items-center gap-2">
+                           <Tag size={14} className="text-[#388E3C]" />
+                           <span className="font-medium text-gray-800">{c.code}</span>
+                        </div>
+                      </td>
+                      <td className="px-4 py-2.5 font-medium text-gray-800">
+                          {c.discountType === 'percentage' ? `${c.discountValue}% OFF` : `₹${c.discountValue} FLAT`}
+                      </td>
+                      <td className="px-4 py-2.5 text-gray-600 font-medium">
+                          {c.usedCount} <span className="text-gray-400">/ {c.usageLimit || '∞'}</span>
+                      </td>
+                      <td className="px-4 py-2.5 text-gray-500 font-medium">
+                          {new Date(c.expiryDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                      </td>
+                      <td className="px-4 py-2.5">
+                        <span className={`px-2 py-0.5 rounded text-[9px] font-bold ${
+                          c.isActive ? 'bg-[#E8F5E9] text-[#2E7D32] border border-[#C8E6C9]' : 'bg-[#FFEBEE] text-[#C62828] border border-[#FFCDD2]'
+                        }`}>
+                          {c.isActive ? 'Active' : 'Paused'}
+                        </span>
+                      </td>
+                    </tr>
+                  ))
+              ) : (
+                  <tr><td colSpan="5" className="px-4 py-10 text-center text-gray-400 font-medium">No coupons available</td></tr>
+              )}
             </tbody>
           </table>
         </div>

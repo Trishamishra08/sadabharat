@@ -7,7 +7,9 @@ const {
   getBlockedVendors,
   approveVendor,
   blockVendor,
-  unblockVendor
+  unblockVendor,
+  getVendorEarnings,
+  getVendorReviews
 } = require('../controllers/vendorController');
 const { protect, authorize } = require('../middlewares/authMiddleware');
 
@@ -15,6 +17,10 @@ const router = express.Router();
 
 router.post('/register', registerVendor);
 router.post('/login', loginVendor);
+
+// Vendor specific routes
+router.get('/earnings', protect, authorize('vendor'), getVendorEarnings);
+router.get('/reviews', protect, authorize('vendor'), getVendorReviews);
 
 // Admin routes
 router.get('/pending', protect, authorize('admin'), getPendingVendors);

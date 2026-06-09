@@ -1,47 +1,23 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import bannerImg from '../../assets/images/banner3.png';
-import bannerImg2 from '../../assets/images/sadabharat_banner.png';
-import bannerImg3 from '../../assets/images/sadabharat_banner1.png';
-
-const banners = [
-  {
-    id: 1,
-    image: bannerImg,
-    hasText: true,
-    badge: '100% Natural',
-    heading: 'Pure Ayurvedic<br />Goodness',
-    subtitle: 'Natural ingredients for a healthy<br className="hidden sm:block" /> body, mind & soul',
-    buttonText: 'Shop Now',
-    link: '/shop'
-  },
-  {
-    id: 2,
-    image: bannerImg2,
-    hasText: false
-  },
-  {
-    id: 3,
-    image: bannerImg3,
-    hasText: true,
-    badge: 'Authentic Care',
-    heading: 'Traditional Healing<br />Modern Life',
-    subtitle: 'Experience the magic of Ayurveda<br className="hidden sm:block" /> in your daily routine',
-    buttonText: 'Explore More',
-    link: '/shop'
-  }
-];
+import { useShop } from '../../context/ShopContext';
 
 const HeroCarousel = () => {
+  const { banners: allBanners } = useShop();
+  // Filter only 'Main Slider' type banners
+  const banners = allBanners ? allBanners.filter(b => b.type === 'Main Slider') : [];
+
   const [currentIndex, setCurrentIndex] = useState(0);
   const [direction, setDirection] = useState(1);
 
   const nextSlide = () => {
+    if (banners.length === 0) return;
     setDirection(1);
     setCurrentIndex((prev) => (prev + 1) % banners.length);
   };
 
   const prevSlide = () => {
+    if (banners.length === 0) return;
     setDirection(-1);
     setCurrentIndex((prev) => (prev - 1 + banners.length) % banners.length);
   };
@@ -78,7 +54,7 @@ const HeroCarousel = () => {
             if (index !== currentIndex) return null;
             return (
               <motion.div
-                key={banner.id}
+                key={banner._id || banner.id || index}
                 custom={direction}
                 variants={variants}
                 initial="enter"
@@ -95,10 +71,11 @@ const HeroCarousel = () => {
                 />
 
                 {/* Optional Text Overlay */}
-                {banner.hasText && (
+                {(banner.heading || banner.subtitle) && (
                   <div className="absolute inset-0 flex items-center">
                     <div className="pl-6 sm:pl-10 md:pl-14 lg:pl-20 max-w-[55%] sm:max-w-[50%] md:max-w-[45%]">
                       {/* Badge */}
+                      {banner.badge && (
                       <div className="flex items-center gap-1.5 mb-2 md:mb-3">
                         <span className="text-[#054425] text-sm md:text-base">🌿</span>
                         <span 
@@ -108,8 +85,10 @@ const HeroCarousel = () => {
                           {banner.badge}
                         </span>
                       </div>
+                      )}
 
                       {/* Main Heading */}
+                      {banner.heading && (
                       <h2 
                         className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-[64px] mb-2 md:mb-3"
                         style={{ 
@@ -121,17 +100,21 @@ const HeroCarousel = () => {
                         }}
                         dangerouslySetInnerHTML={{ __html: banner.heading }}
                       />
+                      )}
 
                       {/* Subtitle */}
+                      {banner.subtitle && (
                       <p 
                         className="text-[10px] sm:text-xs md:text-sm lg:text-base text-gray-600 mb-3 md:mb-5 leading-relaxed"
                         style={{ fontFamily: "'Poppins', sans-serif", fontWeight: 400 }}
                         dangerouslySetInnerHTML={{ __html: banner.subtitle }}
                       />
+                      )}
 
                       {/* Button */}
+                      {banner.buttonText && (
                       <a
-                        href={banner.link}
+                        href={banner.link || '#'}
                         className="inline-flex items-center gap-2 bg-[#054425] hover:bg-[#1E4D2B] text-white text-[10px] sm:text-xs md:text-sm font-semibold px-4 sm:px-5 md:px-6 py-2 sm:py-2.5 md:py-3 rounded-lg transition-all duration-300 hover:scale-105 active:scale-95 shadow-md"
                         style={{ fontFamily: "'Poppins', sans-serif" }}
                       >
@@ -140,6 +123,7 @@ const HeroCarousel = () => {
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" />
                         </svg>
                       </a>
+                      )}
                     </div>
                   </div>
                 )}

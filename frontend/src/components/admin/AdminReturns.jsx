@@ -3,13 +3,7 @@ import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FiRotateCcw, FiRefreshCw, FiSearch, FiCheck, FiX, FiMessageSquare, FiImage } from 'react-icons/fi';
 
-// MOCK API for Frontend-Only mode
-const api = {
-  get: async () => ({ data: { data: { products: [], categories: [], banners: [], settings: {}, orders: [], users: [], stats: [], recentTransactions: [], dailyRevenue: [], vendors: [], blogs: [], returns: [], testimonials: [], reviews: [], replacements: [], supportTickets: [], locations: [], coupons: [], logs: [] }, status: 'success' } }),
-  post: async () => ({ data: { data: { order: { orderId: 'MOCK-ORDER-123' } }, status: 'success' } }),
-  patch: async () => ({ data: { status: 'success' } }),
-  delete: async () => ({ data: { status: 'success' } })
-};
+import api from '../../utils/api';
 
 
 const AdminReturns = () => {
@@ -22,9 +16,9 @@ const AdminReturns = () => {
     const fetchRequests = async () => {
         try {
             setLoading(true);
-            const res = await api.get('/orders');
+            const res = await api.get('/orders/admin');
             // Filter out orders that are NOT null and NOT 'Not Requested' safely
-            const rmaOrders = (res.data?.data?.orders || []).filter(
+            const rmaOrders = (res.data?.data || []).filter(
                 o => ['Refund', 'Replace'].includes(o.returnAction) && o.returnStatus !== 'Not Requested'
             );
             setOrders(rmaOrders);
@@ -41,7 +35,7 @@ const AdminReturns = () => {
 
     const updateReturnStatus = async (id, newStatus) => {
         try {
-            await api.patch(`/orders/${id}/process-return`, { returnStatus: newStatus });
+            await api.patch(`/orders/${id}/admin-update-return`, { returnStatus: newStatus });
             fetchRequests();
         } catch (error) {
             alert("Failed to update status: " + (error.response?.data?.message || error.message));
@@ -52,7 +46,7 @@ const AdminReturns = () => {
     const displayedOrders = orders.filter(o =>
         (activeTab === 'Refunds' ? o.returnAction === 'Refund' : o.returnAction === 'Replace') &&
         (
-            o.orderId.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            o._id.toLowerCase().includes(searchTerm.toLowerCase()) ||
             o.user?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
             o.returnReason?.toLowerCase().includes(searchTerm.toLowerCase())
         )
@@ -211,7 +205,7 @@ const AdminReturns = () => {
                                             className={`group transition-colors ${order.returnStatus?.includes('Requested') ? 'bg-orange-50/50 hover:bg-orange-50' : 'hover:bg-gray-50'}`}
                                         >
                                             <td className="px-6 py-4">
-                                                <span className="text-sm font-medium font-sans text-gray-800 line-clamp-1">{order.orderId}</span>
+                                                <span className="text-sm font-medium font-sans text-gray-800 line-clamp-1">{order._id?.slice(-6).toUpperCase()}</span>
                                             </td>
                                             <td className="px-6 py-4">
                                                 <div className="flex flex-col">
@@ -222,13 +216,13 @@ const AdminReturns = () => {
                                             <td className="px-6 py-4 max-w-sm">
                                                 <div className="flex flex-col gap-1.5">
                                                     <div className="flex gap-2 items-center flex-wrap">
-                                                        {order.items.slice(0, 2).map((item, idx) => (
+                                                        {order.orderItems?.slice(0, 2).map((item, idx) => (
                                                             <div key={idx} className="flex items-center gap-1.5 bg-white border border-gray-100 p-1 rounded-sm">
                                                                 <img src={item.image} alt="" className="w-6 h-6 object-cover bg-gray-50" />
                                                                 <span className="text-xs font-medium text-gray-700 truncate max-w-[80px]">{item.name}</span>
                                                             </div>
                                                         ))}
-                                                        {order.items.length > 2 && <span className="text-xs font-medium text-gray-400">+{order.items.length - 2} more</span>}
+                                                        {order.orderItems?.length > 2 && <span className="text-xs font-medium text-gray-400">+{order.orderItems.length - 2} more</span>}
                                                     </div>
                                                     {order.returnReason && (
                                                         <div className="mt-1 flex gap-2 items-start bg-red-50 p-2 rounded-sm border border-red-100/50">
@@ -248,7 +242,7 @@ const AdminReturns = () => {
                                                 </div>
                                             </td>
                                             <td className="px-6 py-4 text-center">
-                                                <span className="text-sm font-sans font-medium text-admin-dark">₹{order.totalAmount}</span>
+                                                <span className="text-sm font-sans font-medium text-admin-dark">₹{order.totalPrice}</span>
                                             </td>
                                             <td className="px-6 py-4 text-center">
                                                 <span className={`inline-block px-2.5 py-1 text-xs font-sans font-bold uppercase tracking-widest rounded-sm ${['Returned', 'Replaced'].includes(order.returnStatus) ? 'bg-green-100 text-green-700' :
@@ -263,14 +257,14 @@ const AdminReturns = () => {
                                                 {order.returnStatus?.includes('Requested') && (
                                                     <div className="flex items-center justify-end gap-2">
                                                         <button
-                                                            onClick={() => updateReturnStatus(order._id, activeTab === 'Refunds' ? 'Return Approved' : 'Replacement Approved')}
+                                                            onClick={() => updateReturnStatus(order._id, activeTab === 'Refunds' ? 'Return Approved' : 'Replace Approved')}
                                                             className="p-1.5 bg-green-50 text-green-600 hover:bg-green-500 hover:text-white rounded-md transition-all border border-green-200 hover:border-green-500 shadow-sm"
                                                             title={`Approve ${activeTab}`}
                                                         >
                                                             <FiCheck size={12} strokeWidth={3} />
                                                         </button>
                                                         <button
-                                                            onClick={() => updateReturnStatus(order._id, activeTab === 'Refunds' ? 'Return Rejected' : 'Replacement Rejected')}
+                                                            onClick={() => updateReturnStatus(order._id, activeTab === 'Refunds' ? 'Return Rejected' : 'Replace Rejected')}
                                                             className="p-1.5 bg-red-50 text-red-600 hover:bg-red-500 hover:text-white rounded-md transition-all border border-red-200 hover:border-red-500 shadow-sm"
                                                             title={`Reject ${activeTab}`}
                                                         >
@@ -294,7 +288,7 @@ const AdminReturns = () => {
                                                 )}
 
 
-                                                {['Returned', 'Replaced', 'Return Rejected', 'Replacement Rejected'].includes(order.returnStatus) && (
+                                                {['Returned', 'Replaced', 'Return Rejected', 'Replace Rejected'].includes(order.returnStatus) && (
                                                     <span className="text-xs font-sans font-bold uppercase tracking-widest text-gray-300">Resolved</span>
                                                 )}
                                             </td>

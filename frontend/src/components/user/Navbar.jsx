@@ -20,7 +20,7 @@ const Navbar = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const location = useLocation();
   const navigate = useNavigate();
-  const { cartCount, wishlistCount, setIsCartDrawerOpen, isAuthenticated, user, categories } = useShop();
+  const { cartCount, wishlistCount, setIsCartDrawerOpen, isAuthenticated, user, categories, offers } = useShop();
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const [isRecentsOpen, setIsRecentsOpen] = useState(false);
   const [notifications, setNotifications] = useState([
@@ -236,7 +236,7 @@ const Navbar = () => {
                         animate={{ opacity: 1, y: 0, scale: 1 }}
                         exit={{ opacity: 0, y: 10, scale: 0.95 }}
                         transition={{ duration: 0.2, ease: "easeOut" }}
-                        className="fixed top-[60px] left-[2.5%] right-[2.5%] md:absolute md:top-full md:left-auto md:right-0 md:mt-4 w-[95%] md:w-[320px] bg-white rounded-2xl shadow-[0_20px_40px_rgba(0,0,0,0.12)] border border-gray-100 z-50 overflow-hidden origin-top md:origin-top-right"
+                        className="fixed top-[64px] left-2 right-2 md:absolute md:top-full md:left-auto md:right-0 md:mt-4 md:w-[320px] bg-white rounded-2xl shadow-[0_20px_40px_rgba(0,0,0,0.15)] border border-gray-100 z-[60] overflow-hidden origin-top md:origin-top-right"
                       >
                         <div className="bg-[#054425] px-5 py-4 flex justify-between items-center relative overflow-hidden">
                           <div className="absolute inset-0 bg-[url('/footer_pattern.png')] opacity-10 mix-blend-overlay"></div>
@@ -313,7 +313,7 @@ const Navbar = () => {
                         animate={{ opacity: 1, y: 0, scale: 1 }}
                         exit={{ opacity: 0, y: 10, scale: 0.95 }}
                         transition={{ duration: 0.2, ease: "easeOut" }}
-                        className="fixed top-[60px] left-[2.5%] right-[2.5%] md:absolute md:top-full md:left-auto md:right-0 md:mt-4 w-[95%] md:w-[340px] bg-white rounded-2xl shadow-[0_20px_40px_rgba(0,0,0,0.15)] border border-gray-100 z-50 overflow-hidden origin-top md:origin-top-right"
+                        className="fixed top-[64px] left-2 right-2 md:absolute md:top-full md:left-auto md:right-0 md:mt-4 md:w-[340px] bg-white rounded-2xl shadow-[0_20px_40px_rgba(0,0,0,0.15)] border border-gray-100 z-[60] overflow-hidden origin-top md:origin-top-right"
                       >
                         <div className="bg-[#054425] px-5 py-4 flex justify-between items-center relative overflow-hidden">
                           <div className="absolute inset-0 bg-[url('/footer_pattern.png')] opacity-10 mix-blend-overlay"></div>
@@ -489,21 +489,18 @@ const Navbar = () => {
                       </div>
                     ) : item.isOffers ? (
                       <>
-                        {[
-                          { text: "Up to 50% Off On Ayurvedic Skincare", link: "/offers?category=Up%20to%2050%25%20Off%20On%20Ayurvedic%20Skincare" },
-                          { text: "Up to 30% Off On Herbal Haircare", link: "/offers?category=Up%20to%2030%25%20Off%20On%20Herbal%20Haircare" },
-                          { text: "Flat 20% Off On Wellness Supplements", link: "/offers?category=Flat%2020%25%20Off%20On%20Wellness%20Supplements" },
-                          { text: "Buy 1 Get 1 Free On Essential Oils", link: "/offers?category=Buy%201%20Get%201%20Free%20On%20Essential%20Oils" }
-                        ].map((offer, idx) => (
+                        {offers && offers.length > 0 ? offers.map((offer, idx) => (
                           <Link
                             key={idx}
-                            to={offer.link}
+                            to={`/offers?category=${encodeURIComponent(offer.category)}`}
                             className="block px-4 py-3 text-[12px] text-gray-700 hover:text-[#054425] hover:bg-[#F4F8F5] transition-colors border-b border-gray-50 last:border-0 font-medium tracking-wide"
                             style={{ fontFamily: "'Poppins', sans-serif" }}
                           >
-                            {offer.text}
+                            {offer.title}
                           </Link>
-                        ))}
+                        )) : (
+                          <div className="px-4 py-3 text-[12px] text-gray-400">No active offers</div>
+                        )}
                       </>
                     ) : (
                       categories && categories.length > 0 && categories.map((cat, idx) => (

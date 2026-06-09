@@ -2,14 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FiRefreshCw, FiSearch, FiCheck, FiX, FiMessageSquare } from 'react-icons/fi';
 
-// MOCK API for Frontend-Only mode
-const api = {
-  get: async () => ({ data: { data: { products: [], categories: [], banners: [], settings: {}, orders: [], users: [], stats: [], recentTransactions: [], dailyRevenue: [], vendors: [], blogs: [], returns: [], testimonials: [], reviews: [], replacements: [], supportTickets: [], locations: [], coupons: [], logs: [] }, status: 'success' } }),
-  post: async () => ({ data: { data: { order: { orderId: 'MOCK-ORDER-123' } }, status: 'success' } }),
-  patch: async () => ({ data: { status: 'success' } }),
-  delete: async () => ({ data: { status: 'success' } })
-};
-
+import api from '../../utils/api';
 
 const AdminReplacements = () => {
     const [orders, setOrders] = useState([]);
@@ -19,9 +12,9 @@ const AdminReplacements = () => {
     const fetchReplacements = async () => {
         try {
             setLoading(true);
-            const res = await api.get('/orders');
+            const res = await api.get('/orders/admin');
             // Filter orders where returnAction is Replace
-            const replacementOrders = res.data.data.orders.filter(
+            const replacementOrders = (res.data?.data || []).filter(
                 o => o.returnAction === 'Replace' && o.returnStatus !== 'Not Requested'
             );
             setOrders(replacementOrders);
@@ -38,7 +31,7 @@ const AdminReplacements = () => {
 
     const updateReturnStatus = async (id, newStatus) => {
         try {
-            await api.patch(`/orders/${id}/process-return`, { returnStatus: newStatus });
+            await api.patch(`/orders/${id}/admin-update-return`, { returnStatus: newStatus });
             fetchReplacements();
         } catch (error) {
             alert("Failed to update status: " + (error.response?.data?.message || error.message));
@@ -47,7 +40,7 @@ const AdminReplacements = () => {
 
     const filteredOrders = orders.filter(
         (o) =>
-            o.orderId.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            o._id.toLowerCase().includes(searchTerm.toLowerCase()) ||
             o.user?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
             o.returnReason?.toLowerCase().includes(searchTerm.toLowerCase())
     );
@@ -77,7 +70,7 @@ const AdminReplacements = () => {
                         />
                     </div>
                     <button onClick={fetchReplacements} className="h-10 px-4 bg-[#5C2E3E] text-white flex items-center justify-center hover:bg-admin-accent transition-colors shadow-md">
-                        <FiRefreshCw size={14} />
+                        <FiRefreshCw size={14} className={loading ? 'animate-spin' : ''} />
                     </button>
                 </div>
             </div>
@@ -115,7 +108,7 @@ const AdminReplacements = () => {
                                             className={`group hover:bg-admin-accent/5 transition-colors ${order.returnStatus === 'Replacement Requested' ? 'bg-[#5C2E3E]/5' : ''}`}
                                         >
                                             <td className="px-6 py-4">
-                                                <span className="text-[10px] font-black text-[#5C2E3E] tracking-widest uppercase">{order.orderId}</span>
+                                                <span className="text-[10px] font-black text-[#5C2E3E] tracking-widest uppercase">{order._id?.slice(-6).toUpperCase()}</span>
                                             </td>
                                             <td className="px-6 py-4">
                                                 <div className="flex flex-col">
@@ -126,7 +119,7 @@ const AdminReplacements = () => {
                                             <td className="px-6 py-4 max-w-sm">
                                                 <div className="flex flex-col gap-1.5">
                                                     <div className="flex gap-2 items-center flex-wrap">
-                                                        {order.items.slice(0, 2).map((item, idx) => (
+                                                        {order.orderItems?.slice(0, 2).map((item, idx) => (
                                                             <div key={idx} className="flex items-center gap-1.5 bg-white border border-gray-100 p-1 rounded-sm">
                                                                 <img src={item.image} alt="" className="w-6 h-6 object-cover bg-gray-50" />
                                                                 <span className="text-[8px] font-bold truncate max-w-[60px]">{item.name}</span>

@@ -1,67 +1,12 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Autoplay, Navigation } from 'swiper/modules';
 import { FiChevronLeft, FiChevronRight, FiStar } from 'react-icons/fi';
 import { motion } from 'framer-motion';
-
-// MOCK API for Frontend-Only mode
-const api = {
-  get: async () => ({ data: { data: { products: [], categories: [], banners: [], settings: {}, orders: [], users: [], stats: [], recentTransactions: [], dailyRevenue: [], vendors: [], blogs: [], returns: [], testimonials: [], reviews: [], replacements: [], supportTickets: [], locations: [], coupons: [], logs: [] }, status: 'success' } }),
-  post: async () => ({ data: { data: { order: { orderId: 'MOCK-ORDER-123' } }, status: 'success' } }),
-  patch: async () => ({ data: { status: 'success' } }),
-  delete: async () => ({ data: { status: 'success' } })
-};
+import api from '../../utils/api';
 
 import 'swiper/css';
 import 'swiper/css/navigation';
-
-const MOCK_TESTIMONIALS = [
-  {
-    _id: 'm1',
-    name: 'Priya Sharma',
-    location: 'Delhi',
-    rating: 5,
-    text: 'Bhringraj Hair Oil has genuinely transformed my hair. After just 3 weeks, my hair fall reduced drastically. Love the natural fragrance!',
-    image: 'https://randomuser.me/api/portraits/women/44.jpg',
-    product: 'Bhringraj Hair Oil',
-  },
-  {
-    _id: 'm2',
-    name: 'Anita Verma',
-    location: 'Mumbai',
-    rating: 5,
-    text: 'The Neem Tulsi Face Wash is absolutely wonderful. My skin feels so fresh and the acne has reduced significantly. Purely Ayurvedic and effective!',
-    image: 'https://randomuser.me/api/portraits/women/68.jpg',
-    product: 'Neem Tulsi Face Wash',
-  },
-  {
-    _id: 'm3',
-    name: 'Rekha Gupta',
-    location: 'Jaipur',
-    rating: 5,
-    text: 'I have been using Tulsi Green Tea for a month now. It helps with my digestion and I feel lighter. A true Ayurvedic blessing!',
-    image: 'https://randomuser.me/api/portraits/women/32.jpg',
-    product: 'Tulsi Green Tea',
-  },
-  {
-    _id: 'm4',
-    name: 'Sunita Patel',
-    location: 'Ahmedabad',
-    rating: 4,
-    text: 'Aloe Vera Gel is my everyday skin saviour. It soothes my skin after sun exposure and keeps it moisturised. Very happy with this product!',
-    image: 'https://randomuser.me/api/portraits/women/55.jpg',
-    product: 'Aloe Vera Gel',
-  },
-  {
-    _id: 'm5',
-    name: 'Kavita Singh',
-    location: 'Lucknow',
-    rating: 5,
-    text: 'Sada Bharat products are my go-to for all natural Ayurvedic remedies. The quality is unmatched and delivery is always on time. Highly recommend!',
-    image: 'https://randomuser.me/api/portraits/women/12.jpg',
-    product: 'Ayurvedic Wellness',
-  },
-];
 
 const StarRating = ({ rating }) => (
   <div className="flex items-center gap-0.5">
@@ -76,9 +21,8 @@ const StarRating = ({ rating }) => (
 );
 
 const Testimonials = () => {
-  const [testimonials, setTestimonials] = useState(MOCK_TESTIMONIALS);
-  const prevRef = useRef(null);
-  const nextRef = useRef(null);
+  const [testimonials, setTestimonials] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchTestimonials = async () => {
@@ -89,11 +33,15 @@ const Testimonials = () => {
           setTestimonials(data);
         }
       } catch (err) {
-        // silently fall back to mock data
+        console.error('Error fetching testimonials:', err);
+      } finally {
+        setLoading(false);
       }
     };
     fetchTestimonials();
   }, []);
+
+  if (loading || testimonials.length === 0) return null;
 
   return (
     <section className="pt-2 pb-10 md:pt-4 md:pb-14 bg-[#F2F6E8] overflow-hidden relative">
@@ -121,22 +69,6 @@ const Testimonials = () => {
               </span>
             </div>
           </div>
-
-          {/* Compact Arrow Buttons */}
-          <div className="flex items-center gap-2">
-            <button
-              ref={prevRef}
-              className="w-8 h-8 md:w-9 md:h-9 rounded-full border border-[#054425]/30 bg-white flex items-center justify-center text-[#054425] hover:bg-[#054425] hover:text-white hover:border-[#054425] transition-all duration-200 shadow-sm active:scale-95"
-            >
-              <FiChevronLeft size={16} />
-            </button>
-            <button
-              ref={nextRef}
-              className="w-8 h-8 md:w-9 md:h-9 rounded-full border border-[#054425]/30 bg-white flex items-center justify-center text-[#054425] hover:bg-[#054425] hover:text-white hover:border-[#054425] transition-all duration-200 shadow-sm active:scale-95"
-            >
-              <FiChevronRight size={16} />
-            </button>
-          </div>
         </motion.div>
 
         {/* Swiper */}
@@ -146,11 +78,6 @@ const Testimonials = () => {
           slidesPerView={1.15}
           loop={testimonials.length > 3}
           autoplay={{ delay: 4500, disableOnInteraction: false, pauseOnMouseEnter: true }}
-          navigation={{ prevEl: prevRef.current, nextEl: nextRef.current }}
-          onBeforeInit={(swiper) => {
-            swiper.params.navigation.prevEl = prevRef.current;
-            swiper.params.navigation.nextEl = nextRef.current;
-          }}
           breakpoints={{
             480:  { slidesPerView: 1.4, spaceBetween: 14 },
             640:  { slidesPerView: 2.1, spaceBetween: 16 },
@@ -201,9 +128,8 @@ const Testimonials = () => {
 
                 {/* Quote */}
                 <div className="flex-1 relative">
-                  <span className="absolute -top-1 -left-0.5 text-[24px] leading-none text-[#D4AF37]/30 font-serif select-none">"</span>
-                  <p className="text-[10px] text-gray-600 leading-relaxed font-medium pl-3 line-clamp-3">
-                    {item.text}
+                  <p className="text-[#0B3B24]/80 text-[13px] sm:text-sm leading-relaxed mb-6 font-serif italic line-clamp-4 relative z-10">
+                    "{item.content}"
                   </p>
                 </div>
 

@@ -1,15 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { FiTag, FiPlus, FiEdit2, FiTrash2, FiClock, FiCheckCircle, FiXCircle, FiX, FiRefreshCw } from 'react-icons/fi';
+import { Tag, Plus, Edit2, Trash2, Clock, CheckCircle, XCircle, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
-// MOCK API for Frontend-Only mode
-const api = {
-  get: async () => ({ data: { data: { products: [], categories: [], banners: [], settings: {}, orders: [], users: [], stats: [], recentTransactions: [], dailyRevenue: [], vendors: [], blogs: [], returns: [], testimonials: [], reviews: [], replacements: [], supportTickets: [], locations: [], coupons: [], logs: [] }, status: 'success' } }),
-  post: async () => ({ data: { data: { order: { orderId: 'MOCK-ORDER-123' } }, status: 'success' } }),
-  patch: async () => ({ data: { status: 'success' } }),
-  delete: async () => ({ data: { status: 'success' } })
-};
-
+import api from '../../utils/api';
 
 const AdminCoupons = () => {
     const [coupons, setCoupons] = useState([]);
@@ -23,7 +16,7 @@ const AdminCoupons = () => {
         code: '',
         discountType: 'percentage',
         discountValue: '',
-                isActive: true,
+        isActive: true,
         usageLimit: '',
         expiryDate: ''
     });
@@ -36,11 +29,7 @@ const AdminCoupons = () => {
             if (fetched && fetched.length > 0) {
                 setCoupons(fetched);
             } else {
-                setCoupons([
-                    { _id: 'c1', code: 'WELCOME50', campaignName: 'New User Discount', discountType: 'fixed', discountValue: 50, usageLimit: 500, usedCount: 145, expiryDate: '2025-12-31T00:00:00.000Z', isActive: true },
-                    { _id: 'c2', code: 'FESTIVAL20', campaignName: 'Diwali Special', discountType: 'percentage', discountValue: 20, usageLimit: 200, usedCount: 89, expiryDate: '2025-10-15T00:00:00.000Z', isActive: true },
-                    { _id: 'c3', code: 'FREESHIP', campaignName: 'Free Delivery Weekend', discountType: 'fixed', discountValue: 100, usageLimit: 1000, usedCount: 412, expiryDate: '2023-11-30T00:00:00.000Z', isActive: false }
-                ]);
+                setCoupons([]);
             }
         } catch (err) {
             console.error("Failed to fetch coupons:", err);
@@ -54,7 +43,7 @@ const AdminCoupons = () => {
     }, [fetchCoupons]);
 
     const handleDelete = async (id) => {
-        if (window.confirm("Permenantly remove this promo code?")) {
+        if (window.confirm("Permanently remove this promo code?")) {
             try {
                 await api.delete(`/coupons/${id}`);
                 fetchCoupons();
@@ -110,85 +99,78 @@ const AdminCoupons = () => {
     };
 
     return (
-        <div className="max-w-7xl mx-auto space-y-4 font-['Cormorant',_serif]">
+        <div className="space-y-4 pb-6 max-w-[1400px] mx-auto -mt-2">
             <AnimatePresence mode="wait">
                 {!isAdding ? (
                     <motion.div key="list" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="space-y-4">
-                        <div className="flex justify-between items-end">
+                        <div className="flex justify-between items-center">
                             <div>
-                                <h1 className="text-3xl font-['Cormorant',_serif] font-bold text-admin-dark leading-none mb-2">Promo Ledger</h1>
-                                <p className="text-sm font-sans font-medium text-gray-500 capitalize tracking-normal">Manage Store Discount Vectors</p>
+                                <h1 className="text-2xl font-serif font-bold text-gray-900 leading-tight">Coupons</h1>
+                                <p className="text-[12px] text-gray-500 mt-0.5 font-sans">Manage your discount codes and promotions.</p>
                             </div>
                             <div className="flex items-center gap-2">
                                 <button
                                     onClick={() => { setEditingCoupon(null); setForm({ code: '', discountType: 'percentage', discountValue: '', isActive: true, usageLimit: '', expiryDate: '' }); setIsAdding(true); }}
-                                    className="bg-admin-dark text-white px-5 py-1.5 rounded-none text-xs font-sans font-bold uppercase tracking-widest shadow-xl shadow-brand-dark/20 flex items-center gap-2 hover:bg-black transition-all"
+                                    className="flex items-center gap-1.5 px-3 py-1.5 bg-[#054425] text-white rounded-lg text-[12px] font-medium shadow-sm hover:bg-[#04331c] transition-colors"
                                 >
-                                    <FiPlus /> Mint Coupon
+                                    <Plus size={14} /> Create Coupon
                                 </button>
                             </div>
                         </div>
 
-                        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden p-1 pb-4">
+                        <div className="bg-white rounded-xl shadow-[0_2px_10px_rgba(0,0,0,0.02)] border border-gray-100 overflow-hidden">
                             <div className="overflow-x-auto">
-                                <table className="w-full text-left font-sans">
+                                <table className="w-full text-left border-collapse">
                                     <thead>
-                                        <tr className="border-b border-gray-50">
-                                            <th className="px-6 py-4 text-xs font-sans font-bold uppercase tracking-widest text-gray-500">Code</th>
-                                            <th className="px-6 py-4 text-xs font-sans font-bold uppercase tracking-widest text-gray-500">Discount</th>
-                                            <th className="px-6 py-4 text-xs font-sans font-bold uppercase tracking-widest text-gray-500">Redemption Count</th>
-                                            <th className="px-6 py-4 text-xs font-sans font-bold uppercase tracking-widest text-gray-500">Expires</th>
-                                            <th className="px-6 py-4 text-xs font-sans font-bold uppercase tracking-widest text-gray-500">Status</th>
-                                            <th className="px-6 py-4 text-xs font-sans font-bold uppercase tracking-widest text-gray-500 text-right">Actions</th>
+                                        <tr className="bg-gray-50/50 text-[11px] text-gray-500 uppercase tracking-widest border-b border-gray-100">
+                                            <th className="px-4 py-3 font-semibold">Code</th>
+                                            <th className="px-4 py-3 font-semibold">Discount</th>
+                                            <th className="px-4 py-3 font-semibold">Usage</th>
+                                            <th className="px-4 py-3 font-semibold">Expiry Date</th>
+                                            <th className="px-4 py-3 font-semibold">Status</th>
+                                            <th className="px-4 py-3 font-semibold text-right">Actions</th>
                                         </tr>
                                     </thead>
-                                    <tbody className="divide-y divide-gray-50">
+                                    <tbody className="text-[12px] text-gray-800">
                                         {loading ? (
-                                            <tr><td colSpan="6" className="px-6 py-10 text-center text-gray-400 text-[10px] font-bold uppercase tracking-widest animate-pulse">Syncing Promos...</td></tr>
+                                            <tr><td colSpan="6" className="px-4 py-10 text-center text-gray-400 font-medium">Loading coupons...</td></tr>
                                         ) : coupons.length > 0 ? (
                                             coupons.map((c) => (
-                                                <tr key={c._id} className="hover:bg-admin-accent/[0.01] transition-colors group">
-                                                    <td className="px-6 py-4">
-                                                        <span className="text-sm font-sans font-medium text-admin-dark uppercase flex items-center gap-2">
-                                                            <FiTag className="text-admin-accent" size={14} /> {c.code}
-                                                        </span>
-                                                    </td>
-                                                    <td className="px-6 py-4 text-sm font-sans font-medium text-admin-accent">
-                                                        {c.discountType === 'percentage' ? `${c.discountValue}% OFF` : `₹${c.discountValue} FLAT`}
-                                                    </td>
-                                                    <td className="px-6 py-4">
-                                                        <div className="flex flex-col">
-                                                            <span className="text-sm font-sans font-medium text-gray-800">{c.usedCount} <span className="text-xs font-medium text-gray-500">/ {c.usageLimit || '∞'}</span></span>
+                                                <tr key={c._id} className="border-b border-gray-50 hover:bg-gray-50/50 transition-colors">
+                                                    <td className="px-4 py-2.5">
+                                                        <div className="flex items-center gap-2">
+                                                           <Tag size={14} className="text-[#388E3C]" />
+                                                           <span className="font-medium text-gray-800">{c.code}</span>
                                                         </div>
                                                     </td>
-                                                    <td className="px-6 py-4">
-                                                        <span className={`text-sm font-sans font-medium capitalize flex items-center gap-1 ${new Date(c.expiryDate) < new Date() ? 'text-red-500' : 'text-gray-500'}`}>
-                                                            <FiClock size={10} /> {new Date(c.expiryDate).toLocaleDateString()}
-                                                        </span>
+                                                    <td className="px-4 py-2.5 font-medium text-gray-800">
+                                                        {c.discountType === 'percentage' ? `${c.discountValue}% OFF` : `₹${c.discountValue} FLAT`}
                                                     </td>
-                                                    <td className="px-6 py-4">
+                                                    <td className="px-4 py-2.5 text-gray-600 font-medium">
+                                                        {c.usedCount} <span className="text-gray-400">/ {c.usageLimit || '∞'}</span>
+                                                    </td>
+                                                    <td className="px-4 py-2.5 text-gray-500 font-medium">
+                                                        {new Date(c.expiryDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                                                    </td>
+                                                    <td className="px-4 py-2.5">
                                                         <button onClick={() => handleToggleStatus(c._id, c.isActive)} className="focus:outline-none">
-                                                            {c.isActive ? (
-                                                                <span className="px-2.5 py-1 text-xs font-sans font-bold uppercase tracking-wider bg-green-50 text-green-600 border border-green-100 rounded-lg flex items-center gap-1 w-fit cursor-pointer hover:bg-green-100 transition-colors">
-                                                                    <FiCheckCircle size={8} /> Active
-                                                                </span>
-                                                            ) : (
-                                                                <span className="px-2.5 py-1 text-xs font-sans font-bold uppercase tracking-wider bg-red-50 text-red-600 border border-red-100 rounded-lg flex items-center gap-1 w-fit cursor-pointer hover:bg-red-100 transition-colors">
-                                                                    <FiXCircle size={8} /> Paused
-                                                                </span>
-                                                            )}
+                                                            <span className={`px-2 py-0.5 rounded text-[9px] font-bold ${
+                                                              c.isActive ? 'bg-[#E8F5E9] text-[#2E7D32] border border-[#C8E6C9]' : 'bg-[#FFEBEE] text-[#C62828] border border-[#FFCDD2]'
+                                                            }`}>
+                                                              {c.isActive ? 'Active' : 'Paused'}
+                                                            </span>
                                                         </button>
                                                     </td>
-                                                    <td className="px-6 py-4 text-right">
-                                                        <div className="flex items-center gap-2 justify-end">
-                                                            <button onClick={() => startEdit(c)} className="p-1.5 text-admin-dark hover:bg-admin-accent/10 rounded-md transition-all"><FiEdit2 size={12} /></button>
-                                                            <button onClick={() => handleDelete(c._id)} className="p-1.5 text-red-500 hover:bg-red-50 rounded-md transition-all"><FiTrash2 size={12} /></button>
+                                                    <td className="px-4 py-2.5 text-right">
+                                                        <div className="flex items-center gap-2 justify-end text-gray-400">
+                                                            <button onClick={() => startEdit(c)} className="p-1 hover:text-[#054425] transition-colors"><Edit2 size={14} /></button>
+                                                            <button onClick={() => handleDelete(c._id)} className="p-1 hover:text-red-500 transition-colors"><Trash2 size={14} /></button>
                                                         </div>
                                                     </td>
                                                 </tr>
                                             ))
                                         ) : (
-                                            <tr><td colSpan="6" className="px-6 py-10 text-center text-gray-400 text-sm font-sans font-medium text-gray-500 tracking-wider italic">No promos minted yet</td></tr>
+                                            <tr><td colSpan="6" className="px-4 py-10 text-center text-gray-400 font-medium">No coupons found</td></tr>
                                         )}
                                     </tbody>
                                 </table>
@@ -196,52 +178,48 @@ const AdminCoupons = () => {
                         </div>
                     </motion.div>
                 ) : (
-                    <motion.div key="add" initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.98 }} className="max-w-xl mx-auto bg-white rounded-2xl border border-admin-accent/10 shadow-2xl p-6 relative overflow-hidden">
-                        <div className="absolute top-0 left-0 w-full h-1 bg-admin-dark" />
-                        <button onClick={() => setIsAdding(false)} className="absolute top-4 right-4 p-1.5 bg-gray-50 text-admin-dark rounded-lg hover:bg-admin-accent/10 transition-all font-bold">
-                            <FiX size={12} />
+                    <motion.div key="add" initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.98 }} className="max-w-xl mx-auto bg-white rounded-xl shadow-[0_2px_10px_rgba(0,0,0,0.02)] border border-gray-100 p-6 relative overflow-hidden">
+                        <button onClick={() => setIsAdding(false)} className="absolute top-4 right-4 p-1.5 text-gray-400 hover:text-gray-600 transition-colors">
+                            <X size={16} />
                         </button>
 
-                        <div className="mb-6 text-center pt-2">
-                            <div className="w-12 h-12 bg-brand-light rounded-xl flex items-center justify-center text-admin-dark mx-auto mb-3 border border-admin-accent/5 shadow-inner">
-                                <FiTag size={20} />
-                            </div>
-                            <h2 className="text-3xl font-['Cormorant',_serif] font-bold text-admin-dark leading-none mb-1">
-                                {editingCoupon ? 'Redefine Promo' : 'Mint Promo'}
+                        <div className="mb-6">
+                            <h2 className="text-xl font-serif font-bold text-gray-900 leading-tight">
+                                {editingCoupon ? 'Edit Coupon' : 'Create Coupon'}
                             </h2>
-                            <p className="text-[8px] text-gray-400 font-bold uppercase tracking-[0.2em] opacity-60">Architect discount parameters</p>
+                            <p className="text-[12px] text-gray-500 mt-0.5 font-sans">Set up your discount code parameters</p>
                         </div>
 
-                        <form onSubmit={handleAdd} className="space-y-4 font-sans">
+                        <form onSubmit={handleAdd} className="space-y-4">
                             <div className="space-y-1.5">
-                                <label className="text-[8px] font-black text-admin-dark/50 uppercase tracking-widest ml-1">Promo Code String</label>
-                                <input type="text" placeholder="e.g. SAUNDARYA10" className="w-full bg-gray-50 border border-gray-100 p-2.5 rounded-lg text-sm font-sans font-medium text-gray-800 capitalize outline-none focus:border-admin-accent/30 focus:bg-white transition-all shadow-inner" value={form.code} onChange={(e) => setForm({ ...form, code: e.target.value.toUpperCase() })} required />
+                                <label className="text-[11px] font-semibold text-gray-600 uppercase tracking-wider">Coupon Code</label>
+                                <input type="text" placeholder="e.g. SUMMER20" className="w-full border border-gray-200 p-2.5 rounded-lg text-sm text-gray-800 outline-none focus:border-[#054425] focus:ring-1 focus:ring-[#054425] transition-all" value={form.code} onChange={(e) => setForm({ ...form, code: e.target.value.toUpperCase() })} required />
                             </div>
 
                             <div className="grid grid-cols-2 gap-4">
                                 <div className="space-y-1.5">
-                                    <label className="text-[8px] font-black text-admin-dark/50 uppercase tracking-widest ml-1">Vector Scale</label>
-                                    <select className="w-full bg-gray-50 border border-gray-100 p-2.5 rounded-lg text-sm font-sans font-medium text-gray-800 capitalize outline-none focus:border-admin-accent/30 transition-all" value={form.discountType} onChange={(e) => setForm({ ...form, discountType: e.target.value })}>
-                                        <option value="percentage">% Percentage</option>
-                                        <option value="fixed">₹ Fixed Flat</option>
+                                    <label className="text-[11px] font-semibold text-gray-600 uppercase tracking-wider">Discount Type</label>
+                                    <select className="w-full border border-gray-200 p-2.5 rounded-lg text-sm text-gray-800 outline-none focus:border-[#054425] focus:ring-1 focus:ring-[#054425] transition-all" value={form.discountType} onChange={(e) => setForm({ ...form, discountType: e.target.value })}>
+                                        <option value="percentage">Percentage (%)</option>
+                                        <option value="fixed">Fixed Amount (₹)</option>
                                     </select>
                                 </div>
                                 <div className="space-y-1.5">
-                                    <label className="text-[8px] font-black text-admin-dark/50 uppercase tracking-widest ml-1">Magnitude</label>
-                                    <input type="number" placeholder="Value..." className="w-full bg-gray-50 border border-gray-100 p-2.5 rounded-lg text-sm font-sans font-medium text-gray-800 capitalize outline-none focus:border-admin-accent/30 focus:bg-white transition-all" value={form.discountValue} onChange={(e) => setForm({ ...form, discountValue: e.target.value })} required min="1" />
+                                    <label className="text-[11px] font-semibold text-gray-600 uppercase tracking-wider">Discount Value</label>
+                                    <input type="number" placeholder="Enter value" className="w-full border border-gray-200 p-2.5 rounded-lg text-sm text-gray-800 outline-none focus:border-[#054425] focus:ring-1 focus:ring-[#054425] transition-all" value={form.discountValue} onChange={(e) => setForm({ ...form, discountValue: e.target.value })} required min="1" />
                                 </div>
                             </div>
 
                             <div className="grid grid-cols-2 gap-4">
                                 <div className="space-y-1.5">
-                                    <label className="text-[8px] font-black text-admin-dark/50 uppercase tracking-widest ml-1">Redemption Count (Optional)</label>
-                                    <input type="number" placeholder="Leave empty for infinite usage" className="w-full bg-gray-50 border border-gray-100 p-2.5 rounded-lg text-sm font-sans font-medium text-gray-800 capitalize outline-none focus:border-admin-accent/30 focus:bg-white transition-all" value={form.usageLimit} onChange={(e) => setForm({ ...form, usageLimit: e.target.value })} min="1" />
+                                    <label className="text-[11px] font-semibold text-gray-600 uppercase tracking-wider">Usage Limit</label>
+                                    <input type="number" placeholder="Leave empty for unlimited" className="w-full border border-gray-200 p-2.5 rounded-lg text-sm text-gray-800 outline-none focus:border-[#054425] focus:ring-1 focus:ring-[#054425] transition-all" value={form.usageLimit} onChange={(e) => setForm({ ...form, usageLimit: e.target.value })} min="1" />
                                 </div>
                                 <div className="space-y-1.5">
-                                    <label className="text-[8px] font-black text-admin-dark/50 uppercase tracking-widest ml-1">Expiry Horizon</label>
+                                    <label className="text-[11px] font-semibold text-gray-600 uppercase tracking-wider">Expiry Date</label>
                                     <input
                                         type="date"
-                                        className="w-full bg-gray-50 border border-gray-100 p-2.5 rounded-lg text-sm font-sans font-medium text-gray-800 capitalize outline-none focus:border-admin-accent/30 transition-all font-sans"
+                                        className="w-full border border-gray-200 p-2.5 rounded-lg text-sm text-gray-800 outline-none focus:border-[#054425] focus:ring-1 focus:ring-[#054425] transition-all"
                                         value={form.expiryDate}
                                         onChange={(e) => setForm({ ...form, expiryDate: e.target.value })}
                                         required
@@ -250,10 +228,9 @@ const AdminCoupons = () => {
                                 </div>
                             </div>
 
-                            <div className="pt-2">
-                                <button type="submit" disabled={isSubmitting} className="w-full bg-admin-dark text-white py-3 rounded-lg text-[9px] font-black uppercase tracking-[0.2em] shadow-2xl shadow-brand-dark/20 flex items-center justify-center gap-2 hover:bg-black transition-all active:scale-[0.98] group disabled:opacity-50">
-                                    {isSubmitting ? 'Minting Sequence...' : (editingCoupon ? 'Compile Sync' : 'Execute Promo Mint')}
-                                    <FiCheckCircle size={12} className="group-hover:scale-110 transition-transform text-white/50 group-hover:text-brand-gold" />
+                            <div className="pt-4">
+                                <button type="submit" disabled={isSubmitting} className="w-full bg-[#054425] text-white py-2.5 rounded-lg text-[13px] font-medium shadow-sm hover:bg-[#04331c] transition-colors disabled:opacity-50 flex justify-center items-center gap-2">
+                                    {isSubmitting ? 'Saving...' : (editingCoupon ? 'Save Changes' : 'Create Coupon')}
                                 </button>
                             </div>
                         </form>

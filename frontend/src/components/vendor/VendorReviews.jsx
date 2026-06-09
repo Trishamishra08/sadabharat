@@ -1,48 +1,122 @@
-import React from 'react';
-import { Star, MessageSquare } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Star } from 'lucide-react';
+import api from '../../utils/api';
 
 const VendorReviews = () => {
+  const [reviews, setReviews] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchReviews = async () => {
+      try {
+        const res = await api.get('/vendors/reviews');
+        if (res.data.success) {
+          setReviews(res.data.data.reviews);
+        }
+      } catch (err) {
+        console.error('Failed to fetch reviews', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchReviews();
+  }, []);
+
+  const getImage = (product) => {
+    if (!product) return null;
+    if (product.images?.length > 0) return product.images[0];
+    if (product.image) return product.image;
+    return null;
+  };
+
+  if (loading) return (
+    <div className="h-60 flex items-center justify-center text-xs text-gray-400 animate-pulse">
+      Loading reviews...
+    </div>
+  );
+
   return (
-    <div className="space-y-4 pb-6 max-w-[1400px] mx-auto -mt-2">
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-2xl font-serif font-bold text-gray-900 leading-tight">Reviews</h1>
-          <p className="text-[12px] text-gray-500 mt-0.5 font-sans">See what customers are saying about your products.</p>
-        </div>
+    <div className="px-6 py-4 space-y-3">
+      {/* Header */}
+      <div>
+        <h1 className="text-xl font-semibold text-gray-800">Reviews</h1>
+        <p className="text-xs text-gray-400 mt-0.5">Customer feedback on your products</p>
       </div>
 
-      <div className="bg-white rounded-xl shadow-[0_2px_10px_rgba(0,0,0,0.02)] border border-gray-100 overflow-hidden">
+      {/* Table */}
+      <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse">
+          <table className="w-full text-left font-sans">
             <thead>
-              <tr className="bg-gray-50/50 text-[11px] text-gray-500 uppercase tracking-widest border-b border-gray-100">
-                <th className="px-4 py-3 font-semibold">Product</th>
-                <th className="px-4 py-3 font-semibold">Customer</th>
-                <th className="px-4 py-3 font-semibold">Rating</th>
-                <th className="px-4 py-3 font-semibold">Review</th>
-                <th className="px-4 py-3 font-semibold">Date</th>
+              <tr className="border-b border-gray-100 bg-gray-50/60">
+                <th className="px-4 py-2.5 text-[11px] font-medium text-gray-500 uppercase tracking-wide">Product</th>
+                <th className="px-4 py-2.5 text-[11px] font-medium text-gray-500 uppercase tracking-wide">Customer</th>
+                <th className="px-4 py-2.5 text-[11px] font-medium text-gray-500 uppercase tracking-wide">Rating</th>
+                <th className="px-4 py-2.5 text-[11px] font-medium text-gray-500 uppercase tracking-wide">Review</th>
+                <th className="px-4 py-2.5 text-[11px] font-medium text-gray-500 uppercase tracking-wide">Date</th>
               </tr>
             </thead>
-            <tbody className="text-[12px] text-gray-800">
-              {[
-                { product: 'NEEM TULSI Face Wash', customer: 'Ankita S.', rating: 5, review: 'Absolutely love this! Cleared my skin.', date: 'May 30, 2024' },
-                { product: 'BHRINGRAJ Hair Oil', customer: 'Rahul K.', rating: 4, review: 'Good smell, works fine.', date: 'May 28, 2024' },
-                { product: 'AMLA Powder', customer: 'Priya M.', rating: 5, review: 'Very authentic and pure.', date: 'May 25, 2024' },
-              ].map((rev, i) => (
-                <tr key={i} className="border-b border-gray-50 hover:bg-gray-50/50 transition-colors">
-                  <td className="px-4 py-3 font-medium text-gray-800">{rev.product}</td>
-                  <td className="px-4 py-3 font-medium text-gray-600">{rev.customer}</td>
-                  <td className="px-4 py-3">
-                    <div className="flex gap-0.5 text-orange-400">
-                      {[...Array(5)].map((_, idx) => (
-                        <Star key={idx} size={12} fill={idx < rev.rating ? "currentColor" : "none"} strokeWidth={idx < rev.rating ? 0 : 2} className={idx >= rev.rating ? "text-gray-300" : ""} />
-                      ))}
+            <tbody className="divide-y divide-gray-50">
+              {reviews.length > 0 ? reviews.map((rev) => (
+                <tr key={rev._id} className="hover:bg-gray-50/40 transition-colors">
+                  {/* Product */}
+                  <td className="px-4 py-2">
+                    <div className="flex items-center gap-2.5">
+                      <div className="w-8 h-8 bg-gray-50 rounded-lg border border-gray-100 flex-shrink-0 overflow-hidden">
+                        {getImage(rev.product) ? (
+                          <img
+                            src={getImage(rev.product)}
+                            alt=""
+                            className="w-full h-full object-contain mix-blend-multiply"
+                          />
+                        ) : (
+                          <div className="w-full h-full bg-gray-100 rounded-lg" />
+                        )}
+                      </div>
+                      <span className="text-xs text-gray-700 font-medium line-clamp-1 max-w-[130px]">
+                        {rev.product?.name || '—'}
+                      </span>
                     </div>
                   </td>
-                  <td className="px-4 py-3 text-gray-600 font-medium max-w-[200px] truncate">{rev.review}</td>
-                  <td className="px-4 py-3 text-gray-500 font-medium">{rev.date}</td>
+                  {/* Customer */}
+                  <td className="px-4 py-2">
+                    <span className="text-xs text-gray-700">{rev.user?.name || 'Anonymous'}</span>
+                    {rev.user?.phone && (
+                      <p className="text-[10px] text-gray-400 mt-0.5">{rev.user.phone}</p>
+                    )}
+                  </td>
+                  {/* Rating */}
+                  <td className="px-4 py-2">
+                    <div className="flex items-center gap-0.5 text-amber-400">
+                      {[...Array(5)].map((_, idx) => (
+                        <Star
+                          key={idx}
+                          size={11}
+                          fill={idx < rev.rating ? 'currentColor' : 'none'}
+                          className={idx >= rev.rating ? 'text-gray-200' : ''}
+                        />
+                      ))}
+                      <span className="text-[10px] text-amber-500 ml-1 font-medium">{rev.rating}.0</span>
+                    </div>
+                  </td>
+                  {/* Comment */}
+                  <td className="px-4 py-2 max-w-[220px]">
+                    <p className="text-[11px] text-gray-500 italic line-clamp-1">
+                      {rev.comment ? `"${rev.comment}"` : <span className="text-gray-300 not-italic">No comment</span>}
+                    </p>
+                  </td>
+                  {/* Date */}
+                  <td className="px-4 py-2 text-[11px] text-gray-400 whitespace-nowrap">
+                    {new Date(rev.createdAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
+                  </td>
                 </tr>
-              ))}
+              )) : (
+                <tr>
+                  <td colSpan="5" className="px-4 py-10 text-center text-gray-400 text-xs italic">
+                    No reviews found for your products yet.
+                  </td>
+                </tr>
+              )}
             </tbody>
           </table>
         </div>

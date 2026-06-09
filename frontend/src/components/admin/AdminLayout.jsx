@@ -108,14 +108,21 @@ const AdminLayout = () => {
     { title: 'Orders', path: '/admin/orders', icon: <FiShoppingBag /> },
     { title: 'Logistics & Taxes', path: '/admin/logistics', icon: <FiTruck /> },
     { title: 'Service Locations', path: '/admin/locations', icon: <FiMapPin /> },
-    { title: 'Finance', path: '/admin/finance', icon: <FiDollarSign /> },
+    { 
+      title: 'Finance & Payouts', 
+      icon: <FiDollarSign />,
+      subItems: [
+        { title: 'Store Finance', path: '/admin/finance' },
+        { title: 'Vendor Payouts', path: '/admin/payouts' }
+      ]
+    },
     { title: 'Returns & Replace', path: '/admin/returns', icon: <FiRotateCcw /> },
     { title: 'Coupons', path: '/admin/coupons', icon: <FiTag /> },
     { title: 'Divine Offers', path: '/admin/offers', icon: <FiZap /> },
     { title: 'Banners', path: '/admin/banners', icon: <FiImage /> },
     { title: 'Blogs', path: '/admin/blogs', icon: <FiLayers /> },
-    { title: 'Testimonials', path: '/admin/testimonials', icon: <FiUsers /> },
     { title: 'Feedback Ledger', path: '/admin/reviews', icon: <FiMessageSquare /> },
+    { title: 'Notifications', path: '/admin/notifications', icon: <FiBell /> },
     { title: 'Support Archive', path: '/admin/support', icon: <FiHelpCircle /> },
     { title: 'Settings', path: '/admin/settings', icon: <FiSettings /> },
   ];
@@ -397,7 +404,7 @@ const AdminLayout = () => {
         </header>
 
         {/* Content Container */}
-        <main className="px-4 md:px-6 lg:px-8 pb-4 md:pb-6 lg:pb-8 pt-2 md:pt-4 bg-[#FDFBF7] relative min-h-[calc(100vh-56px)]">
+        <main className="bg-[#FDFBF7] relative min-h-[calc(100vh-56px)] overflow-x-hidden">
           <Outlet />
         </main>
       </div>

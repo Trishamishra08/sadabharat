@@ -2,20 +2,12 @@ import React, { useState } from 'react';
 import AdminLayout from './AdminLayout';
 import { FiEdit2, FiPlus, FiTrash2, FiEye, FiImage, FiX, FiUploadCloud } from 'react-icons/fi';
 import { useShop } from '../../context/ShopContext';
-
-// MOCK API for Frontend-Only mode
-const api = {
-  get: async () => ({ data: { data: { products: [], categories: [], banners: [], settings: {}, orders: [], users: [], stats: [], recentTransactions: [], dailyRevenue: [], vendors: [], blogs: [], returns: [], testimonials: [], reviews: [], replacements: [], supportTickets: [], locations: [], coupons: [], logs: [] }, status: 'success' } }),
-  post: async () => ({ data: { data: { order: { orderId: 'MOCK-ORDER-123' } }, status: 'success' } }),
-  patch: async () => ({ data: { status: 'success' } }),
-  delete: async () => ({ data: { status: 'success' } })
-};
-
+import realApi from '../../utils/api';
 import { motion, AnimatePresence } from 'framer-motion';
-
 
 const AdminBanners = () => {
   const { banners, fetchData } = useShop();
+  const [activeTab, setActiveTab] = useState('Store Banners');
   const [isAdding, setIsAdding] = useState(false);
   const [editingBanner, setEditingBanner] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -41,11 +33,27 @@ const AdminBanners = () => {
 
     setIsUploading(true);
     try {
-      const url = URL.createObjectURL(file);
-      const isVideo = file.type.startsWith('video/');
-      setForm(prev => ({ ...prev, image: url, isVideo }));
+      const formData = new FormData();
+      formData.append('documents', file);
+
+      const res = await realApi.post('/upload', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+
+      if (res.data.success && res.data.data.length > 0) {
+        // Construct full URL assuming backend runs on port 5000 and is served statically
+        const backendUrl = import.meta.env.VITE_API_BASE_URL ? import.meta.env.VITE_API_BASE_URL.replace('/api', '') : 'http://localhost:5000';
+        const url = `${backendUrl}${res.data.data[0]}`;
+        const isVideo = file.type.startsWith('video/');
+        setForm(prev => ({ ...prev, image: url, isVideo }));
+      } else {
+        throw new Error('Upload failed on server.');
+      }
     } catch (err) {
-      alert('Upload failed: ' + err.message);
+      console.error('Upload Error:', err);
+      alert('Upload failed: ' + (err.response?.data?.message || err.message));
     } finally {
       setIsUploading(false);
     }
@@ -54,7 +62,7 @@ const AdminBanners = () => {
   const handleDelete = async (id) => {
     if (window.confirm('Securely remove this visual asset? This will reflect on the live storefront.')) {
       try {
-        await api.delete(`/banners/${id}`);
+        await realApi.delete(`/banners/${id}`);
         fetchData();
       } catch (err) {
         alert('Failed to remove banner');
@@ -88,9 +96,9 @@ const AdminBanners = () => {
     setLoading(true);
     try {
       if (editingBanner) {
-        await api.patch(`/banners/${editingBanner._id}`, form);
+        await realApi.put(`/banners/${editingBanner._id}`, form);
       } else {
-        await api.post('/banners', form);
+        await realApi.post('/banners', form);
       }
       setIsAdding(false);
       setEditingBanner(null);
@@ -112,34 +120,49 @@ const AdminBanners = () => {
 
   return (
     <div className="max-w-7xl mx-auto space-y-4 min-h-screen">
-      <div className="flex justify-between items-end">
+      <div className="flex justify-between items-end mb-6">
         <div>
           <h1 className="text-3xl font-['Cormorant',_serif] font-bold text-admin-dark leading-none mb-2">
-          Store Banners
-        </h1>
-        <p className="text-gray-500 text-[13px] font-poppins">
-          Visual merchandising assets
-        </p>
+            Store Banners
+          </h1>
+          <p className="text-gray-500 text-sm font-sans">
+            Visual merchandising assets
+          </p>
         </div>
         <button
           onClick={() => setIsAdding(true)}
-          className="bg-admin-dark text-white px-5 py-2 rounded-none text-[9px] font-bold uppercase tracking-widest shadow-xl shadow-admin-dark/20 flex items-center gap-2 hover:bg-black transition-all"
+          className="bg-brand-dark text-white px-6 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider shadow-lg shadow-brand-dark/20 flex items-center gap-2 hover:bg-black transition-all"
         >
-          <FiPlus /> New Banner
+          <FiPlus size={16} /> New Banner
         </button>
+      </div>
+
+      <div className="flex gap-4 border-b border-gray-100 mb-6">
+        {['Store Banners', 'Vendor Banners'].map(tab => (
+          <button
+            key={tab}
+            onClick={() => setActiveTab(tab)}
+            className={`pb-3 text-sm font-bold transition-colors relative ${activeTab === tab ? 'text-brand-dark' : 'text-gray-400 hover:text-gray-600'}`}
+          >
+            {tab}
+            {activeTab === tab && (
+              <motion.div layoutId="activeTabIndicator" className="absolute bottom-0 left-0 right-0 h-0.5 bg-brand-dark" />
+            )}
+          </button>
+        ))}
       </div>
 
       <AnimatePresence>
         {isAdding && (
           <motion.div
             initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 10 }}
-            className="bg-white border border-admin-accent/20 p-4 rounded-none shadow-sm space-y-4 font-sans"
+            className="bg-white border border-gray-100 p-6 rounded-2xl shadow-xl space-y-6 font-sans mb-8 relative"
           >
-            <div className="flex justify-between items-center border-b border-gray-50 pb-2">
-              <h3 className="text-[10px] font-black uppercase tracking-widest text-admin-dark font-['Cormorant',_serif]">
+            <div className="flex justify-between items-center border-b border-gray-100 pb-4">
+              <h3 className="text-lg font-bold text-brand-dark">
                 {editingBanner ? 'Edit Campaign Banner' : 'Create Campaign Banner'}
               </h3>
-              <button onClick={handleCancel}><FiX size={14} /></button>
+              <button onClick={handleCancel} className="text-gray-400 hover:text-red-500 transition-colors p-1 bg-gray-50 rounded-lg"><FiX size={18} /></button>
             </div>
             <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
               <div className="space-y-1">
@@ -159,6 +182,7 @@ const AdminBanners = () => {
                   <option>Trending</option>
                   <option>Offers</option>
                   <option>AppPromo</option>
+                  <option>Vendor Dashboard</option>
                 </select>
               </div>
               <div className="space-y-1">
@@ -233,50 +257,54 @@ const AdminBanners = () => {
                 </div>
               </div>
 
-              <button type="submit" disabled={loading || isUploading} className="md:col-span-2 lg:col-span-4 bg-admin-gold text-white text-[9px] font-black uppercase py-4 tracking-[0.2em] shadow-lg shadow-admin-gold/10 hover:bg-admin-dark transition-all disabled:opacity-50">
-                {loading ? 'Saving Changes...' : (isUploading ? 'Finalizing Asset...' : (editingBanner ? 'Update Campaign' : 'Deploy Campaign'))}
-              </button>
+              <div className="pt-4 md:col-span-2 lg:col-span-4 flex justify-end">
+                <button type="submit" disabled={loading || isUploading} className="bg-brand-dark text-white px-8 py-3 rounded-xl font-bold text-sm shadow-lg shadow-brand-dark/20 hover:bg-black transition-all disabled:opacity-50 flex items-center gap-2">
+                  {loading ? 'Saving Changes...' : (isUploading ? 'Finalizing Asset...' : (editingBanner ? 'Update Campaign' : 'Deploy Campaign'))}
+                </button>
+              </div>
             </form>
           </motion.div>
         )}
       </AnimatePresence>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
-        {banners.map((banner) => {
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+        {banners.filter(b => activeTab === 'Store Banners' ? b.type !== 'Vendor Dashboard' : b.type === 'Vendor Dashboard').map((banner) => {
           return (
-            <div key={banner._id} className="bg-white rounded-none border border-admin-accent/10 shadow-sm group relative overflow-hidden">
-              <div className="p-1">
-                <div className="relative aspect-[21/9] bg-admin-light overflow-hidden rounded-none">
-                  <img src={banner.image} alt={banner.title} className="w-full h-full object-cover grayscale-[20%] group-hover:grayscale-0 transition-all group-hover:scale-105" />
-                  <div className="absolute top-1 left-1 flex gap-1">
-                    <span className="bg-admin-dark/80 text-white text-[5px] font-black px-1 py-0.5 rounded-none uppercase tracking-widest backdrop-blur-sm">{banner.type}</span>
+            <div key={banner._id} className="bg-white rounded-2xl border border-gray-100 shadow-sm group relative overflow-hidden flex flex-col">
+              <div className="p-3 pb-0">
+                <div className="relative aspect-[21/9] bg-gray-50 overflow-hidden rounded-xl border border-gray-50">
+                  <img src={banner.image} alt={banner.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                  <div className="absolute top-2 left-2 flex gap-1">
+                    <span className="bg-brand-dark/90 text-white text-[9px] font-bold px-2 py-1 rounded uppercase tracking-widest shadow-sm backdrop-blur-md">{banner.type}</span>
                   </div>
-
                 </div>
               </div>
 
-              <div className="p-3 bg-white border-t border-admin-accent/5 space-y-2">
-                <div className="flex items-center justify-between">
-                  <div className="min-w-0">
-                    <h3 className="text-[9px] font-black text-admin-dark uppercase tracking-widest mb-0.5 truncate">{banner.title}</h3>
-                    <span className="text-[7px] text-gray-400 font-bold uppercase tracking-tighter block">URL: {banner.link || 'Internal'}</span>
-                  </div>
-                  <div className="flex items-center gap-1 shrink-0">
-                    <div className="w-1.5 h-1.5 rounded-full bg-green-500 shadow-sm shadow-green-500/50" />
-                    <span className="text-[7px] font-black text-green-500 uppercase tracking-tighter">Live</span>
+              <div className="p-4 bg-white space-y-3 flex-1 flex flex-col justify-between">
+                <div>
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="min-w-0">
+                      <h3 className="text-sm font-sans font-bold text-gray-800 mb-1 truncate">{banner.title}</h3>
+                      <span className="text-xs text-gray-500 font-medium block truncate">{banner.link ? `URL: ${banner.link}` : 'Internal Link'}</span>
+                    </div>
+                    <div className="flex items-center gap-1.5 shrink-0 bg-green-50 px-2 py-1 rounded-md border border-green-100">
+                      <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
+                      <span className="text-[10px] font-bold text-green-600 uppercase tracking-wider">Live</span>
+                    </div>
                   </div>
                 </div>
-                <div className="flex items-center gap-2 pt-1 border-t border-gray-50/50">
-                  <button onClick={() => window.open(banner.image, '_blank')} className="flex items-center gap-1.5 text-[8px] font-black uppercase text-admin-dark hover:text-admin-accent transition-colors">
-                    <FiEye size={10} /> View
+                
+                <div className="flex items-center justify-between pt-3 border-t border-gray-50">
+                  <button onClick={() => window.open(banner.image, '_blank')} className="flex items-center justify-center gap-1.5 p-2 text-gray-500 hover:text-brand-dark hover:bg-gray-50 rounded-lg transition-colors flex-1">
+                    <FiEye size={14} />
                   </button>
-                  <span className="text-gray-100">|</span>
-                  <button onClick={() => handleEdit(banner)} className="flex items-center gap-1.5 text-[8px] font-black uppercase text-admin-dark hover:text-admin-gold transition-colors">
-                    <FiEdit2 size={10} /> Edit
+                  <div className="w-px h-4 bg-gray-200"></div>
+                  <button onClick={() => handleEdit(banner)} className="flex items-center justify-center gap-1.5 p-2 text-blue-500 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-colors flex-1">
+                    <FiEdit2 size={14} />
                   </button>
-                  <span className="text-gray-100">|</span>
-                  <button onClick={() => handleDelete(banner._id)} className="flex items-center gap-1.5 text-[8px] font-black uppercase text-red-400 hover:text-red-600 transition-colors">
-                    <FiTrash2 size={10} /> Remove
+                  <div className="w-px h-4 bg-gray-200"></div>
+                  <button onClick={() => handleDelete(banner._id)} className="flex items-center justify-center gap-1.5 p-2 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors flex-1">
+                    <FiTrash2 size={14} />
                   </button>
                 </div>
               </div>
@@ -286,10 +314,12 @@ const AdminBanners = () => {
 
         <button
           onClick={() => setIsAdding(true)}
-          className="border border-dashed border-admin-accent/10 rounded-none h-24 flex flex-col items-center justify-center gap-1 text-gray-300 hover:border-admin-accent hover:text-admin-accent hover:bg-admin-accent/[0.02] transition-all group bg-white/40"
+          className="border-2 border-dashed border-gray-200 rounded-2xl min-h-[220px] flex flex-col items-center justify-center gap-3 text-gray-400 hover:border-brand-pink hover:text-brand-pink hover:bg-brand-pink/5 transition-all group bg-white"
         >
-          <FiImage size={16} className="group-hover:scale-110 transition-transform" />
-          <span className="text-[6px] font-bold uppercase tracking-widest">Add Asset</span>
+          <div className="w-12 h-12 rounded-full bg-gray-50 group-hover:bg-brand-pink/10 flex items-center justify-center transition-colors">
+            <FiPlus size={24} className="group-hover:scale-110 transition-transform" />
+          </div>
+          <span className="text-xs font-bold uppercase tracking-widest">Add New Banner</span>
         </button>
       </div>
     </div>

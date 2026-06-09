@@ -7,7 +7,7 @@ import { useShop } from '../../context/ShopContext';
 import ConsultationCTA from './ConsultationCTA';
 
 const Offers = () => {
-  const { products, loading } = useShop();
+  const { products, loading, offers } = useShop();
   const [searchParams, setSearchParams] = useSearchParams();
   const urlCategory = searchParams.get('category') || 'All Offers';
   const urlSort = searchParams.get('sort') || 'Top Rated';
@@ -68,7 +68,8 @@ const Offers = () => {
     setSearchParams({ category: activeOffer, sort: newSort });
   };
 
-  const offerFilters = ['All Offers', 'Up to 50% Off On Ayurvedic Skincare', 'Up to 30% Off On Herbal Haircare', 'Flat 20% Off On Wellness Supplements', 'Buy 1 Get 1 Free On Essential Oils'];
+  const dynamicOfferTitles = offers ? offers.map(o => o.title) : [];
+  const offerFilters = ['All Offers', ...dynamicOfferTitles];
 
   // Filter Logic
   const filteredProducts = products.filter(p => {
@@ -87,18 +88,24 @@ const Offers = () => {
 
     let matchesOffer = true;
     if (activeOffer !== 'All Offers' && activeOffer !== 'all') {
-      const lowerOffer = activeOffer.toLowerCase();
-      if (lowerOffer.includes('skincare')) {
-        matchesOffer = p.category?.toLowerCase() === 'skin care' || p.category?.toLowerCase() === 'skincare';
-      } else if (lowerOffer.includes('haircare')) {
-        matchesOffer = p.category?.toLowerCase() === 'hair care' || p.category?.toLowerCase() === 'haircare';
-      } else if (lowerOffer.includes('wellness') || lowerOffer.includes('supplements')) {
-        matchesOffer = p.category?.toLowerCase() === 'wellness' || p.category?.toLowerCase() === 'health care' || p.category?.toLowerCase() === 'supplements';
-      } else if (lowerOffer.includes('oils')) {
-        matchesOffer = p.category?.toLowerCase() === 'aromatherapy' || p.subCategory?.toLowerCase() === 'oil';
+      const selectedOffer = offers?.find(o => o.title === activeOffer || o.category === activeOffer);
+      if (selectedOffer) {
+        const keyword = selectedOffer.category.toLowerCase();
+        matchesOffer = p.category?.toLowerCase().includes(keyword) || 
+                       p.subCategory?.toLowerCase().includes(keyword) || 
+                       p.name?.toLowerCase().includes(keyword);
       } else {
-        // Fallback: Just return true so it doesn't show 0 results if the string is unrecognized
-        matchesOffer = true; 
+        // Fallback for hardcoded URLs that might still exist
+        const lowerOffer = activeOffer.toLowerCase();
+        if (lowerOffer.includes('skincare')) {
+          matchesOffer = p.category?.toLowerCase() === 'skin care' || p.category?.toLowerCase() === 'skincare';
+        } else if (lowerOffer.includes('haircare')) {
+          matchesOffer = p.category?.toLowerCase() === 'hair care' || p.category?.toLowerCase() === 'haircare';
+        } else if (lowerOffer.includes('wellness') || lowerOffer.includes('supplements')) {
+          matchesOffer = p.category?.toLowerCase() === 'wellness' || p.category?.toLowerCase() === 'health care' || p.category?.toLowerCase() === 'supplements';
+        } else if (lowerOffer.includes('oils')) {
+          matchesOffer = p.category?.toLowerCase() === 'aromatherapy' || p.subCategory?.toLowerCase() === 'oil';
+        }
       }
     }
 

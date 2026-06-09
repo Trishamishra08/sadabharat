@@ -1,5 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import { FiArrowLeft, FiCheck, FiMapPin, FiPackage, FiTruck, FiNavigation } from 'react-icons/fi';
+import { FiArrowLeft, FiCheck, FiMapPin, FiPackage, FiTruck, FiNavigation, FiCreditCard, FiPlusCircle, FiImage } from 'react-icons/fi';
+import { AnimatePresence } from 'framer-motion';
+import { RMAModal } from './UserOrders';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import api from '../../utils/api';
 
@@ -9,6 +11,8 @@ const TrackOrder = () => {
   const orderId = searchParams.get('id');
   const [order, setOrder] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [showRmaModal, setShowRmaModal] = useState(false);
+  const [isBankOnly, setIsBankOnly] = useState(false);
 
   useEffect(() => {
     if (orderId) {
@@ -61,6 +65,15 @@ const TrackOrder = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 font-['Poppins'] py-4 px-2 md:px-6">
+      <AnimatePresence>
+        {showRmaModal && order && (
+          <RMAModal
+            order={order}
+            isBankOnly={isBankOnly}
+            onClose={() => { setShowRmaModal(false); setIsBankOnly(false); }}
+          />
+        )}
+      </AnimatePresence>
       <div className="w-full max-w-[1400px] mx-auto">
         
         {/* Header */}
@@ -165,6 +178,53 @@ const TrackOrder = () => {
                         </div>
                     </div>
                 </div>
+
+                {/* Return and Replacement Box */}
+                {minStatusLevel >= 4 && (
+                    <div className="bg-white border border-gray-200 rounded-lg shadow-sm p-4 md:p-5">
+                        <div className="flex items-center justify-between mb-3 border-b border-gray-100 pb-2">
+                            <h4 className="text-xs md:text-sm font-bold font-['Poppins'] text-gray-900 flex items-center gap-2">
+                                {(!order.returnStatus || order.returnStatus === 'Not Requested') ? 'Return & Replacement' : 'RMA Status'}
+                            </h4>
+                        </div>
+                        
+                        {order.returnStatus === 'Return Approved' && !order.refundAccountDetails && (
+                            <div className="bg-pink-50 border border-pink-100 rounded-lg p-3 mb-3">
+                                <p className="text-[10px] font-medium text-gray-800 flex items-center gap-2 mb-2">
+                                    <FiCreditCard className="text-pink-600" />
+                                    Please fill your account details for refund
+                                </p>
+                                <button
+                                    onClick={() => { setIsBankOnly(true); setShowRmaModal(true); }}
+                                    className="w-full bg-gray-900 text-white text-[10px] font-bold uppercase py-1.5 rounded-md hover:bg-pink-600 transition-colors"
+                                >
+                                    Fill Details
+                                </button>
+                            </div>
+                        )}
+
+                        {(!order.returnStatus || order.returnStatus === 'Not Requested') ? (
+                            <div className="text-center py-2">
+                                <p className="text-[10px] md:text-[11px] font-['Poppins'] text-gray-500 mb-3">
+                                    Not satisfied with your product? You can initiate a return or replacement request.
+                                </p>
+                                <button
+                                    onClick={() => setShowRmaModal(true)}
+                                    className="w-full flex items-center justify-center gap-2 bg-[#054425] text-white px-4 py-2 rounded text-[11px] md:text-xs font-semibold font-['Poppins'] hover:bg-[#04331c] transition-colors"
+                                >
+                                    <FiPlusCircle /> Initiate Request
+                                </button>
+                            </div>
+                        ) : (
+                            <div className="flex items-center justify-between bg-gray-50 p-2 rounded border border-gray-100">
+                                <span className={`text-[11px] font-bold uppercase tracking-wide px-3 py-1 rounded-sm border ${['Returned', 'Replaced'].includes(order.returnStatus) ? 'bg-green-50 text-green-600 border-green-200' : order.returnStatus?.includes('Rejected') ? 'bg-red-50 text-red-500 border-red-200' : 'bg-yellow-50 text-yellow-700 border-yellow-200'}`}>
+                                    {order.returnStatus}
+                                </span>
+                                {order.returnImages?.length > 0 && <FiImage className="text-pink-600" size={16} title="Evidence Attached" />}
+                            </div>
+                        )}
+                    </div>
+                )}
 
                 <div className="bg-[#F4F8F5] border border-[#054425]/10 rounded-lg shadow-sm p-4 md:p-5 text-center">
                     <h4 className="text-xs md:text-sm font-bold font-['Poppins'] text-[#054425] mb-1.5 tracking-normal">Need Help?</h4>

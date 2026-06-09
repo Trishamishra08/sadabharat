@@ -1,16 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import AdminLayout from './AdminLayout';
-import { FiStar, FiTrash2, FiCheckCircle, FiXCircle, FiMessageSquare, FiRefreshCw, FiArrowLeft, FiUser } from 'react-icons/fi';
-import { motion, AnimatePresence } from 'framer-motion';
-
-// MOCK API for Frontend-Only mode
-const api = {
-  get: async () => ({ data: { data: { products: [], categories: [], banners: [], settings: {}, orders: [], users: [], stats: [], recentTransactions: [], dailyRevenue: [], vendors: [], blogs: [], returns: [], testimonials: [], reviews: [], replacements: [], supportTickets: [], locations: [], coupons: [], logs: [] }, status: 'success' } }),
-  post: async () => ({ data: { data: { order: { orderId: 'MOCK-ORDER-123' } }, status: 'success' } }),
-  patch: async () => ({ data: { status: 'success' } }),
-  delete: async () => ({ data: { status: 'success' } })
-};
-
+import { FiStar, FiTrash2, FiCheckCircle, FiXCircle, FiRefreshCw } from 'react-icons/fi';
+import api from '../../utils/api';
 
 const AdminReviews = () => {
     const [reviews, setReviews] = useState([]);
@@ -19,123 +9,156 @@ const AdminReviews = () => {
     const fetchReviews = useCallback(async () => {
         try {
             setLoading(true);
-            const res = await api.get('/reviews');
-            setReviews(res.data.data.reviews);
+            const res = await api.get('/admins/reviews');
+            setReviews(res.data.data.reviews || []);
         } catch (err) {
-            console.error("Failed to fetch product reviews:", err);
+            console.error('Failed to fetch product reviews:', err);
         } finally {
             setLoading(false);
         }
     }, []);
 
-    useEffect(() => {
-        fetchReviews();
-    }, [fetchReviews]);
+    useEffect(() => { fetchReviews(); }, [fetchReviews]);
 
     const handleDelete = async (id) => {
-        if (window.confirm("Permanently archive this product feedback? This might affect product ratings.")) {
-            try {
-                await api.delete(`/reviews/${id}`);
-                fetchReviews();
-            } catch (err) {
-                alert("Failed to archive review.");
-            }
+        if (!window.confirm('Delete this review permanently?')) return;
+        try {
+            await api.delete(`/admins/reviews/${id}`);
+            fetchReviews();
+        } catch {
+            alert('Failed to delete review.');
         }
     };
 
     const handleToggleApproval = async (id) => {
         try {
-            await api.patch(`/reviews/${id}/toggle-approval`);
+            await api.patch(`/admins/reviews/${id}/toggle-approval`);
             fetchReviews();
-        } catch (err) {
-            alert("Failed to toggle approval status.");
+        } catch {
+            alert('Failed to update review status.');
         }
     };
 
+    const getImage = (product) => {
+        if (!product) return null;
+        if (product.images?.length > 0) return product.images[0];
+        if (product.image) return product.image;
+        return null;
+    };
+
     return (
-        <div className="max-w-7xl mx-auto space-y-4 font-['Cormorant',_serif] min-h-screen">
-            <div className="flex justify-between items-end">
+        <div className="px-6 py-4">
+            {/* Header */}
+            <div className="flex justify-between items-center mb-4">
                 <div>
-                    <h1 className="text-3xl font-['Cormorant',_serif] font-bold text-admin-dark leading-none mb-2">
-          Feedback Ledger
-        </h1>
-        <p className="text-gray-500 text-[13px] font-poppins">
-          Verified product ratings & commentary
-        </p>
+                    <h1 className="text-xl font-semibold text-gray-800">Feedback Ledger</h1>
+                    <p className="text-xs text-gray-400 mt-0.5">Verified product ratings & customer commentary</p>
                 </div>
-                <button onClick={fetchReviews} className="flex items-center gap-1.5 bg-admin-light/20 px-3 py-1.5 border border-admin-accent/10 text-[8px] font-black uppercase tracking-widest text-admin-dark shadow-sm hover:bg-white transition-colors">
-                    <FiRefreshCw size={10} className={loading ? 'animate-spin' : ''} /> Sync Reviews
+                <button
+                    onClick={fetchReviews}
+                    className="flex items-center gap-1.5 bg-white border border-gray-200 px-3 py-1.5 rounded-lg text-xs text-gray-500 hover:bg-gray-50 transition-colors shadow-sm"
+                >
+                    <FiRefreshCw size={11} className={loading ? 'animate-spin' : ''} />
+                    Sync Reviews
                 </button>
             </div>
 
-            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden p-1 pb-4">
+            {/* Table */}
+            <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
                 <div className="overflow-x-auto">
                     <table className="w-full text-left font-sans">
                         <thead>
-                            <tr className="border-b border-gray-50">
-                                <th className="px-6 py-4 text-[7px] font-black uppercase tracking-widest text-admin-dark/40">Product Info</th>
-                                <th className="px-6 py-4 text-[7px] font-black uppercase tracking-widest text-admin-dark/40">Customer</th>
-                                <th className="px-6 py-4 text-[7px] font-black uppercase tracking-widest text-admin-dark/40">Rating / Commentary</th>
-                                <th className="px-6 py-4 text-[7px] font-black uppercase tracking-widest text-admin-dark/40">Status</th>
-                                <th className="px-6 py-4 text-[7px] font-black uppercase tracking-widest text-admin-dark/40 text-right">Actions</th>
+                            <tr className="border-b border-gray-100 bg-gray-50/60">
+                                <th className="px-4 py-2.5 text-[11px] font-medium text-gray-500 uppercase tracking-wide whitespace-nowrap">Product</th>
+                                <th className="px-4 py-2.5 text-[11px] font-medium text-gray-500 uppercase tracking-wide whitespace-nowrap">Customer</th>
+                                <th className="px-4 py-2.5 text-[11px] font-medium text-gray-500 uppercase tracking-wide whitespace-nowrap">Rating / Comment</th>
+                                <th className="px-4 py-2.5 text-[11px] font-medium text-gray-500 uppercase tracking-wide whitespace-nowrap">Status</th>
+                                <th className="px-4 py-2.5 text-[11px] font-medium text-gray-500 uppercase tracking-wide text-right whitespace-nowrap">Actions</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-50">
                             {loading ? (
-                                <tr><td colSpan="5" className="px-6 py-10 text-center text-gray-400 text-[10px] font-bold uppercase tracking-widest animate-pulse">Syncing Global Feedback...</td></tr>
+                                <tr>
+                                    <td colSpan="5" className="px-4 py-8 text-center text-gray-400 text-xs animate-pulse">
+                                        Loading reviews...
+                                    </td>
+                                </tr>
                             ) : reviews.length > 0 ? (
                                 reviews.map((r) => (
-                                    <tr key={r._id} className="hover:bg-admin-accent/[0.01] transition-colors group">
-                                        <td className="px-6 py-4">
-                                            <div className="flex items-center gap-3">
-                                                <div className="w-10 h-10 bg-gray-50 rounded-lg p-1 border border-admin-accent/10">
-                                                    <img src={r.product?.image} alt="" className="w-full h-full object-contain mix-blend-multiply" />
+                                    <tr key={r._id} className="hover:bg-gray-50/40 transition-colors">
+                                        {/* Product */}
+                                        <td className="px-4 py-2">
+                                            <div className="flex items-center gap-2.5">
+                                                <div className="w-8 h-8 bg-gray-50 rounded-lg border border-gray-100 flex-shrink-0 overflow-hidden">
+                                                    {getImage(r.product) ? (
+                                                        <img
+                                                            src={getImage(r.product)}
+                                                            alt=""
+                                                            className="w-full h-full object-contain mix-blend-multiply"
+                                                        />
+                                                    ) : (
+                                                        <div className="w-full h-full bg-gray-100 rounded-lg" />
+                                                    )}
                                                 </div>
-                                                <span className="text-[10px] font-black text-admin-dark uppercase tracking-tighter truncate max-w-[120px]">
-                                                    {r.product?.name}
+                                                <span className="text-xs text-gray-700 font-medium line-clamp-1 max-w-[130px]">
+                                                    {r.product?.name || '—'}
                                                 </span>
                                             </div>
                                         </td>
-                                        <td className="px-6 py-4">
-                                            <div className="flex flex-col">
-                                                <span className="text-[10px] font-bold text-gray-700">{r.user?.name}</span>
-                                                <span className="text-[7px] text-gray-400 font-bold uppercase tracking-widest">{r.user?.phone}</span>
-                                            </div>
+                                        {/* Customer */}
+                                        <td className="px-4 py-2">
+                                            <span className="text-xs text-gray-700">{r.user?.name || '—'}</span>
+                                            {r.user?.phone && (
+                                                <p className="text-[10px] text-gray-400 mt-0.5">{r.user.phone}</p>
+                                            )}
                                         </td>
-                                        <td className="px-6 py-4 max-w-xs">
-                                            <div className="flex items-center gap-0.5 text-admin-gold mb-1">
+                                        {/* Rating + Comment */}
+                                        <td className="px-4 py-2 max-w-[240px]">
+                                            <div className="flex items-center gap-0.5 text-amber-400 mb-0.5">
                                                 {[...Array(5)].map((_, i) => (
-                                                    <FiStar key={i} size={8} className={i < r.rating ? 'fill-admin-gold' : 'text-gray-200'} />
+                                                    <FiStar
+                                                        key={i}
+                                                        size={10}
+                                                        className={i < r.rating ? 'fill-amber-400 stroke-amber-400' : 'stroke-gray-200 fill-gray-100'}
+                                                    />
                                                 ))}
-                                                <span className="text-[8px] font-black text-admin-gold ml-1">{r.rating}.0</span>
+                                                <span className="text-[10px] text-amber-500 ml-1 font-medium">{r.rating}.0</span>
                                             </div>
-                                            <p className="text-[10px] text-gray-600 line-clamp-2 italic">"{r.review}"</p>
+                                            <p className="text-[11px] text-gray-500 line-clamp-1 italic">
+                                                {r.comment ? `"${r.comment}"` : <span className="text-gray-300 not-italic">No comment</span>}
+                                            </p>
                                         </td>
-                                        <td className="px-6 py-4">
-                                            <button onClick={() => handleToggleApproval(r._id)} className="focus:outline-none">
+                                        {/* Status */}
+                                        <td className="px-4 py-2">
+                                            <button onClick={() => handleToggleApproval(r._id)} title="Click to toggle">
                                                 {r.isApproved ? (
-                                                    <span className="px-2 py-1 text-[6px] font-black uppercase tracking-widest bg-green-50 text-green-600 border border-green-100 rounded-lg flex items-center gap-1 w-fit cursor-pointer hover:bg-green-100 transition-colors">
-                                                        <FiCheckCircle size={8} /> Internal Live
+                                                    <span className="inline-flex items-center gap-1 px-2 py-0.5 text-[10px] bg-green-50 text-green-600 border border-green-100 rounded-md hover:bg-green-100 transition-colors cursor-pointer">
+                                                        <FiCheckCircle size={9} /> Approved
                                                     </span>
                                                 ) : (
-                                                    <span className="px-2 py-1 text-[6px] font-black uppercase tracking-widest bg-red-50 text-red-600 border border-red-100 rounded-lg flex items-center gap-1 w-fit cursor-pointer hover:bg-red-100 transition-colors">
-                                                        <FiXCircle size={8} /> Hidden
+                                                    <span className="inline-flex items-center gap-1 px-2 py-0.5 text-[10px] bg-red-50 text-red-500 border border-red-100 rounded-md hover:bg-red-100 transition-colors cursor-pointer">
+                                                        <FiXCircle size={9} /> Hidden
                                                     </span>
                                                 )}
                                             </button>
                                         </td>
-                                        <td className="px-6 py-4 text-right">
+                                        {/* Actions */}
+                                        <td className="px-4 py-2 text-right">
                                             <button
                                                 onClick={() => handleDelete(r._id)}
-                                                className="p-1.5 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"
+                                                className="p-1 text-gray-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all"
                                             >
-                                                <FiTrash2 size={14} />
+                                                <FiTrash2 size={13} />
                                             </button>
                                         </td>
                                     </tr>
                                 ))
                             ) : (
-                                <tr><td colSpan="5" className="px-6 py-10 text-center text-gray-400 text-[10px] font-bold uppercase tracking-widest italic leading-relaxed">No Product Feedback Record Found In Current Audit</td></tr>
+                                <tr>
+                                    <td colSpan="5" className="px-4 py-10 text-center text-gray-400 text-xs italic">
+                                        No product reviews found.
+                                    </td>
+                                </tr>
                             )}
                         </tbody>
                     </table>

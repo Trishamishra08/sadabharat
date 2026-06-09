@@ -16,7 +16,7 @@ const registerVendor = async (req, res, next) => {
     const { email, mobile, password } = req.body;
 
     const vendorExists = await Vendor.findOne({ $or: [{ email }, { mobile }] });
-    
+
     if (vendorExists) {
       res.status(400);
       throw new Error('Vendor with this email or mobile already exists');
@@ -194,6 +194,121 @@ const unblockVendor = async (req, res, next) => {
   }
 };
 
+const Earning = require('../models/earningModel');
+
+// @desc    Get vendor earnings stats
+// @route   GET /api/vendors/earnings
+// @access  Private/Vendor
+const getVendorEarnings = async (req, res, next) => {
+  try {
+    const vendorId = req.user._id;
+
+    const earnings = await Earning.find({ vendor: vendorId }).populate('order');
+
+    let totalNet = 0;
+    let totalCommission = 0;
+    let todayEarning = 0;
+    let weeklyEarning = 0;
+    let monthlyEarning = 0;
+
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+    const monthAgo = new Date(now.getFullYear(), now.getMonth() - 1, now.getDate());
+
+    const chartDataMap = {};
+
+    let pendingBalance = 0;
+    let clearedBalance = 0;
+
+    earnings.forEach(e => {
+      if (e.status !== 'Refunded') {
+        totalNet += e.netEarning;
+        totalCommission += e.commissionAmount;
+
+        if (e.status === 'Pending') {
+          pendingBalance += e.netEarning;
+        } else if (e.status === 'Cleared') {
+          clearedBalance += e.netEarning;
+        }
+
+        const eDate = new Date(e.createdAt);
+        if (eDate >= today) todayEarning += e.netEarning;
+        if (eDate >= weekAgo) weeklyEarning += e.netEarning;
+        if (eDate >= monthAgo) monthlyEarning += e.netEarning;
+
+        // Chart Data (last 7 days grouped)
+        if (eDate >= weekAgo) {
+          const dateStr = eDate.toISOString().split('T')[0];
+          chartDataMap[dateStr] = (chartDataMap[dateStr] || 0) + e.netEarning;
+        }
+      }
+    });
+
+    const chartData = Object.keys(chartDataMap).sort().map(date => ({
+      date,
+      value: chartDataMap[date]
+    }));
+
+    // Fetch recent transactions for the details table
+    const recentTransactions = earnings
+      .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+      .slice(0, 10)
+      .map(e => ({
+        _id: e._id,
+        orderId: e.order?._id ? e.order._id.toString().substring(0, 8).toUpperCase() : 'UNKNOWN',
+        productName: e.productName,
+        totalAmount: e.totalAmount,
+        commissionRate: e.commissionRate,
+        commissionAmount: e.commissionAmount,
+        netEarning: e.netEarning,
+        status: e.status,
+        date: new Date(e.createdAt).toLocaleDateString()
+      }));
+
+    res.status(200).json({
+      success: true,
+      data: {
+        totalNet,
+        totalCommission,
+        todayEarning,
+        weeklyEarning,
+        monthlyEarning,
+        pendingBalance,
+        clearedBalance,
+        chartData,
+        recentTransactions
+      }
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+const Review = require('../models/reviewModel');
+
+const getVendorReviews = async (req, res, next) => {
+  try {
+    const Product = require('../models/productModel');
+    // Find all products uploaded by this vendor
+    const vendorProducts = await Product.find({ vendor: req.user._id }).select('_id');
+    const productIds = vendorProducts.map(p => p._id);
+
+    // Find reviews for those products
+    const reviews = await Review.find({ product: { $in: productIds } })
+      .populate('product', 'name image images')
+      .populate('user', 'name phone')
+      .sort({ createdAt: -1 });
+
+    res.status(200).json({
+      success: true,
+      data: { reviews }
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports = {
   registerVendor,
   loginVendor,
@@ -202,5 +317,7 @@ module.exports = {
   getBlockedVendors,
   approveVendor,
   blockVendor,
-  unblockVendor
+  unblockVendor,
+  getVendorEarnings,
+  getVendorReviews
 };

@@ -3,14 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { IoArrowBack } from 'react-icons/io5';
 
-// MOCK API for Frontend-Only mode
-const api = {
-  get: async () => ({ data: { data: { products: [], categories: [], banners: [], settings: {}, orders: [], users: [], stats: [], recentTransactions: [], dailyRevenue: [], vendors: [], blogs: [], returns: [], testimonials: [], reviews: [], replacements: [], supportTickets: [], locations: [], coupons: [], logs: [] }, status: 'success' } }),
-  post: async () => ({ data: { data: { order: { orderId: 'MOCK-ORDER-123' } }, status: 'success' } }),
-  patch: async () => ({ data: { status: 'success' } }),
-  delete: async () => ({ data: { status: 'success' } })
-};
-import { mockBlogs } from './BlogSection';
+import api from '../../utils/api';
 
 const BlogDetail = () => {
   const { id } = useParams();
@@ -21,25 +14,15 @@ const BlogDetail = () => {
   useEffect(() => {
     const fetchBlog = async () => {
       try {
-        const res = await api.get('/blogs');
-        const blogs = res.data?.data?.blogs?.length > 0 ? res.data.data.blogs : mockBlogs;
-        
-        // Find by _id (from API) or id (from mock data)
-        const found = blogs.find(b => b._id === id || b.id.toString() === id);
-        
-        if (found) {
-          setBlog(found);
+        const res = await api.get(`/blogs/${id}`);
+        if (res.data?.success && res.data?.data?.blog) {
+          setBlog(res.data.data.blog);
         } else {
           navigate('/blog');
         }
       } catch (err) {
         console.error('Failed to fetch blog detail:', err);
-        const foundMock = mockBlogs.find(b => b._id === id || b.id.toString() === id);
-        if (foundMock) {
-          setBlog(foundMock);
-        } else {
-          navigate('/blog');
-        }
+        navigate('/blog');
       } finally {
         setLoading(false);
       }

@@ -8,6 +8,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 
 import bannerImg1 from '../../assets/images/sadabharat_banner.png';
 import bannerImg2 from '../../assets/images/sadabharat_banner1.png';
+import realApi from '../../utils/api';
 
 
 const StatCard = ({ title, value, trend, trendUp, date, icon: Icon, iconBg, iconColor, cardBg }) => {
@@ -50,13 +51,69 @@ const VendorDashboard = () => {
   const [showCalendar, setShowCalendar] = useState(false);
   const [selectedMonth, setSelectedMonth] = useState('May 2024');
   const [currentSlide, setCurrentSlide] = useState(0);
+  const [vendorBanners, setVendorBanners] = useState([]);
+
+  useEffect(() => {
+    const fetchBanners = async () => {
+      try {
+        const { data } = await realApi.get('/banners');
+        if (data.success) {
+          const vBanners = data.data.banners.filter(b => b.type === 'Vendor Dashboard');
+          if (vBanners.length > 0) {
+            setVendorBanners(vBanners);
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching vendor banners:', error);
+      }
+    };
+    fetchBanners();
+  }, []);
+
+  const staticBanners = [
+    {
+      image: bannerImg1,
+      badge: "📈 Partner Spotlight",
+      title: "Boost Sales By 45% with Prime Badge",
+      desc: "Join our exclusive Prime Seller network and show up in top searches across India.",
+      btn: "Upgrade Now",
+      action: () => window.showVendorToast?.('Redirecting to partner benefits...', 'info')
+    },
+    {
+      image: bannerImg2,
+      badge: "🌿 Flat 5% Platform Fees",
+      title: "Keep More Profits In Your Pocket",
+      desc: "Special seasonal discount: Platform fee slashed to flat 5% for all Premium Ayurvedic Sellers.",
+      btn: "Learn More",
+      action: () => window.showVendorToast?.('Opening commission guide...', 'info')
+    },
+    {
+      image: bannerImg1,
+      badge: "🏆 Seller of the Month",
+      title: "Herbal Essence Achieved Highest Growth!",
+      desc: "Upgrade to premium today to unlock a dedicated home-page showcase feature next month.",
+      btn: "Get Premium",
+      action: () => window.showVendorToast?.('Opening Premium dashboard...', 'info')
+    }
+  ];
+
+  const displayBanners = vendorBanners.length > 0 
+    ? vendorBanners.map(b => ({
+        image: b.image,
+        badge: b.badge || "Partner Spotlight",
+        title: b.title || b.heading || "Special Offer",
+        desc: b.description || "Exciting news for our vendors.",
+        btn: b.btnText || "Learn More",
+        action: () => window.showVendorToast?.(b.link ? `Redirecting to ${b.link}...` : `Action for: ${b.title}`, 'info')
+      }))
+    : staticBanners;
 
   useEffect(() => {
     const timer = setInterval(() => {
-      setCurrentSlide((prev) => (prev + 1) % 3);
+      setCurrentSlide((prev) => (prev + 1) % Math.max(1, displayBanners.length));
     }, 4500);
     return () => clearInterval(timer);
-  }, []);
+  }, [displayBanners.length]);
 
   const dataMap = {
     'May 2024': { sales: '₹1,25,680', orders: '248', cust: '186', trendSales: '↑ 18.6%', trendOrders: '↑ 12.4%', up: true },
@@ -161,32 +218,7 @@ const VendorDashboard = () => {
         
         {/* Slides */}
         <AnimatePresence mode="wait">
-          {[
-            {
-              image: bannerImg1,
-              badge: "📈 Partner Spotlight",
-              title: "Boost Sales By 45% with Prime Badge",
-              desc: "Join our exclusive Prime Seller network and show up in top searches across India.",
-              btn: "Upgrade Now",
-              action: () => window.showVendorToast?.('Redirecting to partner benefits...', 'info')
-            },
-            {
-              image: bannerImg2,
-              badge: "🌿 Flat 5% Platform Fees",
-              title: "Keep More Profits In Your Pocket",
-              desc: "Special seasonal discount: Platform fee slashed to flat 5% for all Premium Ayurvedic Sellers.",
-              btn: "Learn More",
-              action: () => window.showVendorToast?.('Opening commission guide...', 'info')
-            },
-            {
-              image: bannerImg1,
-              badge: "🏆 Seller of the Month",
-              title: "Herbal Essence Achieved Highest Growth!",
-              desc: "Upgrade to premium today to unlock a dedicated home-page showcase feature next month.",
-              btn: "Get Premium",
-              action: () => window.showVendorToast?.('Opening Premium dashboard...', 'info')
-            }
-          ].map((slide, idx) => {
+          {displayBanners.map((slide, idx) => {
             if (idx !== currentSlide) return null;
             return (
               <motion.div 
@@ -229,7 +261,7 @@ const VendorDashboard = () => {
 
         {/* Navigation Dot Indicators */}
         <div className="absolute bottom-2.5 right-4 z-20 flex gap-1.5 pointer-events-auto">
-          {[0, 1, 2].map((i) => (
+          {displayBanners.map((_, i) => (
             <button
               key={i}
               onClick={() => setCurrentSlide(i)}

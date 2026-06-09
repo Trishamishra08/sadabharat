@@ -2,121 +2,18 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { IoClose } from 'react-icons/io5';
 import { useSearchParams, useNavigate } from 'react-router-dom';
-
-// MOCK API for Frontend-Only mode
-const api = {
-  get: async () => ({ data: { data: { products: [], categories: [], banners: [], settings: {}, orders: [], users: [], stats: [], recentTransactions: [], dailyRevenue: [], vendors: [], blogs: [], returns: [], testimonials: [], reviews: [], replacements: [], supportTickets: [], locations: [], coupons: [], logs: [] }, status: 'success' } }),
-  post: async () => ({ data: { data: { order: { orderId: 'MOCK-ORDER-123' } }, status: 'success' } }),
-  patch: async () => ({ data: { status: 'success' } }),
-  delete: async () => ({ data: { status: 'success' } })
-};
+import api from '../../utils/api';
 
 import blogFloating1 from '../../assets/images/cat_wellness.png';
 import blogFloating2 from '../../assets/images/cat_skincare.png';
 import blogFloating3 from '../../assets/images/cat_haircare.png';
 import blogFloating4 from '../../assets/images/cat_essentialoils_new.png';
-import blogItem1 from '../../assets/images/blog_skincare.png';
-import blogItem2 from '../../assets/images/blog_haircare.png';
-import blogItem3 from '../../assets/images/blog_vit_c.png';
 
 const floatingImages = [
   { src: blogFloating1, size: 'w-16 h-20 md:w-24 md:h-32', top: '10%', left: '15%', delay: 0 },
   { src: blogFloating2, size: 'w-14 h-18 md:w-20 md:h-28', top: '25%', left: '30%', delay: 1 },
   { src: blogFloating3, size: 'w-18 h-24 md:w-28 md:h-36', top: '10%', left: '65%', delay: 0.5 },
   { src: blogFloating4, size: 'w-16 h-20 md:w-24 md:h-32', top: '22%', left: '80%', delay: 1.5 },
-];
-
-export const mockBlogs = [
-  {
-    id: 1,
-    category: 'SKINCARE',
-    title: 'Ayurvedic Skincare Routine',
-    excerpt: 'Discover the ancient secrets of naturally glowing skin.',
-    content: "Ayurveda teaches us that glowing skin starts from within. A proper Ayurvedic skincare routine involves more than just topical applications; it requires a balance of doshas. Start your day by cleansing your face with raw milk or rose water. Follow up with a herbal face pack made of turmeric, sandalwood, and gram flour. Hydrate your skin with pure aloe vera gel or a light oil like Kumkumadi Tailam. Remember, drinking warm water with lemon and honey in the morning can help flush out toxins, giving you that radiant, natural glow.",
-    image: blogItem1,
-    date: 'MAR 15',
-    readTime: '5M'
-  },
-  {
-    id: 2,
-    category: 'HERBS',
-    title: 'The Power of Ashwagandha',
-    excerpt: 'How this adaptogen helps with stress and vitality.',
-    content: "Ashwagandha, known as the 'King of Ayurvedic Herbs', is a powerful adaptogen that has been used for over 3,000 years. It helps the body manage stress by lowering cortisol levels and balancing the nervous system. Regular consumption of Ashwagandha root powder with warm milk before bed can improve sleep quality, boost brain function, and increase overall vitality. Whether you're looking to enhance your physical stamina or find mental calmness, Ashwagandha is a natural remedy that supports holistic well-being.",
-    image: blogItem2,
-    date: 'MAR 10',
-    readTime: '4M'
-  },
-  {
-    id: 3,
-    category: 'DAILY',
-    title: 'Dinacharya: Daily Routine',
-    excerpt: 'Start your morning with simple Ayurvedic practices.',
-    content: "Dinacharya is the Ayurvedic concept of a daily routine that aligns your body with the rhythms of nature. Waking up before sunrise, known as Brahma Muhurta, is highly recommended for mental clarity. Begin your day with tongue scraping to remove toxins (ama) accumulated overnight, followed by oil pulling with sesame or coconut oil for oral health. Engage in light yoga or stretching to awaken your body, and end your morning routine with a warm bath. Embracing Dinacharya can lead to profound improvements in your health and energy levels.",
-    image: blogItem3,
-    date: 'MAR 05',
-    readTime: '3M'
-  },
-  {
-    id: 4,
-    category: 'HAIRCARE',
-    title: 'Benefits of Hair Oiling',
-    excerpt: 'Nourish your scalp with traditional herbal oils.',
-    content: "In Ayurveda, 'Shiro Abhyanga' or head massage with warm herbal oils is an essential practice for maintaining healthy hair and a calm mind. Oils infused with herbs like Bhringraj, Amla, and Brahmi provide deep nourishment to the hair follicles, prevent premature graying, and promote hair growth. Massaging the scalp improves blood circulation and relieves stress. For best results, gently warm the oil before application and leave it on overnight or at least for an hour before washing with a mild, sulfate-free shampoo.",
-    image: blogFloating4,
-    date: 'FEB 28',
-    readTime: '6M'
-  },
-  {
-    id: 5,
-    category: 'WELLNESS',
-    title: 'Balancing Your Doshas',
-    excerpt: 'Understand your body constitution for better health.',
-    content: "According to Ayurveda, every individual has a unique constitution composed of three doshas: Vata, Pitta, and Kapha. Understanding your dominant dosha is the key to maintaining balance and preventing illness. Vata types need grounding foods and warm environments; Pitta types benefit from cooling herbs and avoiding spicy foods; Kapha types require stimulating activities and light, warm meals. By tailoring your diet and lifestyle to your doshic profile, you can achieve optimal health and harmony in your body and mind.",
-    image: blogFloating3,
-    date: 'FEB 20',
-    readTime: '4M'
-  },
-  {
-    id: 6,
-    category: 'TIPS',
-    title: 'Ayurvedic Diet Principles',
-    excerpt: 'Eating mindfully according to the seasons.',
-    content: "An Ayurvedic diet is not just about what you eat, but how and when you eat. Mindful eating in a peaceful environment helps the digestive fire (Agni) work efficiently. Emphasize fresh, seasonal, and locally sourced foods. Incorporate all six tastes—sweet, sour, salty, bitter, pungent, and astringent—into your daily meals to ensure nutritional balance. Avoid drinking ice-cold water, as it dampens the digestive fire. Instead, sip warm water or herbal teas throughout the day to support digestion and detoxification.",
-    image: blogFloating1,
-    date: 'FEB 12',
-    readTime: '3M'
-  },
-  {
-    id: 7,
-    category: 'TIPS',
-    title: 'Natural Detox Methods',
-    excerpt: 'Gentle ways to cleanse your body using Ayurveda.',
-    content: "Detoxification in Ayurveda is about gently supporting the body's natural cleansing mechanisms rather than harsh fasting. 'Panchakarma' is the traditional deep cleanse, but you can practice simple detox methods at home. Start your day with warm water and lemon to flush the digestive tract. Incorporate spices like cumin, coriander, and fennel into your cooking to improve digestion. A short mono-diet of Kitchari (a mix of mung beans and rice) for a few days can give your digestive system a much-needed rest while providing adequate nourishment.",
-    image: blogFloating4,
-    date: 'FEB 10',
-    readTime: '4M'
-  },
-  {
-    id: 8,
-    category: 'TIPS',
-    title: 'Herbal Teas for Immunity',
-    excerpt: 'Boost your body defenses with healing spices.',
-    content: "Ayurvedic herbal teas, or 'Kashayams', are excellent for boosting immunity and soothing the body. A simple tea made by boiling fresh ginger, turmeric, black pepper, and holy basil (Tulsi) leaves can work wonders in warding off seasonal colds. Turmeric provides anti-inflammatory benefits, while black pepper enhances its absorption. Tulsi acts as an immunomodulator. Add a teaspoon of raw honey (after the tea has slightly cooled) for added antibacterial properties and a touch of sweetness.",
-    image: blogFloating2,
-    date: 'FEB 05',
-    readTime: '5M'
-  },
-  {
-    id: 9,
-    category: 'TIPS',
-    title: 'Yoga for Better Digestion',
-    excerpt: 'Poses that stimulate your digestive fire.',
-    content: "Movement is crucial for a healthy digestive system. Certain yoga asanas can stimulate the abdominal organs and improve digestion. 'Vajrasana' (Thunderbolt Pose) is one of the few poses recommended right after a meal; sitting in this posture for 5-10 minutes helps direct blood flow to the digestive organs. 'Pawanmuktasana' (Wind-Relieving Pose) is excellent for relieving bloating and gas. Incorporating these simple stretches into your routine can significantly enhance your Agni and alleviate common digestive discomforts.",
-    image: blogFloating3,
-    date: 'JAN 28',
-    readTime: '3M'
-  }
 ];
 
 const BlogSection = () => {
@@ -135,11 +32,11 @@ const BlogSection = () => {
         if (res.data?.data?.blogs?.length > 0) {
           setDynamicBlogs(res.data.data.blogs);
         } else {
-          setDynamicBlogs(mockBlogs);
+          setDynamicBlogs([]);
         }
       } catch (err) {
         console.error('Failed to fetch blogs:', err);
-        setDynamicBlogs(mockBlogs); // Fallback to dummy data
+        setDynamicBlogs([]); 
       } finally {
         setLoading(false);
       }
@@ -150,8 +47,6 @@ const BlogSection = () => {
   const filteredBlogs = catParam
     ? dynamicBlogs.filter(b => b.category.toLowerCase() === catParam.toLowerCase())
     : dynamicBlogs;
-
-
 
   const displayedBlogs = showAll ? filteredBlogs : filteredBlogs.slice(0, 3);
   const isTipsPage = catParam?.toLowerCase() === 'tips';
@@ -219,7 +114,6 @@ const BlogSection = () => {
 
       <div className="container mx-auto px-4 md:px-8">
 
-
         <div className="text-center mt-8 md:mt-12 mb-12 md:mb-16">
           {!showAll && (
             <motion.button
@@ -275,9 +169,9 @@ const BlogSection = () => {
 
                 <div className="space-y-1.5 px-1 text-center md:text-left">
                     <div className="flex items-center justify-center md:justify-start gap-2 text-gray-400 text-[8px] md:text-[9px]  tracking-widest uppercase">
-                      <span>{blog.date}</span>
+                      <span>{new Date(blog.createdAt || Date.now()).toLocaleDateString('en-US', {month: 'short', day: 'numeric'})}</span>
                       <span className="w-1 h-1 bg-brand-gold/20 rounded-full"></span>
-                      <span>{blog.readTime}</span>
+                      <span>{blog.readTime || '5 min'}</span>
                     </div>
 
                     <h3 className="text-sm md:text-[15px] font-['Poppins']  text-[#5C2E3E] leading-snug group-hover:text-brand-gold transition-colors duration-300 uppercase tracking-tight">
