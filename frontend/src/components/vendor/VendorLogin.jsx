@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Mail, Lock, ArrowRight, Eye, EyeOff } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { registerFCMToken } from '../../services/pushNotificationService';
 import api from '../../utils/api';
 
 const VendorLogin = () => {
@@ -25,6 +26,7 @@ const VendorLogin = () => {
       if (res.data.success) {
         localStorage.setItem('vendor_token', res.data.data.token);
         localStorage.setItem('vendor_auth', 'true');
+        registerFCMToken(true).catch(console.error);
         if (window.showVendorToast) {
           window.showVendorToast('Logged in successfully!', 'success');
         }

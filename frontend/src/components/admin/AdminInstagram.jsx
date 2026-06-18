@@ -1,16 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { FiPlus, FiEdit2, FiTrash2, FiTrendingUp, FiInstagram, FiEye, FiEyeOff, FiUpload } from 'react-icons/fi';
-
-// MOCK API for Frontend-Only mode
-const api = {
-  get: async () => ({ data: { data: { products: [], categories: [], banners: [], settings: {}, orders: [], users: [], stats: [], recentTransactions: [], dailyRevenue: [], vendors: [], blogs: [], returns: [], testimonials: [], reviews: [], replacements: [], supportTickets: [], locations: [], coupons: [], logs: [] }, status: 'success' } }),
-  post: async () => ({ data: { data: { order: { orderId: 'MOCK-ORDER-123' } }, status: 'success' } }),
-  patch: async () => ({ data: { status: 'success' } }),
-  delete: async () => ({ data: { status: 'success' } })
-};
-
-
+import api from '../../utils/api';
 
 const AdminInstagram = () => {
     const [posts, setPosts] = useState([]);
@@ -34,8 +25,19 @@ const AdminInstagram = () => {
 
         try {
             setUploading(true);
-            const url = URL.createObjectURL(file);
-            setFormData(prev => ({ ...prev, image: url }));
+            const formDataUpload = new FormData();
+            formDataUpload.append('documents', file);
+            
+            const uploadRes = await api.post('/upload', formDataUpload, {
+                headers: {
+                    'Content-Type': 'multipart/form-data'
+                }
+            });
+            
+            if (uploadRes.data.success) {
+                const url = uploadRes.data.data[0];
+                setFormData(prev => ({ ...prev, image: url }));
+            }
         } catch (err) {
             console.error('Upload failed:', err);
             alert('Digital asset transmission failed.');
@@ -47,7 +49,7 @@ const AdminInstagram = () => {
     const fetchPosts = async () => {
         try {
             setLoading(true);
-            const res = await api.get('/instagram/admin');
+            const res = await api.get('/instagram');
             setPosts(res.data.data.posts);
         } catch (err) {
             console.error('Failed to fetch instagram posts:', err);
@@ -92,11 +94,11 @@ const AdminInstagram = () => {
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-gray-100 pb-8">
                 <div>
                     <h1 className="text-3xl font-['Cormorant',_serif] font-bold text-admin-dark leading-none mb-2">
-          <Fiinstagram Classname="Text-Admin-Accent" /> Visual Network
-        </h1>
-        <p className="text-gray-500 text-[13px] font-poppins">
-          Community aesthetic synchronizer
-        </p>
+                        <FiInstagram className="inline text-admin-accent mr-2" /> Visual Network
+                    </h1>
+                    <p className="text-gray-500 text-[13px] font-poppins">
+                        Community aesthetic synchronizer
+                    </p>
                 </div>
                 <button
                     onClick={() => { setEditingId(null); setFormData(initialFormState); setIsModalOpen(true); }}

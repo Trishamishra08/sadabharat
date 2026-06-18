@@ -2,14 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FiMessageSquare, FiClock, FiCheckCircle, FiAlertCircle, FiSearch, FiUser, FiHash, FiMoreVertical, FiEdit3, FiSave, FiX } from 'react-icons/fi';
 
-// MOCK API for Frontend-Only mode
-const api = {
-  get: async () => ({ data: { data: { products: [], categories: [], banners: [], settings: {}, orders: [], users: [], stats: [], recentTransactions: [], dailyRevenue: [], vendors: [], blogs: [], returns: [], testimonials: [], reviews: [], replacements: [], supportTickets: [], locations: [], coupons: [], logs: [] }, status: 'success' } }),
-  post: async () => ({ data: { data: { order: { orderId: 'MOCK-ORDER-123' } }, status: 'success' } }),
-  patch: async () => ({ data: { status: 'success' } }),
-  delete: async () => ({ data: { status: 'success' } })
-};
-
+import api from '../../utils/api';
 
 const AdminSupport = () => {
   const [tickets, setTickets] = useState([]);
@@ -22,7 +15,7 @@ const AdminSupport = () => {
   const fetchTickets = async () => {
     try {
       setLoading(true);
-      const res = await api.get('/tickets');
+      const res = await api.get('/tickets/admin');
       setTickets(res.data?.data?.tickets || res.data?.data?.supportTickets || []);
     } catch (err) {
       console.error(err);

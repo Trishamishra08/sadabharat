@@ -2,13 +2,7 @@
 import React, { useState } from 'react';
 import { FiHeart, FiShoppingCart, FiUser, FiMenu, FiX, FiHome, FiPercent, FiGrid, FiBell, FiClock, FiSearch, FiChevronDown } from 'react-icons/fi';
 
-// MOCK API for Frontend-Only mode
-const api = {
-  get: async () => ({ data: { data: { products: [], categories: [], banners: [], settings: {}, orders: [], users: [], stats: [], recentTransactions: [], dailyRevenue: [], vendors: [], blogs: [], returns: [], testimonials: [], reviews: [], replacements: [], supportTickets: [], locations: [], coupons: [], logs: [] }, status: 'success' } }),
-  post: async () => ({ data: { data: { order: { orderId: 'MOCK-ORDER-123' } }, status: 'success' } }),
-  patch: async () => ({ data: { status: 'success' } }),
-  delete: async () => ({ data: { status: 'success' } })
-};
+import api from '../../utils/api';
 
 import { motion, AnimatePresence } from 'framer-motion';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
@@ -67,10 +61,10 @@ const Navbar = () => {
     if (isAuthenticated) {
       const fetchNotifications = async () => {
         try {
-          const res = await api.get('/notifications/my-notifications');
-          if (res.data.data.notifications && res.data.data.notifications.length > 0) {
+          const res = await api.get('/notifications/me');
+          if (res.data.success && res.data.data.notifications) {
             setNotifications(res.data.data.notifications);
-            setUnreadCount(res.data.data.notifications.filter(n => !n.read).length);
+            setUnreadCount(res.data.data.notifications.filter(n => !n.isRead).length);
           }
         } catch (err) { /* Silently handle network errors for notifications when offline */ }
       };
@@ -96,12 +90,12 @@ const Navbar = () => {
 
   const markAllRead = async () => {
     // Optimistically update UI first
-    setNotifications(prev => prev.map(n => ({ ...n, read: true })));
+    setNotifications(prev => prev.map(n => ({ ...n, isRead: true })));
     setUnreadCount(0);
     // Auto-close after short delay so user sees the update
     setTimeout(() => setIsNotificationsOpen(false), 600);
     try {
-      await api.patch('/notifications/read-all');
+      await api.patch('/notifications/mark-all-read');
     } catch (err) { 
       console.error(err);
       // No rollback needed for UX - keep as read
@@ -336,20 +330,20 @@ const Navbar = () => {
                               transition={{ delay: i * 0.05 }}
                             >
                               <Link
-                                to="/profile?tab=orders"
+                                to="/notifications"
                                 onClick={() => setIsNotificationsOpen(false)}
-                                className={`block p-2 rounded-lg border transition-all ${!n.read ? 'bg-white border-[#054425]/20 shadow-sm' : 'bg-transparent border-transparent hover:bg-white hover:border-gray-100'}`}
+                                className={`block p-2 rounded-lg border transition-all ${!n.isRead ? 'bg-white border-[#054425]/20 shadow-sm' : 'bg-transparent border-transparent hover:bg-white hover:border-gray-100'}`}
                               >
                                 <div className="flex gap-2.5 items-start">
-                                  <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${!n.read ? 'bg-[#054425] text-white shadow-md' : 'bg-gray-100 text-gray-400'}`}>
+                                  <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${!n.isRead ? 'bg-[#054425] text-white shadow-md' : 'bg-gray-100 text-gray-400'}`}>
                                     <FiBell size={12} />
                                   </div>
                                   <div className="flex-1 min-w-0">
                                     <div className="flex justify-between items-start mb-0.5">
-                                      <p className={`text-xs md:text-[13px] tracking-wide truncate pr-2 ${!n.read ? 'font-black text-[#054425]' : 'font-bold text-gray-600'}`}>{n.title}</p>
-                                      {!n.read && <span className="w-1.5 h-1.5 rounded-full bg-red-500 shrink-0 mt-1.5"></span>}
+                                      <p className={`text-xs md:text-[13px] tracking-wide truncate pr-2 ${!n.isRead ? 'font-black text-[#054425]' : 'font-bold text-gray-600'}`}>{n.title}</p>
+                                      {!n.isRead && <span className="w-1.5 h-1.5 rounded-full bg-red-500 shrink-0 mt-1.5"></span>}
                                     </div>
-                                    <p className="text-[11px] text-gray-500 leading-snug line-clamp-2">{n.body}</p>
+                                    <p className="text-[11px] text-gray-500 leading-snug line-clamp-2">{n.message}</p>
                                   </div>
                                 </div>
                               </Link>

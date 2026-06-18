@@ -43,9 +43,11 @@ const AdminBanners = () => {
       });
 
       if (res.data.success && res.data.data.length > 0) {
-        // Construct full URL assuming backend runs on port 5000 and is served statically
+        const uploadedUrl = res.data.data[0];
         const backendUrl = import.meta.env.VITE_API_BASE_URL ? import.meta.env.VITE_API_BASE_URL.replace('/api', '') : 'http://localhost:5000';
-        const url = `${backendUrl}${res.data.data[0]}`;
+        const url = (uploadedUrl.startsWith('http://') || uploadedUrl.startsWith('https://')) 
+          ? uploadedUrl 
+          : `${backendUrl}${uploadedUrl}`;
         const isVideo = file.type.startsWith('video/');
         setForm(prev => ({ ...prev, image: url, isVideo }));
       } else {

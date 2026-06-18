@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Outlet, NavLink, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
@@ -8,6 +8,7 @@ import {
   Search, MessageSquare, Menu, X, LogOut, Truck
 } from 'lucide-react';
 import vendorLogo from '../../assets/images/WhatsApp Image 2026-05-26 at 1.34.49 PM.jpeg';
+import api from '../../utils/api';
 
 const VendorLayout = () => {
   const navigate = useNavigate();
@@ -22,12 +23,38 @@ const VendorLayout = () => {
   };
   const [showNotifications, setShowNotifications] = useState(false);
   const [showMessages, setShowMessages] = useState(false);
+  const [vendorNotifications, setVendorNotifications] = useState([]);
+  const [unreadCount, setUnreadCount] = useState(0);
+
+  const fetchVendorNotifications = useCallback(async () => {
+    try {
+      const res = await api.get('/notifications/me');
+      if (res.data.success) {
+        setVendorNotifications(res.data.data.notifications);
+        setUnreadCount(res.data.data.notifications.filter(n => !n.isRead).length);
+      }
+    } catch (err) { /* silently fail */ }
+  }, []);
+
+  const handleMarkAllReadHeader = async () => {
+    try {
+      await api.patch('/notifications/mark-all-read');
+      setVendorNotifications(prev => prev.map(n => ({ ...n, isRead: true })));
+      setUnreadCount(0);
+    } catch (err) { /* silently fail */ }
+  };
 
   const notificationRef = useRef(null);
   const messageRef = useRef(null);
   const sidebarRef = useRef(null);
 
   const [toast, setToast] = useState(null);
+
+  useEffect(() => {
+    fetchVendorNotifications();
+    const interval = setInterval(fetchVendorNotifications, 60000);
+    return () => clearInterval(interval);
+  }, [fetchVendorNotifications]);
 
   useEffect(() => {
     window.showVendorToast = (message, type = 'success') => {
@@ -85,7 +112,7 @@ const VendorLayout = () => {
     { name: 'Payouts', path: '/vendor/payouts', icon: CreditCard },
     { name: 'Coupons', path: '/vendor/coupons', icon: Tag },
     { name: 'Reviews', path: '/vendor/reviews', icon: Star },
-    { name: 'Notifications', path: '/vendor/notifications', icon: Bell, badge: 3 },
+    { name: 'Notifications', path: '/vendor/notifications', icon: Bell, badge: unreadCount > 0 ? unreadCount : null },
     { name: 'Analytics', path: '/vendor/analytics', icon: TrendingUp },
     { name: 'Support', path: '/vendor/support', icon: HelpCircle },
     { name: 'Settings', path: '/vendor/settings', icon: Settings },
@@ -230,29 +257,49 @@ const VendorLayout = () => {
                 className="relative text-gray-500 hover:text-[#054425] transition-colors"
               >
                 <Bell size={20} />
-                <span className="absolute -top-1 -right-1 w-3.5 h-3.5 bg-red-500 border-2 border-white rounded-full text-[7px] font-bold text-white flex items-center justify-center">3</span>
+                {unreadCount > 0 && (
+                  <span className="absolute -top-1 -right-1 w-3.5 h-3.5 bg-red-500 border-2 border-white rounded-full text-[7px] font-bold text-white flex items-center justify-center">
+                    {unreadCount > 9 ? '9+' : unreadCount}
+                  </span>
+                )}
               </button>
               {showNotifications && (
                 <div className="absolute right-0 mt-3 w-72 bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden z-50">
                   <div className="p-3 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
-                    <h3 className="text-[12px] font-bold text-gray-900">Notifications</h3>
-                    <button className="text-[10px] text-[#054425] font-semibold hover:underline">Mark all read</button>
+                    <h3 className="text-[12px] font-bold text-gray-900">Notifications {unreadCount > 0 && <span className="text-red-500">({unreadCount})</span>}</h3>
+                    {unreadCount > 0 && (
+                      <button onClick={handleMarkAllReadHeader} className="text-[10px] text-[#054425] font-semibold hover:underline">Mark all read</button>
+                    )}
                   </div>
                   <div className="max-h-[300px] overflow-y-auto">
-                    {[
-                      { title: 'New Order Received', time: '5 mins ago', desc: 'Order #SB12345678 from Rohit Sharma' },
-                      { title: 'Low Stock Alert', time: '1 hour ago', desc: 'NEEM TULSI Face Wash is running low (12 units left).' },
-                      { title: 'Payment Successful', time: '2 hours ago', desc: 'Payout of ₹1,06,000 has been processed.' }
-                    ].map((n, i) => (
-                      <div key={i} className="p-3 border-b border-gray-50 hover:bg-gray-50/50 cursor-pointer transition-colors last:border-0">
-                        <p className="text-[11px] font-bold text-gray-800">{n.title}</p>
-                        <p className="text-[10px] text-gray-500 mt-0.5 leading-tight">{n.desc}</p>
-                        <p className="text-[9px] text-gray-400 mt-1 font-medium">{n.time}</p>
+                    {vendorNotifications.length === 0 ? (
+                      <div className="p-6 text-center">
+                        <Bell className="text-gray-300 mx-auto mb-2" size={20} />
+                        <p className="text-[11px] text-gray-400">No notifications yet</p>
+                      </div>
+                    ) : vendorNotifications.slice(0, 5).map((n) => (
+                      <div 
+                        key={n._id} 
+                        className={`p-3 border-b border-gray-50 hover:bg-gray-50/50 cursor-pointer transition-colors last:border-0 ${!n.isRead ? 'bg-blue-50/30' : ''}`}
+                        onClick={() => { navigate('/vendor/notifications'); setShowNotifications(false); }}
+                      >
+                        <div className="flex items-start gap-2">
+                          <p className={`text-[11px] font-bold flex-1 ${!n.isRead ? 'text-gray-800' : 'text-gray-600'}`}>{n.title}</p>
+                          {!n.isRead && <span className="w-1.5 h-1.5 bg-red-500 rounded-full shrink-0 mt-1"></span>}
+                        </div>
+                        <p className="text-[10px] text-gray-500 mt-0.5 leading-tight line-clamp-1">{n.message}</p>
+                        <p className="text-[9px] text-gray-400 mt-1 font-medium">
+                          {Math.floor((Date.now() - new Date(n.createdAt)) / 60000) < 60
+                            ? `${Math.floor((Date.now() - new Date(n.createdAt)) / 60000)}m ago`
+                            : Math.floor((Date.now() - new Date(n.createdAt)) / 3600000) < 24
+                            ? `${Math.floor((Date.now() - new Date(n.createdAt)) / 3600000)}h ago`
+                            : new Date(n.createdAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })}
+                        </p>
                       </div>
                     ))}
                   </div>
                   <div className="p-2 text-center border-t border-gray-100 bg-gray-50/50">
-                     <button className="text-[11px] font-bold text-[#054425] hover:underline">View All Notifications</button>
+                     <button onClick={() => { navigate('/vendor/notifications'); setShowNotifications(false); }} className="text-[11px] font-bold text-[#054425] hover:underline">View All Notifications</button>
                   </div>
                 </div>
               )}

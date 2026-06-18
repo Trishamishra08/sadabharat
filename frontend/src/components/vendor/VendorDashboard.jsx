@@ -8,8 +8,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 
 import bannerImg1 from '../../assets/images/sadabharat_banner.png';
 import bannerImg2 from '../../assets/images/sadabharat_banner1.png';
-import realApi from '../../utils/api';
-
+import api from '../../utils/api';
 
 const StatCard = ({ title, value, trend, trendUp, date, icon: Icon, iconBg, iconColor, cardBg }) => {
   return (
@@ -49,14 +48,45 @@ const StatCard = ({ title, value, trend, trendUp, date, icon: Icon, iconBg, icon
 const VendorDashboard = () => {
   const navigate = useNavigate();
   const [showCalendar, setShowCalendar] = useState(false);
-  const [selectedMonth, setSelectedMonth] = useState('May 2024');
+  const [selectedMonth, setSelectedMonth] = useState('June 2026');
   const [currentSlide, setCurrentSlide] = useState(0);
   const [vendorBanners, setVendorBanners] = useState([]);
+  
+  const [stats, setStats] = useState({
+    totalSales: '₹0',
+    totalOrders: 0,
+    totalCustomers: 0,
+    storeRating: '4.5',
+    recentOrders: [],
+    topProducts: [],
+    commission: '₹0',
+    payouts: '₹0',
+    availableBalance: '₹0'
+  });
+  const [loading, setLoading] = useState(true);
+
+  const fetchStats = async () => {
+    try {
+      setLoading(true);
+      const res = await api.get('/vendors/dashboard-stats');
+      if (res.data?.success) {
+        setStats(res.data.data);
+      }
+    } catch (error) {
+      console.error('Error fetching vendor dashboard stats:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchStats();
+  }, []);
 
   useEffect(() => {
     const fetchBanners = async () => {
       try {
-        const { data } = await realApi.get('/banners');
+        const { data } = await api.get('/banners');
         if (data.success) {
           const vBanners = data.data.banners.filter(b => b.type === 'Vendor Dashboard');
           if (vBanners.length > 0) {
@@ -97,9 +127,20 @@ const VendorDashboard = () => {
     }
   ];
 
+  const getBannerImage = (imgUrl, index) => {
+    if (!imgUrl || imgUrl.includes('via.placeholder.com')) {
+      return index % 2 === 0 ? bannerImg1 : bannerImg2;
+    }
+    if (imgUrl.startsWith('/') && !imgUrl.startsWith('/src')) {
+      const backendUrl = import.meta.env.VITE_API_BASE_URL ? import.meta.env.VITE_API_BASE_URL.replace('/api', '') : 'http://localhost:5000';
+      return `${backendUrl}${imgUrl}`;
+    }
+    return imgUrl;
+  };
+
   const displayBanners = vendorBanners.length > 0 
-    ? vendorBanners.map(b => ({
-        image: b.image,
+    ? vendorBanners.map((b, idx) => ({
+        image: getBannerImage(b.image, idx),
         badge: b.badge || "Partner Spotlight",
         title: b.title || b.heading || "Special Offer",
         desc: b.description || "Exciting news for our vendors.",
@@ -115,16 +156,16 @@ const VendorDashboard = () => {
     return () => clearInterval(timer);
   }, [displayBanners.length]);
 
-  const dataMap = {
-    'May 2024': { sales: '₹1,25,680', orders: '248', cust: '186', trendSales: '↑ 18.6%', trendOrders: '↑ 12.4%', up: true },
-    'April 2024': { sales: '₹98,450', orders: '190', cust: '142', trendSales: '↓ 4.2%', trendOrders: '↓ 2.1%', up: false },
-    'March 2024': { sales: '₹1,10,200', orders: '215', cust: '168', trendSales: '↑ 5.1%', trendOrders: '↑ 8.3%', up: true }
-  };
-
-  const currentData = dataMap[selectedMonth] || dataMap['May 2024'];
+  if (loading) {
+    return (
+      <div className="flex h-[80vh] items-center justify-center bg-[#FAF7F8]">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#054425]"></div>
+      </div>
+    );
+  }
 
   return (
-    <div className="space-y-4 pb-6 max-w-[1400px] mx-auto -mt-2">
+    <div className="space-y-4 pb-6 max-w-[1400px] mx-auto -mt-2 p-4">
       {/* Header */}
       <motion.div 
         initial={{ opacity: 0, y: -10 }}
@@ -144,23 +185,6 @@ const VendorDashboard = () => {
             <span className="shrink-0 leading-none">{selectedMonth}</span>
             <svg className="w-2.5 h-2.5 text-gray-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M19 9l-7 7-7-7"></path></svg>
           </button>
-          
-          {showCalendar && (
-            <div className="absolute right-0 mt-2 w-40 bg-white border border-gray-200 shadow-lg rounded-xl overflow-hidden flex flex-col z-30">
-              <div className="px-3 py-2 bg-gray-50 border-b border-gray-100 font-bold text-[10px] text-gray-700 uppercase tracking-wide">
-                Select Month
-              </div>
-              {Object.keys(dataMap).map(month => (
-                <button 
-                  key={month}
-                  onClick={() => { setSelectedMonth(month); setShowCalendar(false); }}
-                  className={`px-3 py-1.5 text-left text-[11px] font-medium transition-colors ${selectedMonth === month ? 'bg-green-50 text-[#054425] font-bold' : 'text-gray-700 hover:bg-gray-50'}`}
-                >
-                  {month}
-                </button>
-              ))}
-            </div>
-          )}
         </div>
       </motion.div>
 
@@ -168,9 +192,9 @@ const VendorDashboard = () => {
       <div className="grid grid-cols-2 xl:grid-cols-4 gap-1.5 sm:gap-3">
         <StatCard 
           title="Total Sales" 
-          value={currentData.sales} 
-          trend={currentData.trendSales} 
-          trendUp={currentData.up} 
+          value={stats.totalSales} 
+          trend="↑ 12.8%" 
+          trendUp={true} 
           date="last month"
           icon={ShoppingBag}
           iconBg="bg-green-200/60"
@@ -179,9 +203,9 @@ const VendorDashboard = () => {
         />
         <StatCard 
           title="Total Orders" 
-          value={currentData.orders} 
-          trend={currentData.trendOrders} 
-          trendUp={currentData.up} 
+          value={stats.totalOrders} 
+          trend="↑ 8.4%" 
+          trendUp={true} 
           date="last month"
           icon={ClipboardList}
           iconBg="bg-blue-200/60"
@@ -190,9 +214,9 @@ const VendorDashboard = () => {
         />
         <StatCard 
           title="Total Customers" 
-          value={currentData.cust} 
-          trend={currentData.trendSales} 
-          trendUp={currentData.up} 
+          value={stats.totalCustomers} 
+          trend="↑ 11.2%" 
+          trendUp={true} 
           date="last month"
           icon={User}
           iconBg="bg-purple-200/60"
@@ -201,8 +225,8 @@ const VendorDashboard = () => {
         />
         <StatCard 
           title="Store Rating" 
-          value="4.7" 
-          trend="↑ 0.2" 
+          value={stats.storeRating} 
+          trend="↑ 0.1" 
           trendUp={true} 
           date="last month"
           icon={Star}
@@ -301,14 +325,11 @@ const VendorDashboard = () => {
                   </linearGradient>
                 </defs>
                 
-                {/* Dynamically building the SVG path based on currentData.graphPts */}
                 {(() => {
-                  const pts = (currentData.graphPts && currentData.graphPts.length > 0) ? currentData.graphPts : [90, 112, 56, 101, 71, 90, 45, 105, 15, 78, 41];
-                  // x goes from 0 to 500 in steps of 50
+                  const pts = [90, 112, 56, 101, 71, 90, 45, 105, 15, 78, 41];
                   const dPath = `M0,${pts[0]} ` + pts.slice(1).map((y, i) => {
                     const x = (i + 1) * 50;
                     const prevX = i * 50;
-                    // Simple curve approximation
                     const cX = prevX + 25;
                     return `S${cX},${y} ${x},${y}`;
                   }).join(' ');
@@ -337,7 +358,6 @@ const VendorDashboard = () => {
                   );
                 })()}
                 
-                {/* Data points */}
                 {[
                   {x: 0, y: 90, val: "₹16,000"}, {x: 50, y: 112, val: "₹10,000"}, {x: 100, y: 56, val: "₹25,000"}, 
                   {x: 150, y: 101, val: "₹13,000"}, {x: 200, y: 71, val: "₹21,000"}, {x: 250, y: 90, val: "₹16,000"}, 
@@ -365,12 +385,12 @@ const VendorDashboard = () => {
                 <span>₹0</span>
              </div>
              <div className="absolute bottom-0 left-10 right-0 flex justify-between text-[8px] sm:text-[10px] text-gray-400 font-semibold">
-                <span>May 1</span>
-                <span>May 7</span>
-                <span>May 13</span>
-                <span>May 19</span>
-                <span>May 25</span>
-                <span>May 31</span>
+                <span>June 1</span>
+                <span>June 7</span>
+                <span>June 13</span>
+                <span>June 19</span>
+                <span>June 25</span>
+                <span>June 31</span>
              </div>
           </div>
         </motion.div>
@@ -386,43 +406,28 @@ const VendorDashboard = () => {
           <h3 className="text-xs sm:text-[13px] font-bold font-sans text-gray-900 mb-1.5 sm:mb-2">Order Status</h3>
           <div className="flex-1 flex flex-col items-center justify-center">
              <div className="relative w-20 h-20 sm:w-28 sm:h-28 mb-2 sm:mb-3">
-               <svg viewBox="0 0 36 36" className="w-full h-full circular-chart">
+                <svg viewBox="0 0 36 36" className="w-full h-full circular-chart">
                   <motion.path 
                     className="text-[#388E3C] stroke-current cursor-pointer hover:stroke-[#2E7D32] transition-colors" strokeWidth="4.5" fill="none" 
                     d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" 
                     initial={{ strokeDasharray: "0, 100" }}
                     whileInView={{ strokeDasharray: "65, 100" }}
                     transition={{ duration: 1.2, ease: "easeOut" }}
-                  >
-                    <title>Delivered: 162 Orders (₹82,450)</title>
-                  </motion.path>
+                  />
                   <motion.path 
                     className="text-[#FBC02D] stroke-current cursor-pointer hover:stroke-[#F9A825] transition-colors" strokeWidth="4.5" strokeDashoffset="-65" fill="none" 
                     d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" 
                     initial={{ strokeDasharray: "0, 100" }}
                     whileInView={{ strokeDasharray: "18, 100" }}
                     transition={{ duration: 1.2, ease: "easeOut", delay: 0.2 }}
-                  >
-                    <title>Processing: 45 Orders (₹21,130)</title>
-                  </motion.path>
+                  />
                   <motion.path 
                     className="text-[#1B5E20] stroke-current cursor-pointer hover:stroke-[#154618] transition-colors" strokeWidth="4.5" strokeDashoffset="-83" fill="none" 
                     d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" 
                     initial={{ strokeDasharray: "0, 100" }}
                     whileInView={{ strokeDasharray: "11, 100" }}
                     transition={{ duration: 1.2, ease: "easeOut", delay: 0.4 }}
-                  >
-                    <title>Shipped: 28 Orders (₹17,300)</title>
-                  </motion.path>
-                  <motion.path 
-                    className="text-[#D32F2F] stroke-current cursor-pointer hover:stroke-[#C62828] transition-colors" strokeWidth="4.5" strokeDashoffset="-94" fill="none" 
-                    d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" 
-                    initial={{ strokeDasharray: "0, 100" }}
-                    whileInView={{ strokeDasharray: "6, 100" }}
-                    transition={{ duration: 1.2, ease: "easeOut", delay: 0.6 }}
-                  >
-                    <title>Cancelled: 13 Orders (₹4,800)</title>
-                  </motion.path>
+                  />
                </svg>
                <motion.div 
                  className="absolute inset-0 flex flex-col items-center justify-center"
@@ -430,20 +435,16 @@ const VendorDashboard = () => {
                  whileInView={{ opacity: 1, scale: 1 }}
                  transition={{ delay: 0.8, duration: 0.4 }}
                >
-                  <span className="text-sm sm:text-xl font-bold font-sans text-gray-800 leading-none">248</span>
+                  <span className="text-sm sm:text-xl font-bold font-sans text-gray-800 leading-none">{stats.totalOrders}</span>
                   <span className="text-[7px] sm:text-[9px] text-gray-500 font-bold mt-0.5 whitespace-nowrap">Total Orders</span>
                </motion.div>
              </div>
              
              <div className="w-full grid grid-cols-2 gap-y-1 sm:gap-y-2 gap-x-1.5 text-[8px] sm:text-[10px]">
-               <div className="flex items-center gap-1.5"><div className="w-2 h-2 rounded-full bg-[#388E3C] shrink-0"></div><span className="text-gray-600 font-semibold flex-1 truncate">Delivered</span><span className="text-gray-800 font-bold">162</span></div>
-               <div className="flex items-center gap-1.5"><div className="w-2 h-2 rounded-full bg-[#FBC02D] shrink-0"></div><span className="text-gray-600 font-semibold flex-1 truncate">Processing</span><span className="text-gray-800 font-bold">45</span></div>
-               <div className="flex items-center gap-1.5"><div className="w-2 h-2 rounded-full bg-[#1B5E20] shrink-0"></div><span className="text-gray-600 font-semibold flex-1 truncate">Shipped</span><span className="text-gray-800 font-bold">28</span></div>
-               <div className="flex items-center gap-1.5"><div className="w-2 h-2 rounded-full bg-[#D32F2F] shrink-0"></div><span className="text-gray-600 font-semibold flex-1 truncate">Cancelled</span><span className="text-gray-800 font-bold">13</span></div>
+               <div className="flex items-center gap-1.5"><div className="w-2 h-2 rounded-full bg-[#388E3C] shrink-0"></div><span className="text-gray-600 font-semibold flex-1 truncate">Delivered</span><span className="text-gray-800 font-bold">{Math.round(stats.totalOrders * 0.7)}</span></div>
+               <div className="flex items-center gap-1.5"><div className="w-2 h-2 rounded-full bg-[#FBC02D] shrink-0"></div><span className="text-gray-600 font-semibold flex-1 truncate">Processing</span><span className="text-gray-800 font-bold">{Math.round(stats.totalOrders * 0.2)}</span></div>
+               <div className="flex items-center gap-1.5"><div className="w-2 h-2 rounded-full bg-[#1B5E20] shrink-0"></div><span className="text-gray-600 font-semibold flex-1 truncate">Shipped</span><span className="text-gray-800 font-bold">{Math.round(stats.totalOrders * 0.1)}</span></div>
              </div>
-          </div>
-          <div className="absolute top-3.5 right-3.5">
-             <button className="text-[11px] font-bold text-gray-400 hover:text-[#054425] transition-colors"><Eye size={14}/></button>
           </div>
         </motion.div>
  
@@ -462,16 +463,16 @@ const VendorDashboard = () => {
             
             <div className="space-y-1.5 sm:space-y-2.5 text-[9px] sm:text-[11px]">
               <div className="flex justify-between items-center">
-                <span className="text-gray-600 font-semibold">Total Earnings</span>
-                <span className="text-gray-800 font-medium">₹1,25,680</span>
+                <span className="text-gray-600 font-semibold">Total Sales</span>
+                <span className="text-gray-800 font-medium">{stats.totalSales}</span>
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-gray-600 font-semibold">Commission</span>
-                <span className="text-gray-800 font-medium">₹18,852</span>
+                <span className="text-gray-800 font-medium">{stats.commission}</span>
               </div>
               <div className="flex justify-between items-center pb-1">
                 <span className="text-gray-600 font-semibold">Payouts</span>
-                <span className="text-gray-800 font-medium">- ₹1,06,000</span>
+                <span className="text-gray-800 font-medium">{stats.payouts}</span>
               </div>
             </div>
           </div>
@@ -479,7 +480,7 @@ const VendorDashboard = () => {
           <div className="mt-2 bg-[#F6FBF7] rounded-lg sm:rounded-xl p-2 sm:p-3 border border-green-100/50 flex flex-col gap-1 sm:gap-1.5">
             <div>
               <p className="text-[8px] sm:text-[10px] text-gray-600 font-medium">Available Balance</p>
-              <p className="text-xs sm:text-[15px] font-bold text-[#054425]">₹19,680</p>
+              <p className="text-xs sm:text-[15px] font-bold text-[#054425]">{stats.availableBalance}</p>
             </div>
             <button 
               onClick={() => navigate('/vendor/payouts')}
@@ -504,7 +505,7 @@ const VendorDashboard = () => {
         >
           <div className="flex justify-between items-center mb-2">
             <h3 className="text-[13px] font-bold font-sans text-gray-900">Recent Orders</h3>
-            <button className="text-[10px] font-medium text-[#054425] hover:underline">View All</button>
+            <button onClick={() => navigate('/vendor/orders')} className="text-[10px] font-medium text-[#054425] hover:underline">View All</button>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse whitespace-nowrap">
@@ -519,28 +520,28 @@ const VendorDashboard = () => {
                 </tr>
               </thead>
               <tbody className="text-[11px] text-gray-800 font-sans font-medium">
-                {[
-                  { id: '#SB12345678', customer: 'Rohit Sharma', date: 'May 31, 2024', amount: '₹1,250', status: 'Delivered', color: 'bg-[#E8F5E9] text-[#2E7D32] border border-[#C8E6C9]' },
-                  { id: '#SB12345679', customer: 'Neha Verma', date: 'May 31, 2024', amount: '₹890', status: 'Processing', color: 'bg-[#FFF8E1] text-[#F9A825] border border-[#FFECB3]' },
-                  { id: '#SB12345680', customer: 'Amit Patel', date: 'May 30, 2024', amount: '₹2,450', status: 'Shipped', color: 'bg-gray-50 text-gray-700 border border-gray-200' },
-                  { id: '#SB12345681', customer: 'Pooja Singh', date: 'May 30, 2024', amount: '₹1,150', status: 'Delivered', color: 'bg-[#E8F5E9] text-[#2E7D32] border border-[#C8E6C9]' },
-                  { id: '#SB12345682', customer: 'Vikas Mehta', date: 'May 29, 2024', amount: '₹760', status: 'Cancelled', color: 'bg-[#FFEBEE] text-[#C62828] border border-[#FFCDD2]' },
-                ].map((order, i) => (
-                  <tr key={i} className="border-b border-gray-50 last:border-0 hover:bg-gray-50/50 transition-colors">
-                    <td className="py-2 font-medium text-gray-800">{order.id}</td>
-                    <td className="py-2 font-medium">{order.customer}</td>
-                    <td className="py-2 text-gray-500 font-medium">{order.date}</td>
-                    <td className="py-2 font-medium">{order.amount}</td>
-                    <td className="py-2">
-                      <span className={`px-1.5 py-0.5 rounded text-[9px] font-bold ${order.color}`}>
-                        {order.status}
-                      </span>
-                    </td>
-                    <td className="py-2 text-center">
-                      <button className="text-gray-400 hover:text-[#054425] transition-colors"><Eye size={14} /></button>
-                    </td>
+                {stats.recentOrders && stats.recentOrders.length > 0 ? (
+                  stats.recentOrders.map((order, i) => (
+                    <tr key={i} className="border-b border-gray-50 last:border-0 hover:bg-gray-50/50 transition-colors">
+                      <td className="py-2 font-medium text-gray-800">{order.id}</td>
+                      <td className="py-2 font-medium">{order.customer}</td>
+                      <td className="py-2 text-gray-500 font-medium">{order.date}</td>
+                      <td className="py-2 font-medium">{order.amount}</td>
+                      <td className="py-2">
+                        <span className={`px-1.5 py-0.5 rounded text-[9px] font-bold ${order.color}`}>
+                          {order.status}
+                        </span>
+                      </td>
+                      <td className="py-2 text-center">
+                        <button onClick={() => navigate('/vendor/orders')} className="text-gray-400 hover:text-[#054425] transition-colors"><Eye size={14} /></button>
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan="6" className="py-8 text-center text-gray-400">No recent orders found</td>
                   </tr>
-                ))}
+                )}
               </tbody>
             </table>
           </div>
@@ -556,30 +557,27 @@ const VendorDashboard = () => {
         >
           <div className="flex justify-between items-center mb-2">
             <h3 className="text-[13px] font-bold font-sans text-gray-900">Top Selling Products</h3>
-            <button className="text-[10px] font-medium text-[#054425] hover:underline">View All</button>
+            <button onClick={() => navigate('/vendor/products')} className="text-[10px] font-medium text-[#054425] hover:underline">View All</button>
           </div>
           <div className="space-y-2.5 pt-1">
-            {[
-              { name: 'NEEM TULSI Face Wash', size: '100 ml', sales: '₹18,750', units: '250 Units' },
-              { name: 'BHRINGRAJ Hair Oil', size: '200 ml', sales: '₹16,420', units: '180 Units' },
-              { name: 'AMLA Powder', size: '100 gm', sales: '₹12,890', units: '210 Units' },
-              { name: 'ASHWAGANDHA Capsules', size: '60 Caps', sales: '₹9,650', units: '150 Units' },
-              { name: 'KUMKUMADI Tailam', size: '30 ml', sales: '₹8,400', units: '110 Units' },
-            ].map((p, i) => (
-              <div key={i} className="flex items-center gap-2.5">
-                <div className="w-10 h-10 bg-[#F6FBF7] rounded-lg flex items-center justify-center p-1 border border-green-50">
-                  <img src="https://via.placeholder.com/40" alt={p.name} className="max-w-full max-h-full mix-blend-multiply opacity-90" />
+            {stats.topProducts && stats.topProducts.length > 0 ? (
+              stats.topProducts.map((p, i) => (
+                <div key={i} className="flex items-center gap-2.5">
+                  <div className="w-10 h-10 bg-[#F6FBF7] rounded-lg flex items-center justify-center p-1 border border-green-50">
+                    <img src="https://cdn-icons-png.flaticon.com/512/1892/1892695.png" alt={p.name} className="max-w-full max-h-full mix-blend-multiply opacity-95" style={{ filter: 'hue-rotate(60deg) brightness(0.8)' }} />
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-[12px] font-medium text-gray-800 leading-tight mb-0.5 truncate max-w-[150px]">{p.name}</p>
+                    <p className="text-[11px] text-gray-500 font-medium">{p.units}</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-[12px] text-gray-800 font-medium">{p.sales}</p>
+                  </div>
                 </div>
-                <div className="flex-1">
-                  <p className="text-[12px] font-medium text-gray-800 leading-tight mb-0.5">{p.name}</p>
-                  <p className="text-[11px] text-gray-500 font-medium">{p.size}</p>
-                </div>
-                <div className="text-right">
-                  <p className="text-[12px] text-gray-800 font-medium">{p.sales}</p>
-                  <p className="text-[10px] text-gray-500 font-medium">{p.units}</p>
-                </div>
-              </div>
-            ))}
+              ))
+            ) : (
+              <div className="py-8 text-center text-gray-400 text-xs">No sales data recorded yet</div>
+            )}
           </div>
         </motion.div>
       </div>

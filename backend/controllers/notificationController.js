@@ -107,11 +107,73 @@ const deleteNotification = async (req, res, next) => {
   }
 };
 
+// POST /api/notifications/save-fcm-token
+const saveFCMToken = async (req, res, next) => {
+  try {
+    const { token } = req.body;
+    if (!token) {
+      return res.status(400).json({ success: false, message: 'FCM token is required' });
+    }
+
+    const recipient = req.user; // populated by protect middleware (Vendor or User)
+    if (!recipient.fcmTokens) {
+      recipient.fcmTokens = [];
+    }
+
+    if (!recipient.fcmTokens.includes(token)) {
+      recipient.fcmTokens.push(token);
+      // Keep only last 10 tokens to prevent document size bloat
+      if (recipient.fcmTokens.length > 10) {
+        recipient.fcmTokens = recipient.fcmTokens.slice(-10);
+      }
+      await recipient.save();
+
+      // Trigger a welcome notification to verify push setup is working instantly
+      try {
+        const { sendPushNotification } = require('../services/firebaseAdmin');
+        await sendPushNotification([token], {
+          title: 'Notifications Enabled 🌿',
+          body: `Welcome back, ${recipient.name || recipient.fullName || 'User'}! Push notifications are successfully configured.`,
+          data: { link: '/' }
+        });
+      } catch (welcomeErr) {
+        console.warn('FCM: Welcome confirmation notification skipped:', welcomeErr.message);
+      }
+    }
+
+    res.status(200).json({ success: true, message: 'FCM token saved successfully' });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// POST /api/notifications/remove-fcm-token
+const removeFCMToken = async (req, res, next) => {
+  try {
+    const { token } = req.body;
+    if (!token) {
+      return res.status(400).json({ success: false, message: 'FCM token is required' });
+    }
+
+    const recipient = req.user;
+    if (recipient.fcmTokens) {
+      recipient.fcmTokens = recipient.fcmTokens.filter(t => t !== token);
+      await recipient.save();
+    }
+
+    res.status(200).json({ success: true, message: 'FCM token removed successfully' });
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports = {
   getMyNotifications,
   markAsRead,
   markAllRead,
   getAdminNotifications,
   createNotification,
-  deleteNotification
+  deleteNotification,
+  saveFCMToken,
+  removeFCMToken
 };

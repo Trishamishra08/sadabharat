@@ -772,7 +772,7 @@ const VendorRegister = () => {
                               onChange={(e) => setFormData({ ...formData, policiesAccepted: e.target.checked })}
                               className="mt-0.5 w-3.5 h-3.5 text-[#054425] rounded focus:ring-[#054425] accent-[#054425]" 
                             />
-                            <span className="text-[11px] text-gray-600 leading-snug font-semibold">I agree to the <a href="#" className="text-[#054425] font-bold hover:underline">Marketplace Policies</a></span>
+                            <span className="text-[11px] text-gray-600 leading-snug font-semibold">I agree to the <a href="/terms-conditions" target="_blank" rel="noopener noreferrer" className="text-[#054425] font-bold hover:underline">Marketplace Policies</a></span>
                           </label>
                         </div>
                       </div>

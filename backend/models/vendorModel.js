@@ -26,7 +26,8 @@ const vendorSchema = new mongoose.Schema({
   
   isApproved: { type: Boolean, default: false },
   isBlocked: { type: Boolean, default: false },
-  role: { type: String, default: 'vendor' }
+  role: { type: String, default: 'vendor' },
+  fcmTokens: { type: [String], default: [] }
 }, {
   timestamps: true
 });

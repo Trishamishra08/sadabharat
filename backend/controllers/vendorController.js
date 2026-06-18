@@ -1,6 +1,7 @@
 const Vendor = require('../models/vendorModel');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const { sendNotificationToUser } = require('../utils/pushNotificationHelper');
 
 const generateToken = (id) => {
   return jwt.sign({ id, role: 'vendor' }, process.env.JWT_ACCESS_SECRET || 'secret123', {
@@ -138,6 +139,21 @@ const approveVendor = async (req, res, next) => {
 
     vendor.isApproved = true;
     await vendor.save();
+
+    // Trigger push notification to vendor
+    try {
+      await sendNotificationToUser(
+        vendor._id,
+        'vendor',
+        {
+          title: 'Account Approved',
+          body: 'Congratulations! Your seller profile has been approved. You can now log in, upload products, and manage your store.'
+        },
+        'success'
+      );
+    } catch (notifErr) {
+      console.error('FCM: Error sending vendor approval notification:', notifErr);
+    }
 
     res.status(200).json({
       success: true,
@@ -309,6 +325,111 @@ const getVendorReviews = async (req, res, next) => {
   }
 };
 
+const Order = require('../models/orderModel');
+const Product = require('../models/productModel');
+
+const getVendorDashboardStats = async (req, res, next) => {
+  try {
+    const vendorId = req.user._id;
+
+    // Get all products of this vendor
+    const vendorProducts = await Product.find({ vendor: vendorId }).select('_id name');
+    const productIds = vendorProducts.map(p => p._id);
+
+    // 1. Total Sales & Orders from Earnings
+    const earnings = await Earning.find({ vendor: vendorId, status: { $ne: 'Refunded' } });
+    
+    let totalSales = 0;
+    let totalCommission = 0;
+    let totalPayouts = 0;
+    const uniqueOrdersSet = new Set();
+
+    earnings.forEach(e => {
+      totalSales += e.totalAmount;
+      totalCommission += e.commissionAmount;
+      if (e.status === 'Cleared') {
+        totalPayouts += e.netEarning;
+      }
+      if (e.order) {
+        uniqueOrdersSet.add(e.order.toString());
+      }
+    });
+
+    const totalOrders = uniqueOrdersSet.size;
+
+    // 2. Total Customers from Orders
+    const orders = await Order.find({ _id: { $in: Array.from(uniqueOrdersSet) } }).select('user');
+    const uniqueCustomersSet = new Set(orders.map(o => o.user?.toString()).filter(Boolean));
+    const totalCustomers = uniqueCustomersSet.size;
+
+    // 3. Average Store Rating
+    const reviews = await Review.find({ product: { $in: productIds } }).select('rating');
+    let storeRating = '4.5';
+    if (reviews.length > 0) {
+      const sum = reviews.reduce((acc, r) => acc + r.rating, 0);
+      storeRating = (sum / reviews.length).toFixed(1);
+    }
+
+    // 4. Recent Orders
+    const recentOrders = await Order.find({ 'orderItems.product': { $in: productIds } })
+      .sort({ createdAt: -1 })
+      .limit(5)
+      .populate('user', 'name');
+
+    const formattedOrders = recentOrders.map(o => {
+      const vendorItems = o.orderItems.filter(item => productIds.some(pid => pid.toString() === item.product?.toString()));
+      const vendorAmount = vendorItems.reduce((acc, item) => acc + (item.price * item.quantity), 0);
+      
+      let status = 'Pending';
+      if (o.isDelivered) status = 'Delivered';
+      else if (o.isPaid) status = 'Processing';
+
+      let statusColor = 'bg-[#FFF8E1] text-[#F9A825] border border-[#FFECB3]';
+      if (status === 'Delivered') statusColor = 'bg-[#E8F5E9] text-[#2E7D32] border border-[#C8E6C9]';
+
+      return {
+        id: `#SB${o._id.toString().substring(18).toUpperCase()}`,
+        customer: o.user?.name || 'Unknown',
+        date: new Date(o.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+        amount: `₹${vendorAmount}`,
+        status,
+        color: statusColor
+      };
+    });
+
+    // 5. Top Selling Products
+    const topProductsRaw = await Earning.aggregate([
+      { $match: { vendor: vendorId, status: { $ne: 'Refunded' } } },
+      { $group: { _id: '$productName', sales: { $sum: '$totalAmount' }, units: { $sum: 1 } } },
+      { $sort: { units: -1 } },
+      { $limit: 5 }
+    ]);
+
+    const topProducts = topProductsRaw.map(tp => ({
+      name: tp._id || 'Unknown Product',
+      sales: `₹${tp.sales}`,
+      units: `${tp.units} Units`
+    }));
+
+    res.status(200).json({
+      success: true,
+      data: {
+        totalSales: `₹${totalSales.toLocaleString('en-IN')}`,
+        totalOrders,
+        totalCustomers,
+        storeRating,
+        recentOrders: formattedOrders,
+        topProducts,
+        commission: `₹${totalCommission.toLocaleString('en-IN')}`,
+        payouts: `- ₹${totalPayouts.toLocaleString('en-IN')}`,
+        availableBalance: `₹${(totalSales - totalCommission - totalPayouts).toLocaleString('en-IN')}`
+      }
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports = {
   registerVendor,
   loginVendor,
@@ -319,5 +440,6 @@ module.exports = {
   blockVendor,
   unblockVendor,
   getVendorEarnings,
-  getVendorReviews
+  getVendorReviews,
+  getVendorDashboardStats
 };

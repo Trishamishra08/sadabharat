@@ -2,16 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, Navigate } from 'react-router-dom';
 import { useShop } from '../../context/ShopContext';
 import { FiLock, FiMail, FiArrowRight } from 'react-icons/fi';
+import { registerFCMToken } from '../../services/pushNotificationService';
 
-import realApi from '../../utils/api';
-
-// MOCK API for Frontend-Only mode
-const api = {
-  get: async () => ({ data: { data: { products: [], categories: [], banners: [], settings: {}, orders: [], users: [], stats: [], recentTransactions: [], dailyRevenue: [], vendors: [], blogs: [], returns: [], testimonials: [], reviews: [], replacements: [], supportTickets: [], locations: [], coupons: [], logs: [] }, status: 'success' } }),
-  post: async () => ({ data: { data: { order: { orderId: 'MOCK-ORDER-123' } }, status: 'success' } }),
-  patch: async () => ({ data: { status: 'success' } }),
-  delete: async () => ({ data: { status: 'success' } })
-};
+import api from '../../utils/api';
 
 const AdminLogin = () => {
   const [form, setForm] = useState({ email: '', password: '' });
@@ -47,7 +40,7 @@ const AdminLogin = () => {
     setLoading(true);
 
     try {
-      const res = await realApi.post('/users/login', {
+      const res = await api.post('/users/login', {
         email: form.email,
         password: form.password
       });
@@ -57,6 +50,7 @@ const AdminLogin = () => {
         const data = { name: res.data.data.name, email: res.data.data.email, role: 'admin' };
         
         localStorage.setItem('admin_token', token);
+        registerFCMToken(true).catch(console.error);
         setUser(data);
         setIsAuthenticated(true);
 

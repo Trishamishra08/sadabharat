@@ -49,7 +49,13 @@ const Register = () => {
       if (response.data.success) {
         setOtpSent(true);
         setTimer(60);
-        showNotification("OTP sent successfully to your mobile number.", "success");
+        // In dev mode, backend returns the OTP - auto-fill it
+        if (response.data.devOtp) {
+          setForm(prev => ({ ...prev, otp: response.data.devOtp }));
+          showNotification(`OTP sent! (Dev mode: ${response.data.devOtp})`, "success");
+        } else {
+          showNotification("OTP sent successfully to your mobile number.", "success");
+        }
       }
     } catch (error) {
       showNotification(error.response?.data?.message || "Failed to send OTP", "error");

@@ -141,7 +141,7 @@ const sendRegisterOtp = async (req, res, next) => {
       });
     }
 
-    const otp = process.env.USE_DEFAULT_OTP === 'true' ? '989898' : Math.floor(100000 + Math.random() * 900000).toString();
+    const otp = process.env.USE_DEFAULT_OTP === 'false' ? Math.floor(100000 + Math.random() * 900000).toString() : '989898';
     const expiry = new Date(Date.now() + 10 * 60 * 1000); // 10 mins
 
     user.otp = otp;
@@ -150,7 +150,12 @@ const sendRegisterOtp = async (req, res, next) => {
 
     console.log(`Registration OTP for ${mobile} is ${otp}`);
 
-    res.status(200).json({ success: true, message: 'OTP sent successfully' });
+    const isDev = process.env.USE_DEFAULT_OTP !== 'false';
+    res.status(200).json({ 
+      success: true, 
+      message: 'OTP sent successfully',
+      ...(isDev && { devOtp: otp, devNote: 'OTP visible in dev mode only' })
+    });
   } catch (error) {
     next(error);
   }
@@ -222,7 +227,7 @@ const sendOtp = async (req, res, next) => {
       throw new Error('Your account has been blocked by the admin.');
     }
 
-    const otp = process.env.USE_DEFAULT_OTP === 'true' ? '989898' : Math.floor(100000 + Math.random() * 900000).toString();
+    const otp = process.env.USE_DEFAULT_OTP === 'false' ? Math.floor(100000 + Math.random() * 900000).toString() : '989898';
     const expiry = new Date(Date.now() + 10 * 60 * 1000);
 
     user.otp = otp;
@@ -231,7 +236,12 @@ const sendOtp = async (req, res, next) => {
 
     console.log(`Login OTP for ${mobile} is ${otp}`);
 
-    res.status(200).json({ success: true, message: 'OTP sent successfully' });
+    const isDev = process.env.USE_DEFAULT_OTP !== 'false';
+    res.status(200).json({ 
+      success: true, 
+      message: 'OTP sent successfully',
+      ...(isDev && { devOtp: otp, devNote: 'OTP visible in dev mode only' })
+    });
   } catch (error) {
     next(error);
   }

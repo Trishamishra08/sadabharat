@@ -36,6 +36,7 @@ import UserOrders from './components/user/UserOrders';
 import ScrollToTop from './components/user/ScrollToTop';
 import RaiseTicket from './components/user/RaiseTicket';
 import Consultation from './components/user/Consultation';
+import { initializePushNotifications, setupForegroundNotificationHandler } from './services/pushNotificationService';
 
 // Policy Imports
 import PrivacyPolicy from './components/user/policies/PrivacyPolicy';
@@ -70,6 +71,7 @@ import AdminSupport from './components/admin/AdminSupport';
 import AdminLogistics from './components/admin/AdminLogistics';
 import AdminLocations from './components/admin/AdminLocations';
 import AdminLogin from './components/admin/AdminLogin';
+import AdminPolicies from './components/admin/AdminPolicies';
 
 // Vendor Module Imports
 import VendorLayout from './components/vendor/VendorLayout';
@@ -216,6 +218,7 @@ const AdminRoutes = () => (
       <Route path="/support" element={<AdminSupport />} />
       <Route path="/logistics" element={<AdminLogistics />} />
       <Route path="/locations" element={<AdminLocations />} />
+      <Route path="/policies" element={<AdminPolicies />} />
     </Route>
   </Routes>
 );
@@ -292,6 +295,13 @@ function App() {
     return () => {
       lenis.destroy();
     };
+  }, []);
+
+  React.useEffect(() => {
+    initializePushNotifications();
+    setupForegroundNotificationHandler((payload) => {
+      console.log('App: Foreground notification received:', payload);
+    });
   }, []);
 
   return (

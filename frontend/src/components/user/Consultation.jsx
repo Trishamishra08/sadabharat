@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { FiCalendar, FiClock, FiUser, FiMail, FiPhone, FiMessageSquare, FiCheckCircle } from 'react-icons/fi';
+import api from '../../utils/api';
 
 const Consultation = () => {
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -17,13 +19,18 @@ const Consultation = () => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // Simulate API call
-    setTimeout(() => {
+    try {
+      setLoading(true);
+      await api.post('/consultations', formData);
       setIsSubmitted(true);
       window.scrollTo({ top: 0, behavior: 'smooth' });
-    }, 1000);
+    } catch (err) {
+      alert(err.response?.data?.message || 'Failed to request consultation');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (

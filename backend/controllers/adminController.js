@@ -3,6 +3,9 @@ const Earning = require('../models/earningModel');
 const Vendor = require('../models/vendorModel');
 const Review = require('../models/reviewModel');
 const Testimonial = require('../models/testimonialModel');
+const User = require('../models/userModel');
+const Product = require('../models/productModel');
+const { sendNotificationToUser } = require('../utils/pushNotificationHelper');
 
 // @desc    Get Finance Stats
 // @route   GET /api/admins/finance-stats
@@ -216,6 +219,21 @@ const clearVendorPayout = async (req, res) => {
       { $set: { status: 'Cleared' } }
     );
 
+    // Trigger push notification to vendor
+    try {
+      await sendNotificationToUser(
+        vendorId,
+        'vendor',
+        {
+          title: 'Payout Cleared & Disbursed',
+          body: `Good news! Your pending payouts have been successfully cleared and disbursed by the admin.`
+        },
+        'success'
+      );
+    } catch (notifErr) {
+      console.error('FCM: Error sending payout clearance notification:', notifErr);
+    }
+
     res.status(200).json({
       success: true,
       message: `Cleared ${result.modifiedCount} pending transactions successfully`
@@ -309,6 +327,38 @@ const deleteTestimonial = async (req, res) => {
   }
 };
 
+// @desc    Get Dashboard Stats
+// @route   GET /api/admins/dashboard-stats
+// @access  Private/Admin
+const getDashboardStats = async (req, res) => {
+  try {
+    const totalUsers = await User.countDocuments();
+    const totalOrders = await Order.countDocuments();
+    const pendingOrders = await Order.countDocuments({ isPaid: false });
+    const totalProducts = await Product.countDocuments();
+
+    const paidOrders = await Order.find({ isPaid: true });
+    let totalRevenue = 0;
+    paidOrders.forEach(o => {
+      totalRevenue += o.totalPrice;
+    });
+
+    res.status(200).json({
+      success: true,
+      status: 'success',
+      data: {
+        totalUsers,
+        totalOrders,
+        pendingOrders,
+        totalProducts,
+        totalRevenue: `₹${totalRevenue}`
+      }
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
 module.exports = {
   getFinanceStats,
   updateEarningCommission,
@@ -321,5 +371,6 @@ module.exports = {
   toggleTestimonialApproval,
   createTestimonial,
   updateTestimonial,
-  deleteTestimonial
+  deleteTestimonial,
+  getDashboardStats
 };

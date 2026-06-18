@@ -3,13 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { FiMessageSquare, FiSend, FiClock, FiCheckCircle, FiAlertCircle, FiArrowLeft, FiPlus, FiTag, FiHash } from 'react-icons/fi';
 import { useNavigate, Link } from 'react-router-dom';
 
-// MOCK API for Frontend-Only mode
-const api = {
-  get: async () => ({ data: { data: { products: [], categories: [], banners: [], settings: {}, orders: [], users: [], stats: [], recentTransactions: [], dailyRevenue: [], vendors: [], blogs: [], returns: [], testimonials: [], reviews: [], replacements: [], supportTickets: [], locations: [], coupons: [], logs: [] }, status: 'success' } }),
-  post: async () => ({ data: { data: { order: { orderId: 'MOCK-ORDER-123' } }, status: 'success' } }),
-  patch: async () => ({ data: { status: 'success' } }),
-  delete: async () => ({ data: { status: 'success' } })
-};
+import api from '../../utils/api';
 
 
 const RaiseTicket = () => {

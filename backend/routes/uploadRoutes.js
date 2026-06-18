@@ -1,38 +1,30 @@
 const express = require('express');
 const multer = require('multer');
 const path = require('path');
-const fs = require('fs');
+const cloudinary = require('cloudinary').v2;
 
 const router = express.Router();
 
-// Ensure uploads directory exists
-const uploadDir = path.join(__dirname, '../uploads');
-if (!fs.existsSync(uploadDir)) {
-  fs.mkdirSync(uploadDir, { recursive: true });
-}
-
-// Multer config
-const storage = multer.diskStorage({
-  destination(req, file, cb) {
-    cb(null, uploadDir);
-  },
-  filename(req, file, cb) {
-    cb(
-      null,
-      `${file.fieldname}-${Date.now()}${path.extname(file.originalname)}`
-    );
-  },
+// Configure Cloudinary
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
-function checkFileType(file, cb) {
-  const filetypes = /jpg|jpeg|png|pdf/;
-  const extname = filetypes.test(path.extname(file.originalname).toLowerCase());
-  const mimetype = filetypes.test(file.mimetype);
+// Use memory storage for uploading directly to Cloudinary
+const storage = multer.memoryStorage();
 
-  if (extname && mimetype) {
+function checkFileType(file, cb) {
+  // Allowed extensions: images, pdfs, videos
+  const filetypes = /jpg|jpeg|png|webp|gif|pdf|mp4|mov|avi|mkv|webm/;
+  const extname = filetypes.test(path.extname(file.originalname).toLowerCase());
+  const mimetype = filetypes.test(file.mimetype) || file.mimetype.startsWith('image/') || file.mimetype.startsWith('video/');
+
+  if (extname || mimetype) {
     return cb(null, true);
   } else {
-    cb('Images and PDFs only!');
+    cb(new Error('Images, PDFs, and Videos only!'));
   }
 }
 
@@ -43,17 +35,47 @@ const upload = multer({
   },
 });
 
-router.post('/', upload.array('documents', 5), (req, res) => {
+// Helper to upload a buffer to Cloudinary
+const uploadToCloudinary = (fileBuffer, originalname) => {
+  return new Promise((resolve, reject) => {
+    const stream = cloudinary.uploader.upload_stream(
+      {
+        resource_type: 'auto', // Auto-detect if it is an image, video or PDF
+        folder: 'sadabharat',
+      },
+      (error, result) => {
+        if (error) return reject(error);
+        resolve(result.secure_url);
+      }
+    );
+    stream.end(fileBuffer);
+  });
+};
+
+router.post('/', upload.array('documents', 5), async (req, res) => {
   if (!req.files || req.files.length === 0) {
     return res.status(400).json({ message: 'No files uploaded' });
   }
-  
-  const fileUrls = req.files.map(file => `/uploads/${file.filename}`);
-  
-  res.status(200).json({
-    success: true,
-    data: fileUrls,
-  });
+
+  try {
+    const uploadPromises = req.files.map(file =>
+      uploadToCloudinary(file.buffer, file.originalname)
+    );
+    
+    const fileUrls = await Promise.all(uploadPromises);
+
+    res.status(200).json({
+      success: true,
+      data: fileUrls,
+    });
+  } catch (error) {
+    console.error('Cloudinary upload error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Cloudinary upload failed',
+      error: error.message,
+    });
+  }
 });
 
 module.exports = router;

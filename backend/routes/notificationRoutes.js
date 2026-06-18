@@ -3,7 +3,9 @@ const router = express.Router();
 const {
   getMyNotifications,
   markAsRead,
-  markAllRead
+  markAllRead,
+  saveFCMToken,
+  removeFCMToken
 } = require('../controllers/notificationController');
 const { protect } = require('../middlewares/authMiddleware');
 
@@ -11,5 +13,7 @@ const { protect } = require('../middlewares/authMiddleware');
 router.get('/me', protect, getMyNotifications);
 router.patch('/mark-all-read', protect, markAllRead);
 router.patch('/:id/read', protect, markAsRead);
+router.post('/save-fcm-token', protect, saveFCMToken);
+router.post('/remove-fcm-token', protect, removeFCMToken);
 
 module.exports = router;

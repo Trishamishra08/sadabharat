@@ -25,7 +25,8 @@ import {
   FiHelpCircle,
   FiTruck,
   FiMapPin,
-  FiZap
+  FiZap,
+  FiShield
 } from 'react-icons/fi';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -124,6 +125,7 @@ const AdminLayout = () => {
     { title: 'Feedback Ledger', path: '/admin/reviews', icon: <FiMessageSquare /> },
     { title: 'Notifications', path: '/admin/notifications', icon: <FiBell /> },
     { title: 'Support Archive', path: '/admin/support', icon: <FiHelpCircle /> },
+    { title: 'Legal & Policies', path: '/admin/policies', icon: <FiShield /> },
     { title: 'Settings', path: '/admin/settings', icon: <FiSettings /> },
   ];
 
@@ -404,7 +406,7 @@ const AdminLayout = () => {
         </header>
 
         {/* Content Container */}
-        <main className="bg-[#FDFBF7] relative min-h-[calc(100vh-56px)] overflow-x-hidden">
+        <main className="bg-[#FDFBF7] relative min-h-[calc(100vh-56px)] overflow-x-hidden p-4 md:p-5 lg:p-6">
           <Outlet />
         </main>
       </div>

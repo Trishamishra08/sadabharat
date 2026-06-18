@@ -7,7 +7,16 @@ const settingsSchema = new mongoose.Schema({
   estDeliveryDays: { type: String, default: '3-5 Business Days' },
   shippingPartner: { type: String, default: 'Standard Courier' },
   trackingUrl: { type: String, default: 'https://shiprocket.co/tracking/' },
-  supportContact: { type: String, default: '+91 74071 75567' }
+  supportContact: { type: String, default: '+91 74071 75567' },
+  
+  // Security / Admin Preferences
+  pushNotifications: { type: Boolean, default: true },
+  emailDispatch: { type: Boolean, default: false },
+  smsGateway: { type: Boolean, default: true },
+  soundAlerts: { type: Boolean, default: true },
+  currency: { type: String, default: 'INR (₹)' },
+  taxComputation: { type: String, default: 'Automatic (GST)' },
+  maintenanceMode: { type: Boolean, default: false }
 }, {
   timestamps: true
 });

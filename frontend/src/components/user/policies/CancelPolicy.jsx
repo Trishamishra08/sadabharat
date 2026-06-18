@@ -1,53 +1,44 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
+import api from '../../../utils/api';
 
 const CancelPolicy = () => {
+  const [policy, setPolicy] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchPolicy = async () => {
+      try {
+        const res = await api.get('/policies/cancellation');
+        setPolicy(res.data.data);
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchPolicy();
+  }, []);
+
+  if (loading) {
+    return <div className="p-12 text-center"><div className="animate-spin w-10 h-10 border-4 border-brand-dark mx-auto border-t-transparent rounded-full"></div></div>;
+  }
+
   return (
-    <div className="min-h-screen bg-brand-light py-6 md:py-10 px-4 md:px-0">
-      <div className="max-w-3xl mx-auto bg-white p-6 md:p-10 shadow-xl border border-brand-pink/5">
-        <h1 className="text-2xl md:text-3xl font-serif font-black text-brand-dark mb-6 tracking-widest text-center border-b pb-4 border-brand-pink/10 uppercase" style={{ fontFamily: "'Cinzel', serif" }}>
-          Cancellation Policy
-        </h1>
+    <div className="container mx-auto px-4 py-4 md:py-8 max-w-4xl font-sans">
+      <div className="text-center mb-6">
+        <h1 className="text-xl md:text-2xl font-serif font-black text-brand-dark uppercase tracking-widest mb-2">Cancellation Policy</h1>
+        <div className="h-1 w-12 bg-brand-pink mx-auto rounded-full" />
+      </div>
 
-        <div className="space-y-6 text-brand-dark/70 font-sans leading-relaxed text-[13px] md:text-sm">
-          <section>
-            <h2 className="text-xs md:text-sm font-black text-brand-dark uppercase tracking-widest mb-2 flex items-center gap-2">
-              <span className="w-4 h-[2px] bg-brand-gold"></span> 1. Order Cancellation
-            </h2>
-            <p className="pl-6">
-              You can cancel your order at any time before it has been dispatched from our warehouse. To cancel your order, please log into your account and navigate to the "Recent Orders" section, or contact our customer support immediately.
-            </p>
-          </section>
-
-          <section>
-            <h2 className="text-xs md:text-sm font-black text-brand-dark uppercase tracking-widest mb-2 flex items-center gap-2">
-              <span className="w-4 h-[2px] bg-brand-gold"></span> 2. Post-Dispatch
-            </h2>
-            <p className="pl-6">
-              Once an order has been dispatched, it cannot be cancelled. However, you may refuse the delivery of the package or return it within 7 days of receipt as per our Return Policy.
-            </p>
-          </section>
-
-          <section>
-            <h2 className="text-xs md:text-sm font-black text-brand-dark uppercase tracking-widest mb-2 flex items-center gap-2">
-              <span className="w-4 h-[2px] bg-brand-gold"></span> 3. Refunds
-            </h2>
-            <p className="pl-6">
-              For prepaid orders, the refund will be initiated within 7 Working days after the cancellation request is successfully processed. The amount will be credited back to the original payment method used during the transaction.
-            </p>
-          </section>
-
-          <section>
-            <h2 className="text-xs md:text-sm font-black text-brand-dark uppercase tracking-widest mb-2 flex items-center gap-2">
-              <span className="w-4 h-[2px] bg-brand-gold"></span> 4. Store's Rights
-            </h2>
-            <p className="pl-6">
-              Under rare circumstances, Sada Bharat reserves the right to cancel an order due to stock unavailability, pricing errors, or suspicion of fraudulent activity. You will be notified via email or phone if such a situation arises.
-            </p>
-          </section>
-
-          <div className="mt-8 p-4 bg-brand-pink/5 border-l-2 border-brand-gold italic text-[12px] opacity-80">
-            "We strive to provide a seamless shopping experience. For any queries regarding your order status, please reach out to us at care@sadabharat.com"
-          </div>
+      <div className="bg-white/50 backdrop-blur-sm p-6 md:p-8 rounded-2xl border border-brand-pink/10 shadow-xl shadow-brand-pink/[0.02] space-y-6">
+        <div 
+          className="prose max-w-none text-gray-700 text-sm leading-relaxed whitespace-pre-wrap font-medium"
+          dangerouslySetInnerHTML={{ __html: policy?.content || 'Cancellation Policy coming soon...' }}
+        />
+        <div className="pt-8 border-t border-brand-pink/5 text-center">
+          <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest leading-relaxed">
+            © 2026 Sada Bharat Pvt Ltd. All Rights Reserved.
+          </p>
         </div>
       </div>
     </div>

@@ -2,6 +2,7 @@ const Order = require('../models/orderModel');
 const Product = require('../models/productModel');
 const Razorpay = require('razorpay');
 const crypto = require('crypto');
+const { sendNotificationToUser } = require('../utils/pushNotificationHelper');
 // @desc    Create new order
 // @route   POST /api/orders
 // @access  Private
@@ -74,6 +75,34 @@ const createOrder = async (req, res) => {
           status: 'Pending' // Initially pending until delivered
         });
       }
+    }
+
+    // Trigger push notifications
+    try {
+      await sendNotificationToUser(
+        createdOrder.user,
+        'user',
+        {
+          title: 'Order Placed Successfully',
+          body: `Thank you! Your order #${createdOrder._id} of ₹${createdOrder.totalPrice} has been placed and is being processed.`
+        },
+        'success'
+      );
+
+      const uniqueVendors = [...new Set(createdOrder.orderItems.map(item => item.vendor?.toString()).filter(Boolean))];
+      for (const vendorId of uniqueVendors) {
+        await sendNotificationToUser(
+          vendorId,
+          'vendor',
+          {
+            title: 'New Order Received',
+            body: `You received a new order #${createdOrder._id}. Please review and prepare the items for delivery.`
+          },
+          'success'
+        );
+      }
+    } catch (notifErr) {
+      console.error('FCM: Error sending order creation notifications:', notifErr);
     }
 
     res.status(201).json({
@@ -221,6 +250,34 @@ const verifyRazorpayOrder = async (req, res) => {
       }
     }
 
+    // Trigger push notifications
+    try {
+      await sendNotificationToUser(
+        createdOrder.user,
+        'user',
+        {
+          title: 'Order Paid & Placed Successfully',
+          body: `Thank you! Your payment of ₹${createdOrder.totalPrice} is verified and Order #${createdOrder._id} has been placed.`
+        },
+        'success'
+      );
+
+      const uniqueVendors = [...new Set(createdOrder.orderItems.map(item => item.vendor?.toString()).filter(Boolean))];
+      for (const vendorId of uniqueVendors) {
+        await sendNotificationToUser(
+          vendorId,
+          'vendor',
+          {
+            title: 'New Order Received',
+            body: `You received a new paid order #${createdOrder._id}. Please review and prepare the items for delivery.`
+          },
+          'success'
+        );
+      }
+    } catch (notifErr) {
+      console.error('FCM: Error sending Razorpay order notifications:', notifErr);
+    }
+
     res.status(200).json({
       success: true,
       message: "Payment verified successfully",
@@ -347,6 +404,21 @@ const updateOrderItemStatus = async (req, res) => {
 
     await order.save();
 
+    // Trigger push notification to user
+    try {
+      await sendNotificationToUser(
+        order.user,
+        'user',
+        {
+          title: 'Order Status Update',
+          body: `The status of your item "${item.name}" from Order #${order._id} has been updated to "${status}".`
+        },
+        'info'
+      );
+    } catch (notifErr) {
+      console.error('FCM: Error sending order item status notification:', notifErr);
+    }
+
     res.status(200).json({ success: true, message: 'Item status updated', data: order });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
@@ -381,6 +453,24 @@ const requestReturn = async (req, res) => {
     if (refundAccountDetails) order.refundAccountDetails = refundAccountDetails;
 
     await order.save();
+
+    // Trigger push notification to vendors
+    try {
+      const uniqueVendors = [...new Set(order.orderItems.map(item => item.vendor?.toString()).filter(Boolean))];
+      for (const vendorId of uniqueVendors) {
+        await sendNotificationToUser(
+          vendorId,
+          'vendor',
+          {
+            title: `${order.returnAction} Requested`,
+            body: `A customer has requested a ${order.returnAction.toLowerCase()} for Order #${order._id}. Reason: ${order.returnReason}`
+          },
+          'warning'
+        );
+      }
+    } catch (notifErr) {
+      console.error('FCM: Error sending return request notification:', notifErr);
+    }
 
     res.status(200).json({ success: true, message: 'Return/Replacement requested successfully', data: order });
   } catch (error) {
@@ -427,6 +517,21 @@ const adminUpdateReturn = async (req, res) => {
 
     order.returnStatus = returnStatus;
     await order.save();
+
+    // Trigger push notification to user
+    try {
+      await sendNotificationToUser(
+        order.user,
+        'user',
+        {
+          title: 'Return Status Update',
+          body: `Your return/replacement status for Order #${order._id} has been updated to "${returnStatus}".`
+        },
+        'info'
+      );
+    } catch (notifErr) {
+      console.error('FCM: Error sending return status update notification:', notifErr);
+    }
 
     res.status(200).json({ success: true, message: `Return status updated to ${returnStatus}`, data: order });
   } catch (error) {

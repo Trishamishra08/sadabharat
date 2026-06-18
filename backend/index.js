@@ -46,6 +46,16 @@ const testimonialRoutes = require('./routes/testimonialRoutes');
 app.use('/api/testimonials', testimonialRoutes);
 const notificationRoutes = require('./routes/notificationRoutes');
 app.use('/api/notifications', notificationRoutes);
+const consultationRoutes = require('./routes/consultationRoutes');
+app.use('/api/consultations', consultationRoutes);
+const supportTicketRoutes = require('./routes/supportTicketRoutes');
+app.use('/api/tickets', supportTicketRoutes);
+const instagramPostRoutes = require('./routes/instagramPostRoutes');
+app.use('/api/instagram', instagramPostRoutes);
+const storeLocationRoutes = require('./routes/storeLocationRoutes');
+app.use('/api/locations', storeLocationRoutes);
+const policyRoutes = require('./routes/policyRoutes');
+app.use('/api/policies', policyRoutes);
 
 const path = require('path');
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
@@ -63,3 +73,5 @@ const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
+// Nodemon trigger comment
+

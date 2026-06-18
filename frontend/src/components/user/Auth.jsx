@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { FiUser, FiLock, FiEye, FiEyeOff, FiCheckCircle, FiPhone, FiMail } from 'react-icons/fi';
 import { useShop } from '../../context/ShopContext';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { registerFCMToken } from '../../services/pushNotificationService';
 
 import api from '../../utils/api';
 
@@ -69,7 +70,13 @@ const Auth = () => {
       if (res.data.success) {
         setOtpSent(true);
         setTimer(60);
-        showNotification("OTP sent successfully to your mobile number.");
+        // In dev mode, backend returns the OTP - auto-fill it
+        if (res.data.devOtp) {
+          setForm(prev => ({ ...prev, otp: res.data.devOtp }));
+          showNotification(`OTP sent! (Dev mode: ${res.data.devOtp})`);
+        } else {
+          showNotification("OTP sent successfully to your mobile number.");
+        }
       }
     } catch (error) {
       showNotification(error.response?.data?.message || "Failed to send OTP", "error");
@@ -110,6 +117,7 @@ const Auth = () => {
         if (res.data.success) {
           const { token, ...userData } = res.data.data;
           localStorage.setItem('admin_token', token);
+          registerFCMToken(true).catch(console.error);
           if (setUser) setUser(userData);
           setIsAuthenticated(true);
           showNotification("Login Successful! Welcome to Sada Bharat.", "success");
@@ -125,6 +133,7 @@ const Auth = () => {
         if (res.data.success) {
           const { token, ...userData } = res.data.data;
           localStorage.setItem('customer_token', token);
+          registerFCMToken(true).catch(console.error);
           if (setUser) setUser(userData);
           setIsAuthenticated(true);
           showNotification("Login Successful! Welcome to Sada Bharat.", "success");

@@ -3,15 +3,7 @@ import { FiUser, FiMail, FiShield, FiLock, FiBell, FiChevronRight, FiEdit3, FiSe
 import { motion, AnimatePresence } from 'framer-motion';
 import { useShop } from '../../context/ShopContext';
 import { useNavigate } from 'react-router-dom';
-
-// MOCK API for Frontend-Only mode
-const api = {
-  get: async () => ({ data: { data: { products: [], categories: [], banners: [], settings: {}, orders: [], users: [], stats: [], recentTransactions: [], dailyRevenue: [], vendors: [], blogs: [], returns: [], testimonials: [], reviews: [], replacements: [], supportTickets: [], locations: [], coupons: [], logs: [] }, status: 'success' } }),
-  post: async () => ({ data: { data: { order: { orderId: 'MOCK-ORDER-123' } }, status: 'success' } }),
-  patch: async () => ({ data: { status: 'success' } }),
-  delete: async () => ({ data: { status: 'success' } })
-};
-
+import api from '../../utils/api';
 
 const AdminSettings = () => {
   const { user, setUser, setIsAuthenticated } = useShop();
@@ -43,6 +35,45 @@ const AdminSettings = () => {
   const [activeSecurityView, setActiveSecurityView] = useState(null); // 'password', 'notifications', 'presets', 'archive'
   const [passwordForm, setPasswordForm] = useState({ current: '', new: '', confirm: '' });
 
+  const [settings, setSettings] = useState({
+    pushNotifications: true,
+    emailDispatch: false,
+    smsGateway: true,
+    soundAlerts: true,
+    currency: 'INR (₹)',
+    taxComputation: 'Automatic (GST)',
+    maintenanceMode: false
+  });
+
+  useEffect(() => {
+    const fetchSettings = async () => {
+      try {
+        const res = await api.get('/settings');
+        if (res.data?.data?.settings) {
+          const s = res.data.data.settings;
+          setSettings(prev => ({ ...prev, ...s }));
+        }
+      } catch (err) {
+        console.error(err);
+      }
+    };
+    fetchSettings();
+  }, []);
+
+  const handleUpdateSettings = async (e) => {
+    if (e) e.preventDefault();
+    try {
+      const token = localStorage.getItem('admin_token');
+      await api.put('/settings', settings, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      alert('Settings updated successfully.');
+      setActiveSecurityView(null);
+    } catch (err) {
+      alert('Failed to update settings: ' + (err.response?.data?.message || err.message));
+    }
+  };
+
   useEffect(() => {
     setPasswordForm(prev => ({ ...prev, current: '' }));
     setProfileForm({ ...adminInfo });
@@ -51,7 +82,7 @@ const AdminSettings = () => {
   const handleProfileUpdate = async (e) => {
     e.preventDefault();
     try {
-      const res = await api.patch('/users/update-me', {
+      const res = await api.put('/users/profile', {
         name: profileForm.name,
         email: profileForm.email,
         phone: profileForm.phone
@@ -150,22 +181,22 @@ const AdminSettings = () => {
             </div>
             <div className="space-y-4">
               {[
-                { label: 'Push Notifications', desc: 'Alert browser/mobile on new orders', enabled: true },
-                { label: 'Email Dispatch', desc: 'Send summary reports to master email', enabled: false },
-                { label: 'SMS Gateway', desc: 'High priority customer messages', enabled: true },
-                { label: 'Sound Alerts', desc: 'Play chime on inventory updates', enabled: true },
+                { key: 'pushNotifications', label: 'Push Notifications', desc: 'Alert browser/mobile on new orders' },
+                { key: 'emailDispatch', label: 'Email Dispatch', desc: 'Send summary reports to master email' },
+                { key: 'smsGateway', label: 'SMS Gateway', desc: 'High priority customer messages' },
+                { key: 'soundAlerts', label: 'Sound Alerts', desc: 'Play chime on inventory updates' },
               ].map((notif, i) => (
                 <div key={i} className="flex items-center justify-between p-3 bg-admin-light/20 border border-admin-accent/5 group hover:border-admin-accent/30 transition-all">
                   <div>
                     <p className="text-sm font-semibold text-admin-dark">{notif.label}</p>
                     <p className="text-xs text-gray-500 font-medium mt-0.5">{notif.desc}</p>
                   </div>
-                  <div className={`w-8 h-4 rounded-full p-0.5 transition-colors cursor-pointer ${notif.enabled ? 'bg-green-500' : 'bg-gray-200'}`}>
-                    <div className={`w-3 h-3 bg-white rounded-full transition-transform ${notif.enabled ? 'translate-x-4' : 'translate-x-0'}`} />
+                  <div onClick={() => setSettings({ ...settings, [notif.key]: !settings[notif.key] })} className={`w-8 h-4 rounded-full p-0.5 transition-colors cursor-pointer ${settings[notif.key] ? 'bg-green-500' : 'bg-gray-200'}`}>
+                    <div className={`w-3 h-3 bg-white rounded-full transition-transform ${settings[notif.key] ? 'translate-x-4' : 'translate-x-0'}`} />
                   </div>
                 </div>
               ))}
-              <button onClick={() => { alert('Configurations synced with server.'); setActiveSecurityView(null); }} className="w-full bg-admin-dark text-white py-3 text-[9px] font-bold uppercase tracking-widest mt-4">Sync Configs</button>
+              <button onClick={handleUpdateSettings} className="w-full bg-admin-dark text-white py-3 text-[9px] font-bold uppercase tracking-widest mt-4">Sync Configs</button>
             </div>
           </motion.div>
         );
@@ -184,24 +215,24 @@ const AdminSettings = () => {
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-1">
                 <label className="text-xs font-semibold text-gray-500 uppercase tracking-widest pl-1">Store Currency</label>
-                <select className="w-full bg-admin-light/10 border border-admin-accent/10 p-2 text-sm font-medium outline-none">
-                  <option>INR (₹)</option>
-                  <option>USD ($)</option>
+                <select value={settings.currency} onChange={(e) => setSettings({ ...settings, currency: e.target.value })} className="w-full bg-admin-light/10 border border-admin-accent/10 p-2 text-sm font-medium outline-none">
+                  <option value="INR (₹)">INR (₹)</option>
+                  <option value="USD ($)">USD ($)</option>
                 </select>
               </div>
               <div className="space-y-1">
                 <label className="text-xs font-semibold text-gray-500 uppercase tracking-widest pl-1">Tax Computation</label>
-                <select className="w-full bg-admin-light/10 border border-admin-accent/10 p-2 text-sm font-medium outline-none">
-                  <option>Automatic (GST)</option>
-                  <option>Manual Override</option>
+                <select value={settings.taxComputation} onChange={(e) => setSettings({ ...settings, taxComputation: e.target.value })} className="w-full bg-admin-light/10 border border-admin-accent/10 p-2 text-sm font-medium outline-none">
+                  <option value="Automatic (GST)">Automatic (GST)</option>
+                  <option value="Manual Override">Manual Override</option>
                 </select>
               </div>
               <div className="col-span-2 p-3 bg-admin-accent/5 border border-dashed border-admin-accent/30 flex justify-between items-center">
                 <span className="text-sm font-semibold text-admin-accent">Portal Maintenance Mode</span>
-                <div className="w-8 h-4 bg-gray-200 rounded-full p-0.5 cursor-pointer"><div className="w-3 h-3 bg-white rounded-full translate-x-0 transition-all" /></div>
+                <div onClick={() => setSettings({ ...settings, maintenanceMode: !settings.maintenanceMode })} className={`w-8 h-4 bg-gray-200 rounded-full p-0.5 cursor-pointer transition-colors ${settings.maintenanceMode ? 'bg-red-500' : 'bg-gray-200'}`}><div className={`w-3 h-3 bg-white rounded-full transition-all ${settings.maintenanceMode ? 'translate-x-4' : 'translate-x-0'}`} /></div>
               </div>
             </div>
-            <button onClick={() => setActiveSecurityView(null)} className="w-full bg-admin-dark text-white py-3 text-[9px] font-bold uppercase tracking-widest mt-6">Apply Presets</button>
+            <button onClick={handleUpdateSettings} className="w-full bg-admin-dark text-white py-3 text-[9px] font-bold uppercase tracking-widest mt-6">Apply Presets</button>
           </motion.div>
         );
       case 'archive':

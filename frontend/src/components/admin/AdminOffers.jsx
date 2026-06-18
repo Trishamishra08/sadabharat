@@ -15,16 +15,8 @@ import {
 import { motion, AnimatePresence } from 'framer-motion';
 import { useShop } from '../../context/ShopContext';
 
-// MOCK API for Frontend-Only mode
-const api = {
-  get: async () => ({ data: { data: { products: [], categories: [], banners: [], settings: {}, orders: [], users: [], stats: [], recentTransactions: [], dailyRevenue: [], vendors: [], blogs: [], returns: [], testimonials: [], reviews: [], replacements: [], supportTickets: [], locations: [], coupons: [], logs: [] }, status: 'success' } }),
-  post: async () => ({ data: { data: { order: { orderId: 'MOCK-ORDER-123' } }, status: 'success' } }),
-  patch: async () => ({ data: { status: 'success' } }),
-  delete: async () => ({ data: { status: 'success' } })
-};
-
 import { Link } from 'react-router-dom';
-import realApi from '../../utils/api'; // Real API import for offers
+import api from '../../utils/api'; // Real API import for offers
 
 const AdminOffers = () => {
     const { products, offers, fetchData } = useShop();
@@ -67,9 +59,9 @@ const AdminOffers = () => {
     const handleSaveOffer = async () => {
         try {
             if (editingOfferId) {
-                await realApi.put(`/offers/${editingOfferId}`, newOffer);
+                await api.put(`/offers/${editingOfferId}`, newOffer);
             } else {
-                await realApi.post('/offers', newOffer);
+                await api.post('/offers', newOffer);
             }
             setNewOffer({ title: '', badge: 'DEAL', category: '', discountValue: '', image: '' });
             setIsAddingOffer(false);
@@ -95,7 +87,7 @@ const AdminOffers = () => {
     const handleDeleteOffer = async (id) => {
         if(window.confirm('Are you sure you want to delete this offer category?')) {
             try {
-                await realApi.delete(`/offers/${id}`);
+                await api.delete(`/offers/${id}`);
                 await fetchData();
             } catch (err) {
                 alert('Failed to delete offer: ' + (err.response?.data?.message || err.message));
@@ -106,7 +98,7 @@ const AdminOffers = () => {
     const toggleOffer = async (product) => {
         setIsUpdating(product._id);
         try {
-            await realApi.put(`/products/${product._id}`, {
+            await api.put(`/products/${product._id}`, {
                 ...product,
                 flashSale: !product.flashSale
             });
@@ -129,7 +121,7 @@ const AdminOffers = () => {
     const handleUpdateProduct = async () => {
         setIsUpdating(editingProduct._id);
         try {
-            await realApi.put(`/products/${editingProduct._id}`, {
+            await api.put(`/products/${editingProduct._id}`, {
                 ...editingProduct,
                 price: Number(editForm.price),
                 oldPrice: editForm.oldPrice ? Number(editForm.oldPrice) : null
